@@ -27,7 +27,7 @@
   <body data-spy="scroll" data-target="#main-nav" id="home">
     <nav id="main-nav" class="navbar navbar-expand-sm navbar-dark fixed-top">
       <div class="container">
-        <a href="index.html" class="navbar-brand">Junxuan He</a>
+        <a data-scroll href="index.html" class="navbar-brand">Junxuan He</a>
         <div class="mr-3 ml-2">
           <a
             href="https://linkedin.com/in/junxuan-he-026355130/"
@@ -39,6 +39,7 @@
         </div>
         <div class="mx-3">
           <a
+            data-scroll
             href="https://www.facebook.com/Ivanhehehehe?ref=bookmarks"
             class="text-white"
             target="blank"
@@ -48,6 +49,7 @@
         </div>
         <div class="mx-3">
           <a
+            data-scroll
             href="https://www.instagram.com/triplejazz/"
             class="text-white"
             target="blank"
@@ -57,6 +59,7 @@
         </div>
         <div class="mx-3">
           <a
+            data-scroll
             href="https://github.com/JunxuanH"
             class="text-white"
             target="blank"
@@ -430,6 +433,7 @@
       integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T"
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdn.jsdelivr.net/gh/cferdinandi/smooth-scroll@14.0.0/dist/smooth-scroll.polyfills.min.js"></script>
 
     <script>
       $('.img').mouseover(function() {
@@ -456,24 +460,6 @@
 
       //Init Scrollspy
       $('body').scrollspy({ target: '#main-nav' });
-      // Smooth Scrolling
-      $('#main-nav a').on('click', function(event) {
-        if (this.hash !== '') {
-          event.preventDefault();
-
-          const hash = this.hash;
-
-          $('html, body').animate(
-            {
-              scrollTop: $(hash).offset().top
-            },
-            800,
-            function() {
-              window.location.hash = hash;
-            }
-          );
-        }
-      });
 
       // Video Play
       $(function() {
@@ -551,6 +537,14 @@
           '.txt-rotate > .wrap { border-right: 0.08em solid #666 }';
         document.body.appendChild(css);
       };
+    </script>
+    // Smooth Scrolling
+    <script>
+      // All animations will take exactly 500ms
+      var scroll = new SmoothScroll('a[href*="#"]', {
+        speed: 750,
+        speedAsDuration: true
+      });
     </script>
   </body>
 </html>
