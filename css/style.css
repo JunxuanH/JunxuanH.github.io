@@ -86,10 +86,9 @@ body {
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
     ),
-    url('../img/berk3.jpg');
+    url('../img/berk4.jpg');
   background-attachment: fixed;
   background-repeat: no-repeat;
-  background-size: auto;
 
   text-align: center;
   color: #fff;
