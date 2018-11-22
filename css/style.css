@@ -44,6 +44,7 @@ body {
   background-attachment: fixed;
   background-repeat: no-repeat;
   text-align: center;
+  background-size: auto;
   color: #fff;
 }
 
@@ -59,6 +60,8 @@ body {
   background-repeat: no-repeat;
   background-position: 0 -300px;
   text-align: center;
+  background-size: auto;
+
   color: #fff;
 }
 
@@ -86,6 +89,8 @@ body {
     url('../img/berk3.jpg');
   background-attachment: fixed;
   background-repeat: no-repeat;
+  background-size: auto;
+
   text-align: center;
   color: #fff;
 }
