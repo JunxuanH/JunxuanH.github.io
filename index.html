@@ -27,7 +27,7 @@
   <body data-spy="scroll" data-target="#main-nav" id="home">
     <nav id="main-nav" class="navbar navbar-expand-sm navbar-dark fixed-top">
       <div class="container">
-        <a data-scroll href="index.html" class="navbar-brand">Junxuan He</a>
+        <a href="index.html" class="navbar-brand">Junxuan He</a>
         <div class="mr-3 ml-2">
           <a
             href="https://linkedin.com/in/junxuan-he-026355130/"
@@ -39,7 +39,6 @@
         </div>
         <div class="mx-3">
           <a
-            data-scroll
             href="https://www.facebook.com/Ivanhehehehe?ref=bookmarks"
             class="text-white"
             target="blank"
@@ -49,7 +48,6 @@
         </div>
         <div class="mx-3">
           <a
-            data-scroll
             href="https://www.instagram.com/triplejazz/"
             class="text-white"
             target="blank"
@@ -59,7 +57,6 @@
         </div>
         <div class="mx-3">
           <a
-            data-scroll
             href="https://github.com/JunxuanH"
             class="text-white"
             target="blank"
@@ -77,16 +74,18 @@
         <div class="collapse navbar-collapse" id="navbarCollapse">
           <ul class="navbar-nav ml-auto">
             <li class="nav-item">
-              <a href="#showcase" class="nav-link">About Me</a>
+              <a data-scroll href="#showcase" class="nav-link">About Me</a>
             </li>
             <li class="nav-item">
-              <a href="#resume" class="nav-link">Resume</a>
+              <a data-scroll href="#resume" class="nav-link">Resume</a>
             </li>
             <li class="nav-item">
-              <a href="#project-heading" class="nav-link">Projects</a>
+              <a data-scroll href="#project-heading" class="nav-link"
+                >Projects</a
+              >
             </li>
             <li class="nav-item">
-              <a href="#contact" class="nav-link">Contact Me</a>
+              <a data-scroll href="#contact" class="nav-link">Contact Me</a>
             </li>
           </ul>
         </div>
@@ -542,7 +541,7 @@
     <script>
       // All animations will take exactly 500ms
       var scroll = new SmoothScroll('a[href*="#"]', {
-        speed: 750,
+        speed: 800,
         speedAsDuration: true
       });
     </script>
