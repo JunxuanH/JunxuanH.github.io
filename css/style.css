@@ -115,6 +115,7 @@ body {
 
 #hover :hover {
   background: #324a5f;
+  transition: 0.25s ease;
   color: #fff;
   background-repeat: no-repeat;
   background-size: cover;
