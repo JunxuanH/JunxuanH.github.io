@@ -26,8 +26,6 @@
   </head>
 
   <body data-spy="scroll" data-target="#main-nav" id="home">
-    <!-- CSS Spinner -->
-    <div class="spinner-wrapper"><div class="spinner"></div></div>
     <nav id="main-nav" class="navbar navbar-expand-sm navbar-dark fixed-top">
       <div class="container">
         <a href="index.html" class="navbar-brand">
@@ -574,19 +572,6 @@
       var scroll = new SmoothScroll('a[href*="#"]', {
         speed: 800,
         speedAsDuration: true
-      });
-    </script>
-    <script>
-      $(document).ready(function() {
-        //Preloader
-        $(window).on('load', function() {
-          preloaderFadeOutTime = 500;
-          function hidePreloader() {
-            var preloader = $('.spinner-wrapper');
-            preloader.fadeOut(preloaderFadeOutTime);
-          }
-          hidePreloader();
-        });
       });
     </script>
   </body>
