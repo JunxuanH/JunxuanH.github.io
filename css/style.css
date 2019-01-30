@@ -155,3 +155,7 @@ body {
   transform: translate(-50%, -50%);
   text-align: center;
 }
+
+.skill:hover {
+  background: rgb(243, 238, 238);
+}
