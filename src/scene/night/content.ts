@@ -148,6 +148,10 @@ export async function createContent(opts: ContentOptions) {
   /** Visibility 0…1 of a board for this frame: p window (ride), proximity to its mount (walk), docked or not (dock). */
   const visibilityK = (id: string, carrier: Carrier | undefined, win: [number, number], p: number, view?: ContentView) => {
     if (!view || view.mode === 'ride') return windowK(win, p);
+    // On foot or docked every board stays lit: boards are real geometry (cheap), and the old proximity fade (a CSS3D-era
+    // saving) left the departures board a blank frame from the landing pad. Carriers outside the current section are
+    // not drawn at all (carriers.update), so this only affects the district you are in. `?boardfade` restores the fade.
+    if (!params.has('boardfade')) return 1;
     if (view.mode === 'dock') return view.docked === id ? 1 : 0;
     if (!view.player || !carrier) return windowK(win, p);
     carrier.mount.getWorldPosition(mountPos);
