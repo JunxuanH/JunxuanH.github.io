@@ -1,0 +1,5180 @@
+{
+ "done": true,
+ "fixed": true,
+ "rigs": {
+  "agent": {
+   "name": "agent",
+   "metaHeight": 1.8,
+   "assetHeight": 1.8,
+   "vertices": 4268,
+   "triangles": 5381,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.025,
+    "maxY": 1.825,
+    "height": 1.8,
+    "width": 1.012,
+    "depth": 0.364
+   },
+   "headY": 1.591,
+   "headTopY": 1.83,
+   "hipsY": 0.987,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.003,
+      "max": 0.008
+     },
+     "hipsDrift": 0.059,
+     "hipsDriftY": 0.072,
+     "maxDisp": 0.135,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.286,
+     "stretchMax": 1.584,
+     "stride": 1.422,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.758,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.535,
+       "vx": -0.03,
+       "vz": -1.535
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.344,
+       "samples": 56,
+       "slope": -1.322,
+       "vx": 0.022,
+       "vz": -1.322
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.004,
+      "max": 0.154
+     },
+     "hipsDrift": 0.045,
+     "hipsDriftY": 0.051,
+     "maxDisp": 0.19,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.492,
+     "stretchMax": 2.438,
+     "stride": 5.029,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.676,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.354,
+       "samples": 22,
+       "slope": -5.283,
+       "vx": 0.087,
+       "vz": -5.283
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.063,
+       "samples": 31,
+       "slope": -4.848,
+       "vx": -0.018,
+       "vz": -4.848
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.005,
+      "min": 0.004,
+      "max": 0.01
+     },
+     "hipsDrift": 0.032,
+     "hipsDriftY": 0.026,
+     "maxDisp": 0.132,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.5,
+     "stretchMax": 2.021,
+     "stride": 0.018,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.037,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.002,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.036,
+       "vx": -0.008,
+       "vz": -0.036
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.059,
+   "maxDisp": 0.19,
+   "stretch": 1.5,
+   "stride": 1.422,
+   "strideRun": 5.029,
+   "stepLen": 0.758,
+   "stepLenRun": 1.676,
+   "walkYawErr": -0.9,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 69
+  },
+  "netrunner": {
+   "name": "netrunner",
+   "metaHeight": 1.75,
+   "assetHeight": 1.75,
+   "vertices": 8736,
+   "triangles": 11057,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0,
+    "maxY": 1.75,
+    "height": 1.75,
+    "width": 0.93,
+    "depth": 0.315
+   },
+   "headY": 1.558,
+   "headTopY": 1.754,
+   "hipsY": 0.992,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.006,
+      "min": -0.01,
+      "max": 0.006
+     },
+     "hipsDrift": 0.057,
+     "hipsDriftY": 0.076,
+     "maxDisp": 0.104,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.417,
+     "stretchMax": 5.01,
+     "stride": 1.437,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.766,
+     "walkYawErr": -0.7,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.558,
+       "vx": -0.024,
+       "vz": -1.558
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.333,
+       "samples": 55,
+       "slope": -1.327,
+       "vx": 0.015,
+       "vz": -1.327
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.008,
+      "max": 0.149
+     },
+     "hipsDrift": 0.045,
+     "hipsDriftY": 0.049,
+     "maxDisp": 0.212,
+     "maxDispBone": "RightArm",
+     "stretch": 1.735,
+     "stretchMax": 16.399,
+     "stride": 5.247,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.749,
+     "walkYawErr": -1.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -5.389,
+       "vx": 0.112,
+       "vz": -5.389
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.049,
+       "samples": 29,
+       "slope": -5.144,
+       "vx": -0.033,
+       "vz": -5.144
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.008,
+      "min": 0.007,
+      "max": 0.012
+     },
+     "hipsDrift": 0.028,
+     "hipsDriftY": 0.022,
+     "maxDisp": 0.11,
+     "maxDispBone": "RightArm",
+     "stretch": 1.603,
+     "stretchMax": 9.74,
+     "stride": 0.015,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.03,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.001,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.03,
+       "vx": -0.013,
+       "vz": -0.03
+      }
+     ]
+    }
+   },
+   "groundOffset": 0.006,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.057,
+   "maxDisp": 0.212,
+   "stretch": 1.735,
+   "stride": 1.437,
+   "strideRun": 5.247,
+   "stepLen": 0.766,
+   "stepLenRun": 1.749,
+   "walkYawErr": -0.7,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 113
+  },
+  "corpo": {
+   "name": "corpo",
+   "metaHeight": 1.75,
+   "assetHeight": 1.75,
+   "vertices": 5278,
+   "triangles": 7092,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.022,
+    "maxY": 1.772,
+    "height": 1.75,
+    "width": 1.07,
+    "depth": 0.336
+   },
+   "headY": 1.559,
+   "headTopY": 1.78,
+   "hipsY": 0.919,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0.014,
+      "min": 0.014,
+      "max": 0.014
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "Hips",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.003,
+      "max": 0.015
+     },
+     "hipsDrift": 0.058,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.146,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.558,
+     "stretchMax": 2.176,
+     "stride": 1.361,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.726,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.474,
+       "vx": -0.033,
+       "vz": -1.474
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.333,
+       "samples": 55,
+       "slope": -1.258,
+       "vx": 0.02,
+       "vz": -1.258
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.13
+     },
+     "hipsDrift": 0.039,
+     "hipsDriftY": 0.044,
+     "maxDisp": 0.19,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.852,
+     "stretchMax": 2.939,
+     "stride": 4.984,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.661,
+     "walkYawErr": -0.8,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -5.152,
+       "vx": 0.07,
+       "vz": -5.152
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -4.867,
+       "vx": -0.015,
+       "vz": -4.867
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0.007
+     },
+     "hipsDrift": 0.03,
+     "hipsDriftY": 0.026,
+     "maxDisp": 0.139,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.705,
+     "stretchMax": 2.412,
+     "stride": 0.017,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.034,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.001,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.033,
+       "vx": -0.01,
+       "vz": -0.033
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.058,
+   "maxDisp": 0.19,
+   "stretch": 1.852,
+   "stride": 1.361,
+   "strideRun": 4.984,
+   "stepLen": 0.726,
+   "stepLenRun": 1.661,
+   "walkYawErr": -0.9,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 73
+  },
+  "vendor": {
+   "name": "vendor",
+   "metaHeight": 1.75,
+   "assetHeight": 1.75,
+   "vertices": 8830,
+   "triangles": 12256,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.027,
+    "maxY": 1.777,
+    "height": 1.75,
+    "width": 0.991,
+    "depth": 0.345
+   },
+   "headY": 1.562,
+   "headTopY": 1.785,
+   "hipsY": 0.888,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0.014,
+      "min": 0.014,
+      "max": 0.014
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightShoulder",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 0,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.004,
+      "max": 0.007
+     },
+     "hipsDrift": 0.056,
+     "hipsDriftY": 0.06,
+     "maxDisp": 0.135,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.542,
+     "stretchMax": 3.633,
+     "stride": 1.302,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.694,
+     "walkYawErr": -1.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.856,
+       "samples": 52,
+       "slope": -1.402,
+       "vx": -0.044,
+       "vz": -1.402
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.344,
+       "samples": 56,
+       "slope": -1.209,
+       "vx": 0.03,
+       "vz": -1.209
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.006,
+      "max": 0.122
+     },
+     "hipsDrift": 0.038,
+     "hipsDriftY": 0.045,
+     "maxDisp": 0.256,
+     "maxDispBone": "RightArm",
+     "stretch": 1.952,
+     "stretchMax": 4.24,
+     "stride": 4.535,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.512,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.354,
+       "samples": 23,
+       "slope": -4.74,
+       "vx": 0.071,
+       "vz": -4.74
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.063,
+       "samples": 31,
+       "slope": -4.383,
+       "vx": -0.01,
+       "vz": -4.383
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 5.367,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": 0,
+      "min": -0.001,
+      "max": 0.022
+     },
+     "hipsDrift": 0.068,
+     "hipsDriftY": 0.022,
+     "maxDisp": 0.362,
+     "maxDispBone": "RightArm",
+     "stretch": 2.819,
+     "stretchMax": 8.238,
+     "stride": 0.001,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0.003,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 5.311,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": -0.002,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 5.311,
+       "samples": 96,
+       "slope": 0.002,
+       "vx": 0.001,
+       "vz": 0.002
+      }
+     ]
+    },
+    "talk": {
+     "name": "talk",
+     "duration": 4,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": 0.066,
+      "min": 0.064,
+      "max": 0.073
+     },
+     "hipsDrift": 0.067,
+     "hipsDriftY": 0.01,
+     "maxDisp": 0.159,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.395,
+     "stretchMax": 3.293,
+     "stride": 0.001,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0.001,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.958,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.001,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.958,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": 0,
+       "vz": 0.001
+      }
+     ]
+    },
+    "wave": {
+     "name": "wave",
+     "duration": 5.367,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 0,
+     "minY": {
+      "p20": 0.071,
+      "min": 0.061,
+      "max": 0.105
+     },
+     "hipsDrift": 0.163,
+     "hipsDriftY": 0.042,
+     "maxDisp": 0.387,
+     "maxDispBone": "RightArm",
+     "stretch": 2.333,
+     "stretchMax": 6.731,
+     "stride": 0.022,
+     "strideSign": 1,
+     "cycles": 2,
+     "stepLen": 0.03,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.727,
+       "t1": 1.733,
+       "samples": 19,
+       "slope": 0,
+       "vx": 0.001,
+       "vz": 0
+      },
+      {
+       "foot": "L",
+       "t0": 3.578,
+       "t1": 0.615,
+       "samples": 44,
+       "slope": 0.021,
+       "vx": -0.002,
+       "vz": 0.021
+      },
+      {
+       "foot": "R",
+       "t0": 1.845,
+       "t1": 0.783,
+       "samples": 78,
+       "slope": 0.029,
+       "vx": -0.003,
+       "vz": 0.029
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.163,
+   "maxDisp": 0.387,
+   "stretch": 2.819,
+   "stride": 1.302,
+   "strideRun": 4.535,
+   "stepLen": 0.694,
+   "stepLenRun": 1.512,
+   "walkYawErr": -1.4,
+   "redundantTracks": 283,
+   "totalTracks": 432,
+   "flags": [
+    "stretch 2.819"
+   ],
+   "ms": 178
+  },
+  "punk": {
+   "name": "punk",
+   "metaHeight": 1.75,
+   "assetHeight": 1.75,
+   "vertices": 8322,
+   "triangles": 11779,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.011,
+    "maxY": 1.761,
+    "height": 1.75,
+    "width": 0.902,
+    "depth": 0.286
+   },
+   "headY": 1.508,
+   "headTopY": 1.762,
+   "hipsY": 0.911,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "Spine01",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.006,
+      "max": 0.013
+     },
+     "hipsDrift": 0.056,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.103,
+     "maxDispBone": "RightArm",
+     "stretch": 1.403,
+     "stretchMax": 2.378,
+     "stride": 1.331,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.71,
+     "walkYawErr": -1.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.844,
+       "samples": 51,
+       "slope": -1.435,
+       "vx": -0.037,
+       "vz": -1.435
+      },
+      {
+       "foot": "R",
+       "t0": 0.789,
+       "t1": 0.333,
+       "samples": 56,
+       "slope": -1.236,
+       "vx": 0.027,
+       "vz": -1.236
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.003,
+      "max": 0.145
+     },
+     "hipsDrift": 0.043,
+     "hipsDriftY": 0.048,
+     "maxDisp": 0.213,
+     "maxDispBone": "RightArm",
+     "stretch": 1.768,
+     "stretchMax": 2.784,
+     "stride": 4.81,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.603,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.354,
+       "samples": 23,
+       "slope": -4.942,
+       "vx": 0.081,
+       "vz": -4.942
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -4.709,
+       "vx": -0.012,
+       "vz": -4.709
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 2.367,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": 0.007,
+      "min": 0.007,
+      "max": 0.008
+     },
+     "hipsDrift": 0.003,
+     "hipsDriftY": 0.011,
+     "maxDisp": 0.113,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.346,
+     "stretchMax": 1.885,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 2.342,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 2.342,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "talk": {
+     "name": "talk",
+     "duration": 10.3,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": -0.007,
+      "min": -0.008,
+      "max": 0.003
+     },
+     "hipsDrift": 0.053,
+     "hipsDriftY": 0.015,
+     "maxDisp": 0.196,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.396,
+     "stretchMax": 1.954,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 10.193,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 10.193,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "wave": {
+     "name": "wave",
+     "duration": 4.133,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": -0.002,
+      "min": -0.002,
+      "max": 0.008
+     },
+     "hipsDrift": 0.011,
+     "hipsDriftY": 0.011,
+     "maxDisp": 0.187,
+     "maxDispBone": "RightArm",
+     "stretch": 1.418,
+     "stretchMax": 2.335,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 4.09,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 4.09,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.056,
+   "maxDisp": 0.213,
+   "stretch": 1.768,
+   "stride": 1.331,
+   "strideRun": 4.81,
+   "stepLen": 0.71,
+   "stepLenRun": 1.603,
+   "walkYawErr": -1.2,
+   "redundantTracks": 283,
+   "totalTracks": 432,
+   "flags": [],
+   "ms": 164
+  },
+  "sec-bot": {
+   "name": "sec-bot",
+   "metaHeight": 2.1,
+   "assetHeight": 2.1,
+   "vertices": 15225,
+   "triangles": 16107,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.012,
+    "maxY": 2.112,
+    "height": 2.1,
+    "width": 0.861,
+    "depth": 0.546
+   },
+   "headY": 1.878,
+   "headTopY": 2.118,
+   "hipsY": 1.207,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.01,
+      "max": 0.017
+     },
+     "hipsDrift": 0.071,
+     "hipsDriftY": 0.086,
+     "maxDisp": 0.12,
+     "maxDispBone": "RightShoulder",
+     "stretch": 1.373,
+     "stretchMax": 4.829,
+     "stride": 1.722,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.919,
+     "walkYawErr": -1.7,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.833,
+       "samples": 49,
+       "slope": -1.854,
+       "vx": -0.061,
+       "vz": -1.854
+      },
+      {
+       "foot": "R",
+       "t0": 0.811,
+       "t1": 0.322,
+       "samples": 53,
+       "slope": -1.601,
+       "vx": 0.048,
+       "vz": -1.601
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.016,
+      "max": 0.157
+     },
+     "hipsDrift": 0.061,
+     "hipsDriftY": 0.069,
+     "maxDisp": 0.15,
+     "maxDispBone": "RightArm",
+     "stretch": 1.586,
+     "stretchMax": 5.142,
+     "stride": 6.423,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 2.141,
+     "walkYawErr": -0.8,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -6.48,
+       "vx": -0.028,
+       "vz": -6.48
+      },
+      {
+       "foot": "R",
+       "t0": 0.528,
+       "t1": 0.042,
+       "samples": 27,
+       "slope": -6.379,
+       "vx": 0.09,
+       "vz": -6.379
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.006,
+      "min": 0.001,
+      "max": 0.026
+     },
+     "hipsDrift": 0.104,
+     "hipsDriftY": 0.019,
+     "maxDisp": 0.132,
+     "maxDispBone": "Spine02",
+     "stretch": 1.51,
+     "stretchMax": 2.432,
+     "stride": 0.023,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.047,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.002,
+       "vx": -0.007,
+       "vz": -0.002
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.044,
+       "vx": -0.02,
+       "vz": -0.044
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.104,
+   "maxDisp": 0.15,
+   "stretch": 1.586,
+   "stride": 1.722,
+   "strideRun": 6.423,
+   "stepLen": 0.919,
+   "stepLenRun": 2.141,
+   "walkYawErr": -1.7,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 181
+  },
+  "chef": {
+   "name": "chef",
+   "metaHeight": 1.78,
+   "assetHeight": 1.78,
+   "vertices": 7192,
+   "triangles": 8919,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.024,
+    "maxY": 1.804,
+    "height": 1.78,
+    "width": 1.314,
+    "depth": 0.336
+   },
+   "headY": 1.574,
+   "headTopY": 1.807,
+   "hipsY": 0.961,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.006,
+      "max": 0.008
+     },
+     "hipsDrift": 0.058,
+     "hipsDriftY": 0.068,
+     "maxDisp": 0.136,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.367,
+     "stretchMax": 2.341,
+     "stride": 1.414,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.754,
+     "walkYawErr": -1.1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.53,
+       "vx": -0.041,
+       "vz": -1.53
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.333,
+       "samples": 55,
+       "slope": -1.309,
+       "vx": 0.025,
+       "vz": -1.309
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.003,
+      "max": 0.142
+     },
+     "hipsDrift": 0.041,
+     "hipsDriftY": 0.046,
+     "maxDisp": 0.175,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.613,
+     "stretchMax": 2.705,
+     "stride": 5.077,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.692,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.354,
+       "samples": 23,
+       "slope": -5.195,
+       "vx": 0.089,
+       "vz": -5.195
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -4.986,
+       "vx": -0.008,
+       "vz": -4.986
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.004,
+      "min": -0.005,
+      "max": 0.004
+     },
+     "hipsDrift": 0.033,
+     "hipsDriftY": 0.029,
+     "maxDisp": 0.144,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.572,
+     "stretchMax": 2.615,
+     "stride": 0.021,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.042,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": -0.003,
+       "vz": 0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.041,
+       "vx": -0.004,
+       "vz": -0.041
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.058,
+   "maxDisp": 0.175,
+   "stretch": 1.613,
+   "stride": 1.414,
+   "strideRun": 5.077,
+   "stepLen": 0.754,
+   "stepLenRun": 1.692,
+   "walkYawErr": -1.1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 89
+  },
+  "geisha-bot": {
+   "name": "geisha-bot",
+   "metaHeight": 1.8,
+   "assetHeight": 1.8,
+   "vertices": 8557,
+   "triangles": 10529,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.019,
+    "maxY": 1.819,
+    "height": 1.8,
+    "width": 1.09,
+    "depth": 0.329
+   },
+   "headY": 1.54,
+   "headTopY": 1.823,
+   "hipsY": 0.991,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0.011,
+      "min": 0.011,
+      "max": 0.011
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.016
+     },
+     "hipsDrift": 0.054,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.272,
+     "maxDispBone": "LeftLeg",
+     "stretch": 2.501,
+     "stretchMax": 5.148,
+     "stride": 1.315,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.701,
+     "walkYawErr": -0.8,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.424,
+       "vx": -0.025,
+       "vz": -1.424
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.333,
+       "samples": 55,
+       "slope": -1.216,
+       "vx": 0.017,
+       "vz": -1.216
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.156
+     },
+     "hipsDrift": 0.045,
+     "hipsDriftY": 0.055,
+     "maxDisp": 0.371,
+     "maxDispBone": "LeftLeg",
+     "stretch": 3.108,
+     "stretchMax": 8.755,
+     "stride": 4.92,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.64,
+     "walkYawErr": -1.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -4.916,
+       "vx": 0.1,
+       "vz": -4.916
+      },
+      {
+       "foot": "R",
+       "t0": 0.528,
+       "t1": 0.042,
+       "samples": 27,
+       "slope": -4.923,
+       "vx": -0.072,
+       "vz": -4.923
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.011
+     },
+     "hipsDrift": 0.026,
+     "hipsDriftY": 0.025,
+     "maxDisp": 0.199,
+     "maxDispBone": "LeftLeg",
+     "stretch": 2.397,
+     "stretchMax": 5.091,
+     "stride": 0.009,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.018,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.002,
+       "vx": 0,
+       "vz": -0.002
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.015,
+       "vx": -0.016,
+       "vz": -0.015
+      }
+     ]
+    },
+    "talk": {
+     "name": "talk",
+     "duration": 4,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": 0.093,
+      "min": 0.09,
+      "max": 0.103
+     },
+     "hipsDrift": 0.075,
+     "hipsDriftY": 0.009,
+     "maxDisp": 0.198,
+     "maxDispBone": "RightForeArm",
+     "stretch": 1.45,
+     "stretchMax": 5.164,
+     "stride": 0.001,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.003,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.958,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": 0,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.958,
+       "samples": 96,
+       "slope": -0.002,
+       "vx": -0.001,
+       "vz": -0.002
+      }
+     ]
+    },
+    "wave": {
+     "name": "wave",
+     "duration": 5.367,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 0,
+     "minY": {
+      "p20": 0.111,
+      "min": 0.098,
+      "max": 0.152
+     },
+     "hipsDrift": 0.168,
+     "hipsDriftY": 0.068,
+     "maxDisp": 0.567,
+     "maxDispBone": "RightForeArm",
+     "stretch": 2.816,
+     "stretchMax": 11.9,
+     "stride": 0.014,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.037,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 3.354,
+       "t1": 0.671,
+       "samples": 49,
+       "slope": 0.008,
+       "vx": 0.006,
+       "vz": 0.008
+      },
+      {
+       "foot": "R",
+       "t0": 3.131,
+       "t1": 0.727,
+       "samples": 54,
+       "slope": -0.019,
+       "vx": 0.015,
+       "vz": -0.019
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.168,
+   "maxDisp": 0.567,
+   "stretch": 3.108,
+   "stride": 1.315,
+   "strideRun": 4.92,
+   "stepLen": 0.701,
+   "stepLenRun": 1.64,
+   "walkYawErr": -0.8,
+   "redundantTracks": 282,
+   "totalTracks": 432,
+   "flags": [
+    "stretch 3.108"
+   ],
+   "ms": 158
+  },
+  "idol": {
+   "name": "idol",
+   "metaHeight": 1.65,
+   "assetHeight": 1.65,
+   "vertices": 9547,
+   "triangles": 11336,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.036,
+    "maxY": 1.686,
+    "height": 1.65,
+    "width": 1.202,
+    "depth": 0.541
+   },
+   "headY": 1.44,
+   "headTopY": 1.686,
+   "hipsY": 0.977,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0.125,
+   "strayBones": [
+    "Head:710",
+    "neck:624",
+    "Spine:484",
+    "LeftShoulder:295"
+   ],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "Head",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.019
+     },
+     "hipsDrift": 0.055,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.08,
+     "maxDispBone": "LeftShoulder",
+     "stretch": 1.268,
+     "stretchMax": 1.592,
+     "stride": 1.353,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.721,
+     "walkYawErr": -1.7,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.452,
+       "vx": -0.048,
+       "vz": -1.452
+      },
+      {
+       "foot": "R",
+       "t0": 0.822,
+       "t1": 0.344,
+       "samples": 54,
+       "slope": -1.261,
+       "vx": 0.036,
+       "vz": -1.261
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.007,
+      "max": 0.127
+     },
+     "hipsDrift": 0.048,
+     "hipsDriftY": 0.054,
+     "maxDisp": 0.089,
+     "maxDispBone": "RightArm",
+     "stretch": 1.363,
+     "stretchMax": 2.048,
+     "stride": 4.663,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.554,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.215,
+       "t1": 0.354,
+       "samples": 21,
+       "slope": -5.017,
+       "vx": -0.058,
+       "vz": -5.017
+      },
+      {
+       "foot": "R",
+       "t0": 0.535,
+       "t1": 0.063,
+       "samples": 29,
+       "slope": -4.407,
+       "vx": 0.073,
+       "vz": -4.407
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.001,
+      "min": -0.002,
+      "max": 0.016
+     },
+     "hipsDrift": 0.103,
+     "hipsDriftY": 0.022,
+     "maxDisp": 0.198,
+     "maxDispBone": "neck",
+     "stretch": 1.537,
+     "stretchMax": 3.474,
+     "stride": 0.023,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.047,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.005,
+       "vx": -0.007,
+       "vz": -0.005
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.042,
+       "vx": -0.012,
+       "vz": -0.042
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.103,
+   "maxDisp": 0.198,
+   "stretch": 1.537,
+   "stride": 1.353,
+   "strideRun": 4.663,
+   "stepLen": 0.721,
+   "stepLenRun": 1.554,
+   "walkYawErr": -1.7,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [
+    "stray 12.5%"
+   ],
+   "ms": 122
+  },
+  "ronin": {
+   "name": "ronin",
+   "metaHeight": 1.78,
+   "assetHeight": 1.78,
+   "vertices": 8539,
+   "triangles": 9816,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.026,
+    "maxY": 1.806,
+    "height": 1.78,
+    "width": 1.341,
+    "depth": 0.371
+   },
+   "headY": 1.556,
+   "headTopY": 1.806,
+   "hipsY": 0.949,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0.006,
+   "strayBones": [
+    "Spine02:53"
+   ],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.004,
+      "max": 0.011
+     },
+     "hipsDrift": 0.057,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.116,
+     "maxDispBone": "RightArm",
+     "stretch": 1.29,
+     "stretchMax": 1.828,
+     "stride": 1.397,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.745,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.501,
+       "vx": -0.035,
+       "vz": -1.501
+      },
+      {
+       "foot": "R",
+       "t0": 0.811,
+       "t1": 0.344,
+       "samples": 55,
+       "slope": -1.302,
+       "vx": 0.024,
+       "vz": -1.302
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.007,
+      "max": 0.144
+     },
+     "hipsDrift": 0.041,
+     "hipsDriftY": 0.05,
+     "maxDisp": 0.19,
+     "maxDispBone": "RightArm",
+     "stretch": 1.46,
+     "stretchMax": 3.357,
+     "stride": 4.862,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.621,
+     "walkYawErr": -0.5,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.354,
+       "samples": 22,
+       "slope": -5.119,
+       "vx": 0.044,
+       "vz": -5.119
+      },
+      {
+       "foot": "R",
+       "t0": 0.528,
+       "t1": 0.063,
+       "samples": 30,
+       "slope": -4.674,
+       "vx": 0.012,
+       "vz": -4.674
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.004,
+      "min": -0.006,
+      "max": 0.011
+     },
+     "hipsDrift": 0.038,
+     "hipsDriftY": 0.028,
+     "maxDisp": 0.12,
+     "maxDispBone": "RightArm",
+     "stretch": 1.488,
+     "stretchMax": 2.164,
+     "stride": 0.021,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.042,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.004,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.041,
+       "vx": -0.009,
+       "vz": -0.041
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.057,
+   "maxDisp": 0.19,
+   "stretch": 1.488,
+   "stride": 1.397,
+   "strideRun": 4.862,
+   "stepLen": 0.745,
+   "stepLenRun": 1.621,
+   "walkYawErr": -1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 102
+  },
+  "schoolgirl-hacker": {
+   "name": "schoolgirl-hacker",
+   "metaHeight": 1.6,
+   "assetHeight": 1.6,
+   "vertices": 10582,
+   "triangles": 12676,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.047,
+    "maxY": 1.647,
+    "height": 1.6,
+    "width": 1.255,
+    "depth": 0.6
+   },
+   "headY": 1.366,
+   "headTopY": 1.655,
+   "hipsY": 0.95,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0.002,
+   "strayBones": [
+    "Spine01:19"
+   ],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.038,
+      "min": -0.038,
+      "max": -0.038
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.023,
+      "max": 0.051
+     },
+     "hipsDrift": 0.05,
+     "hipsDriftY": 0.067,
+     "maxDisp": 0.179,
+     "maxDispBone": "RightArm",
+     "stretch": 1.5,
+     "stretchMax": 10.636,
+     "stride": 1.552,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.828,
+     "walkYawErr": -0.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.611,
+       "t1": 0.878,
+       "samples": 25,
+       "slope": -1.579,
+       "vx": 0.012,
+       "vz": -1.579
+      },
+      {
+       "foot": "R",
+       "t0": 0.111,
+       "t1": 0.367,
+       "samples": 24,
+       "slope": -1.523,
+       "vx": -0.035,
+       "vz": -1.523
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.034,
+      "max": 0.165
+     },
+     "hipsDrift": 0.044,
+     "hipsDriftY": 0.061,
+     "maxDisp": 0.183,
+     "maxDispBone": "RightArm",
+     "stretch": 1.719,
+     "stretchMax": 14.884,
+     "stride": 3.549,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.183,
+     "walkYawErr": -9.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.292,
+       "t1": 0.375,
+       "samples": 13,
+       "slope": -5.504,
+       "vx": 0.341,
+       "vz": -5.504
+      },
+      {
+       "foot": "R",
+       "t0": 0.632,
+       "t1": 0.076,
+       "samples": 17,
+       "slope": -2.054,
+       "vx": -0.022,
+       "vz": -2.054
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.002,
+      "max": 0.008
+     },
+     "hipsDrift": 0.029,
+     "hipsDriftY": 0.015,
+     "maxDisp": 0.201,
+     "maxDispBone": "RightArm",
+     "stretch": 1.932,
+     "stretchMax": 23.272,
+     "stride": 0.019,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.038,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": -0.004,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.037,
+       "vx": -0.018,
+       "vz": -0.037
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.05,
+   "maxDisp": 0.201,
+   "stretch": 1.932,
+   "stride": 1.552,
+   "strideRun": 3.549,
+   "stepLen": 0.828,
+   "stepLenRun": 1.183,
+   "walkYawErr": -0.4,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 134
+  },
+  "mech-pilot": {
+   "name": "mech-pilot",
+   "metaHeight": 1.9,
+   "assetHeight": 1.9,
+   "vertices": 11758,
+   "triangles": 14882,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.041,
+    "maxY": 1.941,
+    "height": 1.9,
+    "width": 1.373,
+    "depth": 0.57
+   },
+   "headY": 1.536,
+   "headTopY": 1.951,
+   "hipsY": 1.07,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightShoulder",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.007,
+      "max": 0.015
+     },
+     "hipsDrift": 0.055,
+     "hipsDriftY": 0.07,
+     "maxDisp": 0.213,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.61,
+     "stretchMax": 5.263,
+     "stride": 1.461,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.779,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.565,
+       "vx": -0.032,
+       "vz": -1.565
+      },
+      {
+       "foot": "R",
+       "t0": 0.811,
+       "t1": 0.333,
+       "samples": 54,
+       "slope": -1.365,
+       "vx": 0.023,
+       "vz": -1.365
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.007,
+      "max": 0.146
+     },
+     "hipsDrift": 0.049,
+     "hipsDriftY": 0.063,
+     "maxDisp": 0.379,
+     "maxDispBone": "RightArm",
+     "stretch": 2.044,
+     "stretchMax": 12.38,
+     "stride": 5.267,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.756,
+     "walkYawErr": -0.7,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -5.376,
+       "vx": -0.044,
+       "vz": -5.376
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -5.19,
+       "vx": 0.061,
+       "vz": -5.19
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.005,
+      "min": -0.01,
+      "max": 0.013
+     },
+     "hipsDrift": 0.058,
+     "hipsDriftY": 0.026,
+     "maxDisp": 0.253,
+     "maxDispBone": "RightArm",
+     "stretch": 2.01,
+     "stretchMax": 7.59,
+     "stride": 0.024,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.049,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.002,
+       "vx": -0.005,
+       "vz": -0.002
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.046,
+       "vx": -0.008,
+       "vz": -0.046
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.058,
+   "maxDisp": 0.379,
+   "stretch": 2.044,
+   "stride": 1.461,
+   "strideRun": 5.267,
+   "stepLen": 0.779,
+   "stepLenRun": 1.756,
+   "walkYawErr": -1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [
+    "stretch 2.044"
+   ],
+   "ms": 153
+  },
+  "cat-courier": {
+   "name": "cat-courier",
+   "metaHeight": 1.65,
+   "assetHeight": 1.65,
+   "vertices": 7488,
+   "triangles": 9496,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.031,
+    "maxY": 1.681,
+    "height": 1.65,
+    "width": 1.24,
+    "depth": 0.315
+   },
+   "headY": 1.389,
+   "headTopY": 1.681,
+   "hipsY": 0.922,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 0,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.016
+     },
+     "hipsDrift": 0.053,
+     "hipsDriftY": 0.062,
+     "maxDisp": 0.071,
+     "maxDispBone": "Hips",
+     "stretch": 1.34,
+     "stretchMax": 2.863,
+     "stride": 1.284,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.685,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.833,
+       "samples": 49,
+       "slope": -1.382,
+       "vx": -0.028,
+       "vz": -1.382
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.322,
+       "samples": 54,
+       "slope": -1.196,
+       "vx": 0.018,
+       "vz": -1.196
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.007,
+      "max": 0.138
+     },
+     "hipsDrift": 0.041,
+     "hipsDriftY": 0.046,
+     "maxDisp": 0.112,
+     "maxDispBone": "RightArm",
+     "stretch": 1.528,
+     "stretchMax": 3.682,
+     "stride": 4.627,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.542,
+     "walkYawErr": -0.9,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.347,
+       "samples": 22,
+       "slope": -4.697,
+       "vx": 0.075,
+       "vz": -4.697
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.049,
+       "samples": 29,
+       "slope": -4.574,
+       "vx": -0.016,
+       "vz": -4.574
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.004,
+      "min": 0.003,
+      "max": 0.011
+     },
+     "hipsDrift": 0.022,
+     "hipsDriftY": 0.028,
+     "maxDisp": 0.092,
+     "maxDispBone": "Head",
+     "stretch": 1.65,
+     "stretchMax": 2.551,
+     "stride": 0.017,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.035,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": -0.001,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.034,
+       "vx": -0.007,
+       "vz": -0.034
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.053,
+   "maxDisp": 0.112,
+   "stretch": 1.65,
+   "stride": 1.284,
+   "strideRun": 4.627,
+   "stepLen": 0.685,
+   "stepLenRun": 1.542,
+   "walkYawErr": -0.9,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 95
+  },
+  "oni-bouncer": {
+   "name": "oni-bouncer",
+   "metaHeight": 2,
+   "assetHeight": 2,
+   "vertices": 9143,
+   "triangles": 11499,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.021,
+    "maxY": 2.021,
+    "height": 2,
+    "width": 1.342,
+    "depth": 0.537
+   },
+   "headY": 1.735,
+   "headTopY": 2.021,
+   "hipsY": 1.091,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0.019,
+   "strayBones": [
+    "Hips:172",
+    "RightUpLeg:59",
+    "LeftUpLeg:54"
+   ],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "Hips",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.003,
+      "max": 0.009
+     },
+     "hipsDrift": 0.064,
+     "hipsDriftY": 0.075,
+     "maxDisp": 0.268,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.456,
+     "stretchMax": 2.801,
+     "stride": 1.574,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.84,
+     "walkYawErr": -1.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.856,
+       "samples": 51,
+       "slope": -1.693,
+       "vx": -0.054,
+       "vz": -1.693
+      },
+      {
+       "foot": "R",
+       "t0": 0.811,
+       "t1": 0.344,
+       "samples": 55,
+       "slope": -1.464,
+       "vx": 0.037,
+       "vz": -1.464
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.014,
+      "max": 0.145
+     },
+     "hipsDrift": 0.054,
+     "hipsDriftY": 0.059,
+     "maxDisp": 0.329,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.789,
+     "stretchMax": 4.234,
+     "stride": 5.509,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.836,
+     "walkYawErr": -0.6,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.354,
+       "samples": 22,
+       "slope": -5.764,
+       "vx": 0.01,
+       "vz": -5.764
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.063,
+       "samples": 31,
+       "slope": -5.329,
+       "vx": 0.056,
+       "vz": -5.329
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.006,
+      "min": 0.005,
+      "max": 0.019
+     },
+     "hipsDrift": 0.072,
+     "hipsDriftY": 0.023,
+     "maxDisp": 0.274,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.624,
+     "stretchMax": 3.134,
+     "stride": 0.027,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.054,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0,
+       "vx": -0.006,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.053,
+       "vx": -0.005,
+       "vz": -0.053
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.072,
+   "maxDisp": 0.329,
+   "stretch": 1.789,
+   "stride": 1.574,
+   "strideRun": 5.509,
+   "stepLen": 0.84,
+   "stepLenRun": 1.836,
+   "walkYawErr": -1.4,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [
+    "stray 1.9%"
+   ],
+   "ms": 112
+  },
+  "maid-bot": {
+   "name": "maid-bot",
+   "metaHeight": 1.7,
+   "assetHeight": 1.7,
+   "vertices": 9491,
+   "triangles": 12088,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.021,
+    "maxY": 1.721,
+    "height": 1.7,
+    "width": 1.165,
+    "depth": 0.344
+   },
+   "headY": 1.479,
+   "headTopY": 1.729,
+   "hipsY": 0.993,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.018,
+      "min": -0.018,
+      "max": -0.018
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "neck",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.004,
+      "max": 0.02
+     },
+     "hipsDrift": 0.056,
+     "hipsDriftY": 0.068,
+     "maxDisp": 0.057,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.279,
+     "stretchMax": 1.707,
+     "stride": 1.375,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.733,
+     "walkYawErr": -1.1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.833,
+       "samples": 50,
+       "slope": -1.485,
+       "vx": -0.035,
+       "vz": -1.485
+      },
+      {
+       "foot": "R",
+       "t0": 0.789,
+       "t1": 0.322,
+       "samples": 55,
+       "slope": -1.275,
+       "vx": 0.024,
+       "vz": -1.275
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.183
+     },
+     "hipsDrift": 0.045,
+     "hipsDriftY": 0.052,
+     "maxDisp": 0.079,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1.408,
+     "stretchMax": 2.158,
+     "stride": 4.963,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.654,
+     "walkYawErr": -1.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.347,
+       "samples": 21,
+       "slope": -5.038,
+       "vx": 0.117,
+       "vz": -5.038
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.049,
+       "samples": 29,
+       "slope": -4.908,
+       "vx": -0.04,
+       "vz": -4.908
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.001,
+      "max": 0.01
+     },
+     "hipsDrift": 0.036,
+     "hipsDriftY": 0.026,
+     "maxDisp": 0.065,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.469,
+     "stretchMax": 2.093,
+     "stride": 0.013,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.027,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": -0.003,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.026,
+       "vx": -0.009,
+       "vz": -0.026
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.056,
+   "maxDisp": 0.079,
+   "stretch": 1.469,
+   "stride": 1.375,
+   "strideRun": 4.963,
+   "stepLen": 0.733,
+   "stepLenRun": 1.654,
+   "walkYawErr": -1.1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 114
+  },
+  "medic": {
+   "name": "medic",
+   "metaHeight": 1.72,
+   "assetHeight": 1.72,
+   "vertices": 7846,
+   "triangles": 9590,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.011,
+    "maxY": 1.731,
+    "height": 1.72,
+    "width": 1.281,
+    "depth": 0.341
+   },
+   "headY": 1.496,
+   "headTopY": 1.736,
+   "hipsY": 0.96,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.011,
+      "min": -0.011,
+      "max": -0.011
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.004,
+      "max": 0.007
+     },
+     "hipsDrift": 0.055,
+     "hipsDriftY": 0.069,
+     "maxDisp": 0.08,
+     "maxDispBone": "RightArm",
+     "stretch": 1.293,
+     "stretchMax": 1.707,
+     "stride": 1.381,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.736,
+     "walkYawErr": -0.6,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.856,
+       "samples": 51,
+       "slope": -1.487,
+       "vx": -0.024,
+       "vz": -1.487
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.344,
+       "samples": 56,
+       "slope": -1.283,
+       "vx": 0.013,
+       "vz": -1.283
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.002,
+      "max": 0.135
+     },
+     "hipsDrift": 0.044,
+     "hipsDriftY": 0.049,
+     "maxDisp": 0.128,
+     "maxDispBone": "RightArm",
+     "stretch": 1.471,
+     "stretchMax": 1.955,
+     "stride": 4.974,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.658,
+     "walkYawErr": -1.3,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.208,
+       "t1": 0.354,
+       "samples": 22,
+       "slope": -5.08,
+       "vx": 0.112,
+       "vz": -5.08
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -4.897,
+       "vx": -0.03,
+       "vz": -4.897
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.001,
+      "max": 0.004
+     },
+     "hipsDrift": 0.025,
+     "hipsDriftY": 0.026,
+     "maxDisp": 0.095,
+     "maxDispBone": "Head",
+     "stretch": 1.557,
+     "stretchMax": 2.217,
+     "stride": 0.017,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.035,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": -0.002,
+       "vz": 0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.034,
+       "vx": -0.01,
+       "vz": -0.034
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.055,
+   "maxDisp": 0.128,
+   "stretch": 1.557,
+   "stride": 1.381,
+   "strideRun": 4.974,
+   "stepLen": 0.736,
+   "stepLenRun": 1.658,
+   "walkYawErr": -0.6,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 98
+  },
+  "skater": {
+   "name": "skater",
+   "metaHeight": 1.65,
+   "assetHeight": 1.65,
+   "vertices": 7585,
+   "triangles": 9862,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.039,
+    "maxY": 1.689,
+    "height": 1.65,
+    "width": 1.229,
+    "depth": 0.365
+   },
+   "headY": 1.468,
+   "headTopY": 1.696,
+   "hipsY": 0.93,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightShoulder",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.006,
+      "max": 0.019
+     },
+     "hipsDrift": 0.051,
+     "hipsDriftY": 0.061,
+     "maxDisp": 0.072,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.331,
+     "stretchMax": 1.783,
+     "stride": 1.276,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.681,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.833,
+       "samples": 49,
+       "slope": -1.375,
+       "vx": -0.029,
+       "vz": -1.375
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.322,
+       "samples": 54,
+       "slope": -1.187,
+       "vx": 0.02,
+       "vz": -1.187
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.008,
+      "max": 0.139
+     },
+     "hipsDrift": 0.043,
+     "hipsDriftY": 0.047,
+     "maxDisp": 0.113,
+     "maxDispBone": "RightArm",
+     "stretch": 1.554,
+     "stretchMax": 2.112,
+     "stride": 4.557,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.519,
+     "walkYawErr": -0.6,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.347,
+       "samples": 22,
+       "slope": -4.622,
+       "vx": 0.047,
+       "vz": -4.622
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.049,
+       "samples": 29,
+       "slope": -4.507,
+       "vx": -0.002,
+       "vz": -4.507
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.005,
+      "min": 0.004,
+      "max": 0.016
+     },
+     "hipsDrift": 0.025,
+     "hipsDriftY": 0.027,
+     "maxDisp": 0.085,
+     "maxDispBone": "RightArm",
+     "stretch": 1.586,
+     "stretchMax": 1.857,
+     "stride": 0.023,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.047,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.001,
+       "vx": -0.003,
+       "vz": -0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.045,
+       "vx": 0.001,
+       "vz": -0.045
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.051,
+   "maxDisp": 0.113,
+   "stretch": 1.586,
+   "stride": 1.276,
+   "strideRun": 4.557,
+   "stepLen": 0.681,
+   "stepLenRun": 1.519,
+   "walkYawErr": -1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 94
+  },
+  "salaryman": {
+   "name": "salaryman",
+   "metaHeight": 1.75,
+   "assetHeight": 1.75,
+   "vertices": 7906,
+   "triangles": 8747,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.017,
+    "maxY": 1.767,
+    "height": 1.75,
+    "width": 1.264,
+    "depth": 0.327
+   },
+   "headY": 1.546,
+   "headTopY": 1.768,
+   "hipsY": 0.953,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.01
+     },
+     "hipsDrift": 0.059,
+     "hipsDriftY": 0.069,
+     "maxDisp": 0.083,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.333,
+     "stretchMax": 1.959,
+     "stride": 1.41,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.752,
+     "walkYawErr": -1.1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.3,
+       "t1": 0.844,
+       "samples": 50,
+       "slope": -1.523,
+       "vx": -0.038,
+       "vz": -1.523
+      },
+      {
+       "foot": "R",
+       "t0": 0.8,
+       "t1": 0.333,
+       "samples": 55,
+       "slope": -1.307,
+       "vx": 0.026,
+       "vz": -1.307
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.152
+     },
+     "hipsDrift": 0.042,
+     "hipsDriftY": 0.047,
+     "maxDisp": 0.167,
+     "maxDispBone": "RightArm",
+     "stretch": 1.458,
+     "stretchMax": 2.357,
+     "stride": 5.031,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.677,
+     "walkYawErr": -1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.201,
+       "t1": 0.347,
+       "samples": 22,
+       "slope": -5.152,
+       "vx": 0.087,
+       "vz": -5.152
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.056,
+       "samples": 30,
+       "slope": -4.942,
+       "vx": 0.001,
+       "vz": -4.942
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.001,
+      "min": -0.002,
+      "max": 0.006
+     },
+     "hipsDrift": 0.036,
+     "hipsDriftY": 0.028,
+     "maxDisp": 0.124,
+     "maxDispBone": "RightArm",
+     "stretch": 1.523,
+     "stretchMax": 1.884,
+     "stride": 0.023,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.046,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": -0.003,
+       "vz": 0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.045,
+       "vx": 0,
+       "vz": -0.045
+      }
+     ]
+    },
+    "talk": {
+     "name": "talk",
+     "duration": 4.867,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": 0.062,
+      "min": 0.059,
+      "max": 0.067
+     },
+     "hipsDrift": 0.107,
+     "hipsDriftY": 0.041,
+     "maxDisp": 0.147,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.327,
+     "stretchMax": 1.666,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 4.816,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 4.816,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "wave": {
+     "name": "wave",
+     "duration": 4.133,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 2,
+     "minY": {
+      "p20": -0.016,
+      "min": -0.017,
+      "max": -0.003
+     },
+     "hipsDrift": 0.013,
+     "hipsDriftY": 0.014,
+     "maxDisp": 0.134,
+     "maxDispBone": "RightArm",
+     "stretch": 1.319,
+     "stretchMax": 1.947,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0.001,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 4.09,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 4.09,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.107,
+   "maxDisp": 0.167,
+   "stretch": 1.523,
+   "stride": 1.41,
+   "strideRun": 5.031,
+   "stepLen": 0.752,
+   "stepLenRun": 1.677,
+   "walkYawErr": -1.1,
+   "redundantTracks": 282,
+   "totalTracks": 432,
+   "flags": [],
+   "ms": 131
+  },
+  "dj": {
+   "name": "dj",
+   "metaHeight": 1.7,
+   "assetHeight": 1.7,
+   "vertices": 7167,
+   "triangles": 9096,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.012,
+    "maxY": 1.712,
+    "height": 1.7,
+    "width": 1.155,
+    "depth": 0.307
+   },
+   "headY": 1.426,
+   "headTopY": 1.712,
+   "hipsY": 0.949,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.014,
+      "min": -0.014,
+      "max": -0.014
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightUpLeg",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.002,
+      "max": 0.012
+     },
+     "hipsDrift": 0.054,
+     "hipsDriftY": 0.073,
+     "maxDisp": 0.089,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.33,
+     "stretchMax": 2.062,
+     "stride": 1.401,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.747,
+     "walkYawErr": -0.1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.311,
+       "t1": 0.856,
+       "samples": 50,
+       "slope": -1.518,
+       "vx": -0.001,
+       "vz": -1.518
+      },
+      {
+       "foot": "R",
+       "t0": 0.811,
+       "t1": 0.344,
+       "samples": 55,
+       "slope": -1.294,
+       "vx": 0.002,
+       "vz": -1.294
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.008,
+      "max": 0.159
+     },
+     "hipsDrift": 0.042,
+     "hipsDriftY": 0.043,
+     "maxDisp": 0.131,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.517,
+     "stretchMax": 2.633,
+     "stride": 4.953,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.651,
+     "walkYawErr": -1.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.215,
+       "t1": 0.347,
+       "samples": 20,
+       "slope": -5.204,
+       "vx": 0.097,
+       "vz": -5.204
+      },
+      {
+       "foot": "R",
+       "t0": 0.528,
+       "t1": 0.056,
+       "samples": 29,
+       "slope": -4.779,
+       "vx": -0.027,
+       "vz": -4.779
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.002,
+      "max": 0.003
+     },
+     "hipsDrift": 0.027,
+     "hipsDriftY": 0.027,
+     "maxDisp": 0.089,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.542,
+     "stretchMax": 2.491,
+     "stride": 0.019,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.037,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.003,
+       "vx": -0.001,
+       "vz": 0.003
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.034,
+       "vx": -0.007,
+       "vz": -0.034
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.054,
+   "maxDisp": 0.131,
+   "stretch": 1.542,
+   "stride": 1.401,
+   "strideRun": 4.953,
+   "stepLen": 0.747,
+   "stepLenRun": 1.651,
+   "walkYawErr": -0.1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 88
+  },
+  "nomad": {
+   "name": "nomad",
+   "metaHeight": 1.78,
+   "assetHeight": 1.78,
+   "vertices": 9401,
+   "triangles": 11179,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0,
+    "maxY": 1.78,
+    "height": 1.78,
+    "width": 1.26,
+    "depth": 0.565
+   },
+   "headY": 1.587,
+   "headTopY": 1.789,
+   "hipsY": 0.984,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.013,
+      "min": -0.013,
+      "max": -0.013
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftShoulder",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0.003,
+      "min": -0.004,
+      "max": 0.015
+     },
+     "hipsDrift": 0.06,
+     "hipsDriftY": 0.078,
+     "maxDisp": 0.104,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.383,
+     "stretchMax": 1.975,
+     "stride": 1.454,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.776,
+     "walkYawErr": -0.1,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.833,
+       "samples": 50,
+       "slope": -1.572,
+       "vx": -0.007,
+       "vz": -1.572
+      },
+      {
+       "foot": "R",
+       "t0": 0.778,
+       "t1": 0.322,
+       "samples": 56,
+       "slope": -1.349,
+       "vx": 0.001,
+       "vz": -1.349
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.013,
+      "max": 0.167
+     },
+     "hipsDrift": 0.047,
+     "hipsDriftY": 0.047,
+     "maxDisp": 0.178,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.626,
+     "stretchMax": 2.418,
+     "stride": 5.255,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.752,
+     "walkYawErr": -2.8,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.194,
+       "t1": 0.34,
+       "samples": 22,
+       "slope": -5.279,
+       "vx": 0.254,
+       "vz": -5.279
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.66,
+       "samples": 21,
+       "slope": -5.23,
+       "vx": -0.216,
+       "vz": -5.23
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.002,
+      "max": 0.012
+     },
+     "hipsDrift": 0.086,
+     "hipsDriftY": 0.03,
+     "maxDisp": 0.136,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.603,
+     "stretchMax": 3.028,
+     "stride": 0.009,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.018,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.004,
+       "vx": 0.001,
+       "vz": 0.004
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.014,
+       "vx": 0.047,
+       "vz": -0.014
+      }
+     ]
+    }
+   },
+   "groundOffset": -0.003,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.086,
+   "maxDisp": 0.178,
+   "stretch": 1.626,
+   "stride": 1.454,
+   "strideRun": 5.255,
+   "stepLen": 0.776,
+   "stepLenRun": 1.752,
+   "walkYawErr": -0.1,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 113
+  },
+  "noodle-cook": {
+   "name": "noodle-cook",
+   "metaHeight": 1.68,
+   "assetHeight": 1.68,
+   "vertices": 8927,
+   "triangles": 11717,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0.031,
+    "maxY": 1.711,
+    "height": 1.68,
+    "width": 1.317,
+    "depth": 0.48
+   },
+   "headY": 1.485,
+   "headTopY": 1.714,
+   "hipsY": 0.862,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": 0,
+      "min": 0,
+      "max": 0
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "RightShoulder",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.006,
+      "max": 0.006
+     },
+     "hipsDrift": 0.053,
+     "hipsDriftY": 0.058,
+     "maxDisp": 0.188,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.534,
+     "stretchMax": 4.523,
+     "stride": 1.255,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.669,
+     "walkYawErr": -1.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.844,
+       "samples": 51,
+       "slope": -1.348,
+       "vx": -0.041,
+       "vz": -1.348
+      },
+      {
+       "foot": "R",
+       "t0": 0.778,
+       "t1": 0.344,
+       "samples": 58,
+       "slope": -1.174,
+       "vx": 0.024,
+       "vz": -1.174
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.015,
+      "max": 0.099
+     },
+     "hipsDrift": 0.036,
+     "hipsDriftY": 0.042,
+     "maxDisp": 0.242,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.735,
+     "stretchMax": 6.131,
+     "stride": 4.421,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.474,
+     "walkYawErr": -1.4,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.188,
+       "t1": 0.354,
+       "samples": 25,
+       "slope": -4.488,
+       "vx": 0.103,
+       "vz": -4.488
+      },
+      {
+       "foot": "R",
+       "t0": 0.514,
+       "t1": 0.056,
+       "samples": 31,
+       "slope": -4.367,
+       "vx": -0.02,
+       "vz": -4.367
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.006,
+      "min": -0.01,
+      "max": -0.001
+     },
+     "hipsDrift": 0.022,
+     "hipsDriftY": 0.029,
+     "maxDisp": 0.198,
+     "maxDispBone": "LeftUpLeg",
+     "stretch": 1.784,
+     "stretchMax": 6.018,
+     "stride": 0.022,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.044,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": -0.003,
+       "vz": 0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.042,
+       "vx": -0.001,
+       "vz": -0.042
+      }
+     ]
+    }
+   },
+   "groundOffset": 0,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.053,
+   "maxDisp": 0.242,
+   "stretch": 1.784,
+   "stride": 1.255,
+   "strideRun": 4.421,
+   "stepLen": 0.669,
+   "stepLenRun": 1.474,
+   "walkYawErr": -1.2,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 112
+  },
+  "patrol-bot": {
+   "name": "patrol-bot",
+   "metaHeight": 1.9,
+   "assetHeight": 1.9,
+   "vertices": 11070,
+   "triangles": 14412,
+   "bones": 24,
+   "skinnedMeshes": 1,
+   "bboxRest": {
+    "minY": 0,
+    "maxY": 1.9,
+    "height": 1.9,
+    "width": 1.356,
+    "depth": 0.39
+   },
+   "headY": 1.556,
+   "headTopY": 1.9,
+   "hipsY": 1.09,
+   "forward": [
+    0,
+    1
+   ],
+   "forwardSource": "headfront",
+   "yawErr": 0,
+   "mirrored": false,
+   "strayWeights": 0,
+   "strayBones": [],
+   "clips": {
+    "clip0": {
+     "name": "clip0",
+     "duration": 0.3,
+     "tracks": 24,
+     "redundantTracks": 0,
+     "constantRotations": 24,
+     "minY": {
+      "p20": -0.033,
+      "min": -0.033,
+      "max": -0.033
+     },
+     "hipsDrift": 0,
+     "hipsDriftY": 0,
+     "maxDisp": 0,
+     "maxDispBone": "LeftArm",
+     "stretch": 1,
+     "stretchMax": 1,
+     "stride": 0,
+     "strideSign": 1,
+     "cycles": 1,
+     "stepLen": 0,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 0.297,
+       "samples": 96,
+       "slope": 0,
+       "vx": 0,
+       "vz": 0
+      }
+     ]
+    },
+    "walk": {
+     "name": "walk",
+     "duration": 1.067,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.001,
+      "min": -0.007,
+      "max": 0.012
+     },
+     "hipsDrift": 0.053,
+     "hipsDriftY": 0.077,
+     "maxDisp": 0.074,
+     "maxDispBone": "LeftArm",
+     "stretch": 1.272,
+     "stretchMax": 1.872,
+     "stride": 1.54,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.821,
+     "walkYawErr": -0.2,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.289,
+       "t1": 0.844,
+       "samples": 51,
+       "slope": -1.64,
+       "vx": 0.005,
+       "vz": -1.64
+      },
+      {
+       "foot": "R",
+       "t0": 0.789,
+       "t1": 0.333,
+       "samples": 56,
+       "slope": -1.448,
+       "vx": -0.014,
+       "vz": -1.448
+      }
+     ]
+    },
+    "run": {
+     "name": "run",
+     "duration": 0.667,
+     "tracks": 25,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": -0.007,
+      "min": -0.037,
+      "max": 0.171
+     },
+     "hipsDrift": 0.051,
+     "hipsDriftY": 0.059,
+     "maxDisp": 0.118,
+     "maxDispBone": "RightArm",
+     "stretch": 1.456,
+     "stretchMax": 2.527,
+     "stride": 5.654,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 1.885,
+     "walkYawErr": -1.5,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0.194,
+       "t1": 0.34,
+       "samples": 22,
+       "slope": -5.624,
+       "vx": 0.144,
+       "vz": -5.624
+      },
+      {
+       "foot": "R",
+       "t0": 0.521,
+       "t1": 0.625,
+       "samples": 16,
+       "slope": -5.697,
+       "vx": -0.187,
+       "vz": -5.697
+      }
+     ]
+    },
+    "idle": {
+     "name": "idle",
+     "duration": 4.033,
+     "tracks": 26,
+     "redundantTracks": 0,
+     "constantRotations": 1,
+     "minY": {
+      "p20": 0,
+      "min": -0.005,
+      "max": 0.005
+     },
+     "hipsDrift": 0.051,
+     "hipsDriftY": 0.019,
+     "maxDisp": 0.085,
+     "maxDispBone": "Spine02",
+     "stretch": 1.512,
+     "stretchMax": 2.239,
+     "stride": 0.021,
+     "strideSign": -1,
+     "cycles": 1,
+     "stepLen": 0.042,
+     "walkYawErr": null,
+     "phases": [
+      {
+       "foot": "L",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": 0.001,
+       "vx": -0.003,
+       "vz": 0.001
+      },
+      {
+       "foot": "R",
+       "t0": 0,
+       "t1": 3.991,
+       "samples": 96,
+       "slope": -0.04,
+       "vx": 0,
+       "vz": -0.04
+      }
+     ]
+    }
+   },
+   "groundOffset": 0.001,
+   "floating": false,
+   "sinking": false,
+   "hover": false,
+   "hipsDrift": 0.053,
+   "maxDisp": 0.118,
+   "stretch": 1.512,
+   "stride": 1.54,
+   "strideRun": 5.654,
+   "stepLen": 0.821,
+   "stepLenRun": 1.885,
+   "walkYawErr": -0.2,
+   "redundantTracks": 188,
+   "totalTracks": 288,
+   "flags": [],
+   "ms": 133
+  }
+ },
+ "errors": {},
+ "generated": "2026-09-14T15:25:45.302Z"
+}

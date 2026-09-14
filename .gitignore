@@ -12,3 +12,9 @@ design/*
 design/night/*
 !design/night/*.md
 !design/night/prompts/
+# video cutscenes: the establishing frames, their CDN url cache, the ledger and the clip table are tracked; raw fal downloads are not
+!design/night/cutscenes/
+design/night/cutscenes/*
+!design/night/cutscenes/frames/
+!design/night/cutscenes/ledger.tsv
+!design/night/cutscenes/clips.tsv

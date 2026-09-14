@@ -3,12 +3,15 @@
   "generate_type": "LowPoly",
   "height_meters": 1.75,
   "concept": "concept-1.png",
-  "fal_requests": "3d=01a09e4b-da63-7680-b21f-9286ea32828a rig=01a09e51-f9d7-7ab0-9d25-12fc986f1884",
+  "fal_requests": "clips=01a0a080-6fa9-77d1-9125-21915de87380",
   "files": [
+    "model.glb",
     "rigged.glb",
     "walk.glb",
     "run.glb",
-    "idle.glb"
+    "idle.glb",
+    "talk.glb",
+    "wave.glb"
   ],
-  "generated": "2026-09-14T05:13:40Z"
+  "generated": "2026-09-14T15:22:24Z"
 }

@@ -1,0 +1,185 @@
+{
+  "v": 1,
+  "clips": {
+    "city-contact": {
+      "src": "/night/cutscenes/city-contact.mp4",
+      "duration": 5.100,
+      "bytes": 2141017,
+      "sha": "3a999d21",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa6b-79b0-b7f7-2c9f3520c17d",
+      "reverseOf": null
+    },
+    "city-education": {
+      "src": "/night/cutscenes/city-education.mp4",
+      "duration": 5.100,
+      "bytes": 2406155,
+      "sha": "4f105a16",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a071-0c84-79d2-a774-69ea0591fd9d",
+      "reverseOf": null
+    },
+    "city-projects": {
+      "src": "/night/cutscenes/city-projects.mp4",
+      "duration": 5.100,
+      "bytes": 2140010,
+      "sha": "47d7f75c",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa5c-7860-9a60-dfcaaea699ca",
+      "reverseOf": null
+    },
+    "city-work": {
+      "src": "/night/cutscenes/city-work.mp4",
+      "duration": 5.100,
+      "bytes": 2070929,
+      "sha": "bf1ccca5",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d48-73f0-84a1-f6abd765b28a",
+      "reverseOf": null
+    },
+    "contact-city": {
+      "src": "/night/cutscenes/contact-city.mp4",
+      "duration": 5.100,
+      "bytes": 2169907,
+      "sha": "ab22821d",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a071-0b96-7e83-8897-e3b8f627d625",
+      "reverseOf": null
+    },
+    "contact-education": {
+      "src": "/night/cutscenes/contact-education.mp4",
+      "duration": 5.100,
+      "bytes": 2092817,
+      "sha": "95518880",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa5c-7cc0-8271-8425886cc26b",
+      "reverseOf": "education-contact"
+    },
+    "contact-projects": {
+      "src": "/night/cutscenes/contact-projects.mp4",
+      "duration": 5.100,
+      "bytes": 2444284,
+      "sha": "319b3b28",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a071-0888-73e0-870e-a63ab07f1617",
+      "reverseOf": "projects-contact"
+    },
+    "contact-work": {
+      "src": "/night/cutscenes/contact-work.mp4",
+      "duration": 5.100,
+      "bytes": 2190918,
+      "sha": "0094cec1",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d36-7423-a39d-55808c4d5873",
+      "reverseOf": "work-contact"
+    },
+    "education-city": {
+      "src": "/night/cutscenes/education-city.mp4",
+      "duration": 5.100,
+      "bytes": 2366809,
+      "sha": "7d39f293",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a071-0c84-79d2-a774-69ea0591fd9d",
+      "reverseOf": "city-education"
+    },
+    "education-contact": {
+      "src": "/night/cutscenes/education-contact.mp4",
+      "duration": 5.100,
+      "bytes": 2085574,
+      "sha": "62bd59e4",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa5c-7cc0-8271-8425886cc26b",
+      "reverseOf": null
+    },
+    "education-projects": {
+      "src": "/night/cutscenes/education-projects.mp4",
+      "duration": 5.100,
+      "bytes": 2473305,
+      "sha": "dfe13bbb",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa67-7b32-91f5-ffb05452d86d",
+      "reverseOf": null
+    },
+    "education-work": {
+      "src": "/night/cutscenes/education-work.mp4",
+      "duration": 5.100,
+      "bytes": 2118172,
+      "sha": "3bd75eb3",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d36-7423-a39d-5595e9d76a31",
+      "reverseOf": null
+    },
+    "projects-city": {
+      "src": "/night/cutscenes/projects-city.mp4",
+      "duration": 5.100,
+      "bytes": 2092164,
+      "sha": "a87d6fbd",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa5c-7860-9a60-dfcaaea699ca",
+      "reverseOf": "city-projects"
+    },
+    "projects-contact": {
+      "src": "/night/cutscenes/projects-contact.mp4",
+      "duration": 5.100,
+      "bytes": 2439418,
+      "sha": "4bf776fe",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a071-0888-73e0-870e-a63ab07f1617",
+      "reverseOf": null
+    },
+    "projects-education": {
+      "src": "/night/cutscenes/projects-education.mp4",
+      "duration": 5.100,
+      "bytes": 2478212,
+      "sha": "b41c3caf",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a075-fa67-7b32-91f5-ffb05452d86d",
+      "reverseOf": "education-projects"
+    },
+    "projects-work": {
+      "src": "/night/cutscenes/projects-work.mp4",
+      "duration": 5.100,
+      "bytes": 2426021,
+      "sha": "93dd561c",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d3a-7503-a877-57effb8025eb",
+      "reverseOf": "work-projects"
+    },
+    "work-city": {
+      "src": "/night/cutscenes/work-city.mp4",
+      "duration": 5.100,
+      "bytes": 2020118,
+      "sha": "2471f43f",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d48-73f0-84a1-f6abd765b28a",
+      "reverseOf": "city-work"
+    },
+    "work-contact": {
+      "src": "/night/cutscenes/work-contact.mp4",
+      "duration": 5.100,
+      "bytes": 2164537,
+      "sha": "72474cd5",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d36-7423-a39d-55808c4d5873",
+      "reverseOf": null
+    },
+    "work-education": {
+      "src": "/night/cutscenes/work-education.mp4",
+      "duration": 5.100,
+      "bytes": 2192706,
+      "sha": "aceb66bb",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d36-7423-a39d-5595e9d76a31",
+      "reverseOf": "education-work"
+    },
+    "work-projects": {
+      "src": "/night/cutscenes/work-projects.mp4",
+      "duration": 5.100,
+      "bytes": 2441169,
+      "sha": "6c47466c",
+      "model": "fal-ai/kling-video/o1/image-to-video",
+      "request": "01a0a089-2d3a-7503-a877-57effb8025eb",
+      "reverseOf": null
+    }
+  }
+}

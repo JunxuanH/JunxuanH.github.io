@@ -1,0 +1,15 @@
+{
+  "name": "agent",
+  "generate_type": "LowPoly",
+  "height_meters": 1.80,
+  "concept": "concept-2.png",
+  "fal_requests": "3d=01a0a069-da52-79e0-afe5-aec939070a71 rig=01a0a06d-df75-7b70-82f3-ede9a723fa67",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T15:01:14Z"
+}

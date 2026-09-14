@@ -3,9 +3,18 @@
 # walk/run (+ one idle clip) → optional extra Meshy clips → slimmed GLBs under public/night/characters/<name>/.
 #
 # Usage: scripts/night-character.sh <name> <concept.png> [--type LowPoly|Normal] [--rig] [--idle <meshyId>]
-#                                   [--clips 0,30,308] [--height 1.75] [--skip-3d] [--no-slim]
+#                                   [--clips talk=308,wave=28] [--clips-replace-rig] [--height 1.75]
+#                                   [--skip-3d] [--model-url <url|file.glb>] [--no-slim]
 #   e.g. scripts/night-character.sh netrunner design/night/characters/netrunner/concept-1.png --rig --idle 0
 #        scripts/night-character.sh drone-police design/night/characters/drone-police/concept-1.png --type Normal
+#        scripts/night-character.sh vendor x.png --skip-3d --model-url design/night/characters/vendor/model-raw.glb \
+#            --clips idle=12,talk=313,wave=28 --clips-replace-rig      # extra clips on an existing character
+#
+# --clips: Meshy animation-library ids (docs.meshy.ai/en/api/animation-library), optionally labelled
+#   `label=id`; each clip ships as public/…/<label>.glb (armature-only, ~40–70 KB) so the runtime clip key
+#   is the label (stalls ask for talk / wave / idle). The multi-animation endpoint re-rigs the mesh and
+#   returns a NEW rig with its own walk/run: --clips-replace-rig ships that rig (rigged/walk/run) instead
+#   of the one from --rig, so all clips share one skeleton (audit again afterwards: rigs.ts numbers move).
 #
 # Prices (verified on fal model pages 2026-09-13): Hunyuan3D v3 LowPoly $0.45 / Normal $0.375, +$0.15 PBR;
 # Meshy rigging $0.20 (+$0.12 with one animation clip); Meshy multi-animation $0.20 + $0.12 per clip.
@@ -15,7 +24,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 NAME="${1:?name}"; CONCEPT="${2:?concept.png}"; shift 2
-TYPE=LowPoly; RIG=0; IDLE=0; CLIPS=""; HEIGHT=1.75; SKIP3D=0; SLIM=1; MODEL_OVERRIDE=""
+TYPE=LowPoly; RIG=0; IDLE=0; CLIPS=""; CLIPS_REPLACE=0; HEIGHT=1.75; SKIP3D=0; SLIM=1; MODEL_OVERRIDE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --type) TYPE="$2"; shift 2 ;;
@@ -23,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --rig) RIG=1; shift ;;
     --idle) IDLE="$2"; shift 2 ;;
     --clips) CLIPS="$2"; shift 2 ;;
+    --clips-replace-rig) CLIPS_REPLACE=1; shift ;;
     --height) HEIGHT="$2"; shift 2 ;;
     --skip-3d) SKIP3D=1; shift ;;
     --no-slim) SLIM=0; shift ;;
@@ -87,10 +97,16 @@ EOF
 fi
 
 # ---------- 3. extra Meshy clips (multi-animation: $0.20 + $0.12 per clip) ----------
+CLIP_LABELS=()
 if [[ -n "$CLIPS" ]]; then
-  N="$(tr ',' '\n' <<<"$CLIPS" | wc -l | tr -d ' ')"
+  # "label=id,label=id" or bare ids (label = clip-<id>)
+  CLIP_IDS=()
+  for spec in $(tr ',' ' ' <<<"$CLIPS"); do
+    if [[ "$spec" == *=* ]]; then CLIP_LABELS+=("${spec%%=*}"); CLIP_IDS+=("${spec#*=}"); else CLIP_LABELS+=("clip-$spec"); CLIP_IDS+=("$spec"); fi
+  done
+  N="${#CLIP_IDS[@]}"
   PRICE="$(awk -v n="$N" 'BEGIN {printf "%.2f", 0.20 + 0.12 * n}')"
-  python3 - "$DES/clips-input.json" "$MODEL_URL" "$HEIGHT" "$CLIPS" <<'EOF'
+  python3 - "$DES/clips-input.json" "$MODEL_URL" "$HEIGHT" "$(IFS=,; echo "${CLIP_IDS[*]}")" <<'EOF'
 import json, sys, base64
 out, url, height, clips = sys.argv[1:5]
 if url.startswith('file:'):
@@ -99,12 +115,21 @@ json.dump({'model_url': url, 'height_meters': float(height), 'animation_action_i
 EOF
   OUTC="$(scripts/fal-run.sh fal-ai/meshy/rigging/multi-animation "$PRICE" "night/char/$NAME/clips" "$DES/clips-input.json" "$DES/clips-rigged-raw.glb" '.rigged_character_glb.url')"
   echo "$OUTC"; ids+=("clips=$(grep -o 'queued: [^ ]*' <<<"$OUTC" | cut -d' ' -f2)")
-  i=0
-  for id in $(tr ',' ' ' <<<"$CLIPS"); do
-    u="$(jq -r ".animations[$i].animation_glb.url // empty" "$DES/clips-rigged-raw.response.json")"
-    [[ -n "$u" ]] && curl -sSL -o "$DES/clip-$id-raw.glb" "$u" && echo "  clip $id ($(du -h "$DES/clip-$id-raw.glb" | cut -f1))"
-    i=$((i + 1))
+  RC="$DES/clips-rigged-raw.response.json"
+  for ((i = 0; i < N; i++)); do
+    u="$(jq -r ".animations[$i].animation_glb.url // empty" "$RC")"
+    [[ -n "$u" ]] && curl -sSL -o "$DES/${CLIP_LABELS[$i]}-raw.glb" "$u" && echo "  clip ${CLIP_LABELS[$i]} (id ${CLIP_IDS[$i]}, $(du -h "$DES/${CLIP_LABELS[$i]}-raw.glb" | cut -f1))"
   done
+  if [[ $CLIPS_REPLACE == 1 ]]; then
+    # The clips live on the multi-animation rig: ship that rig and its walk/run so every clip shares one skeleton.
+    [[ -f "$DES/rigged-raw.glb" ]] && mv "$DES/rigged-raw.glb" "$DES/rigged-raw.prev.glb"
+    cp "$DES/clips-rigged-raw.glb" "$DES/rigged-raw.glb"
+    dlc() { local u; u="$(jq -r "$1 // empty" "$RC")"; [[ -n "$u" ]] && curl -sSL -o "$2" "$u" && echo "  $2 ($(du -h "$2" | cut -f1))" || echo "  (no $1)"; }
+    dlc '.basic_animations.walking_armature_glb.url' "$DES/walk-armature-raw.glb"
+    dlc '.basic_animations.running_armature_glb.url' "$DES/run-armature-raw.glb"
+    # An idle from the earlier --rig call would be on the previous skeleton: keep it only when re-requested here.
+    if ! printf '%s\n' "${CLIP_LABELS[@]}" | grep -qx idle; then [[ -f "$DES/idle-raw.glb" ]] && mv "$DES/idle-raw.glb" "$DES/idle-raw.prev.glb"; fi
+  fi
 fi
 
 # ---------- 4. slim → public ----------
@@ -127,9 +152,12 @@ if [[ $SLIM == 1 ]]; then
   [[ -f "$DES/walk-armature-raw.glb" ]] && slim "$DES/walk-armature-raw.glb" "$PUB/walk.glb" && files+=(walk.glb)
   [[ -f "$DES/run-armature-raw.glb" ]] && slim "$DES/run-armature-raw.glb" "$PUB/run.glb" && files+=(run.glb)
   [[ -f "$DES/idle-raw.glb" ]] && slim "$DES/idle-raw.glb" "$PUB/idle.glb" && files+=(idle.glb)
-  for f in "$DES"/clip-*-raw.glb; do
-    [[ -f "$f" ]] || continue
-    b="$(basename "$f" -raw.glb)"; slim "$f" "$PUB/$b.glb" && files+=("$b.glb")
+  # Extra clips (full-model GLBs from multi-animation): strip the mesh first → armature-only, then slim.
+  for label in "${CLIP_LABELS[@]:-}"; do
+    [[ -z "$label" || "$label" == idle ]] && continue # (bash 3.2 + set -u: an empty array expands to "") · idle shipped above
+    f="$DES/$label-raw.glb"; [[ -f "$f" ]] || continue
+    t="$(mktemp -d)"; node scripts/night-strip-mesh.mjs "$f" "$t/arm.glb" >/dev/null 2>&1 || cp "$f" "$t/arm.glb"
+    slim "$t/arm.glb" "$PUB/$label.glb" && files+=("$label.glb"); rm -rf "$t"
   done
 fi
 
