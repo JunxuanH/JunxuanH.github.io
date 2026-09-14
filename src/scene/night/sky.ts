@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import {
   positionLocal, normalize, mix, color, smoothstep, step, hash, floor, float, uv, texture, vec3,
-  fog, densityFogFactor, positionWorld,
+  fog, densityFogFactor, positionWorld, equirectUV, vec2,
 } from './tsl';
 import { PAL, loadSRGB } from './palette';
 
@@ -10,8 +10,26 @@ import { PAL, loadSRGB } from './palette';
  * lit from below by the city (the Aero cumulus cutouts, re-tinted), and a small moon.
  * Everything is `fog: false`; the scene fog handles the haze between towers.
  */
-export function createSky(tier: 'high' | 'med' | 'low') {
+export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; rotation?: number; gain?: number }) {
   const group = new THREE.Group();
+  if (pano) {
+    // Preview (`?pano=`): a 360° equirectangular panorama (HunyuanWorld) on the dome replaces the gradient, stars, moon
+    // and clouds. u = 0.5 faces +x, so the panorama's river runs east–west through the bay and its banks rise behind
+    // the city (−z) and across the water (+z). `rotation` (deg) turns it.
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1500, 64, 32), new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide }));
+    const mat = dome.material as THREE.MeshBasicNodeMaterial;
+    mat.fog = false;
+    mat.depthWrite = false;
+    dome.rotation.y = THREE.MathUtils.degToRad(pano.rotation ?? 0);
+    loadSRGB(pano.url).then((tex) => {
+      tex.wrapS = THREE.RepeatWrapping;
+      mat.colorNode = texture(tex, equirectUV(normalize(positionLocal))).rgb.mul(pano.gain ?? 1.15);
+      mat.needsUpdate = true;
+    }).catch((e) => console.warn('[night] pano', e));
+    mat.colorNode = color(0x060a14);
+    group.add(dome);
+    return group;
+  }
 
   const dome = new THREE.Mesh(new THREE.SphereGeometry(1500, 48, 24), new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide }));
   const mat = dome.material as THREE.MeshBasicNodeMaterial;
@@ -66,8 +84,9 @@ export function createSky(tier: 'high' | 'med' | 'low') {
 }
 
 /** Height-tinted haze: magenta/orange near the streets, navy up high. */
-export function createHaze(density = 0.0032) {
-  const c = mix(color(PAL.navy), color(PAL.plum), smoothstep(40.0, 0.0, positionWorld.y));
+export function createHaze(density = 0.0032, cool = false) {
+  // `cool` (panorama preview): navy up high, teal at street level, matching the panorama's horizon haze.
+  const c = mix(color(PAL.navy), color(cool ? 0x10303a : PAL.plum), smoothstep(40.0, 0.0, positionWorld.y));
   return fog(c, densityFogFactor(density));
 }
 

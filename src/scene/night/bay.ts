@@ -2,9 +2,9 @@ import * as THREE from 'three/webgpu';
 import {
   add, sub, div, vec2, vec3, float, time, texture, normalize, cameraPosition, positionWorld, positionLocal,
   transformNormalToView, sin, cos, max, dot, pow, length, mix, reflector, color, uv, step, fract, floor, hash,
-  smoothstep, abs, reflect, glowMaterial,
+  smoothstep, abs, reflect, glowMaterial, uniform,
 } from './tsl';
-import { PAL, loader } from './palette';
+import { PAL, loader, params } from './palette';
 import { groundMaterial } from './streets';
 
 /**
@@ -172,13 +172,20 @@ export function createBridge() {
 }
 
 /** Big LED billboard: canvas text → LED-dot mask, chromatic offset, scanlines, rare glitch band. */
+export interface BillboardFace {
+  image: string;
+  /** Optional H.264 loop of the same panel: played as a VideoTexture in the same material (skipped under `?novideo`, i.e. lite tiers). */
+  video?: string;
+}
 /**
  * LED billboard: a 2048×1024 canvas — either a name + subtitle in the site's type (the blimp's banner) or a full-bleed
- * image (`{ image }`, cover-fit; the tower's ad) — behind one LED-dot / chromatic / scanline / glitch material, so both
- * faces share the program. The image loads through the default manager (lite URL rewrite, boot progress) over a dark
- * placeholder.
+ * image (`{ image, video? }`, cover-fit; the tower's ad) — behind one LED-dot / chromatic / scanline / glitch material,
+ * so both faces share the program. The image loads through the default manager (lite URL rewrite, boot progress) over
+ * a dark placeholder and stays as the poster until the loop's first frame. Procedural motion for every tier (the
+ * `anim` uniform, 0 for the text face): a luminance-keyed glow pulse on the bright pixels and a soft light sweep
+ * crossing the panel every ~6 s, on top of the rare glitch band.
  */
-export function createBillboard(face: string | { image: string }, subtitle = '', w = 36, h = 18) {
+export function createBillboard(face: string | BillboardFace, subtitle = '', w = 36, h = 18) {
   const c = document.createElement('canvas');
   c.width = 2048; c.height = 1024;
   const g = c.getContext('2d')!;
@@ -186,6 +193,8 @@ export function createBillboard(face: string | { image: string }, subtitle = '',
   g.fillRect(0, 0, c.width, c.height);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  const group = new THREE.Group();
+  group.userData.face = typeof face === 'string' ? 'text' : 'image';
   if (typeof face === 'string') {
     g.textAlign = 'center';
     g.textBaseline = 'middle';
@@ -214,18 +223,43 @@ export function createBillboard(face: string | { image: string }, subtitle = '',
   const mat = new THREE.MeshBasicNodeMaterial();
   const glitch = step(0.985, hash(floor(time.mul(7)))).mul(hash(floor(uv().y.mul(18)).add(floor(time.mul(7)))).sub(0.5)).mul(0.05);
   const u = uv().add(vec2(glitch, 0));
-  const r = texture(tex, u.add(vec2(0.0022, 0))).r;
-  const gg = texture(tex, u).g;
-  const bb = texture(tex, u.sub(vec2(0.0022, 0))).b;
+  const taps = [texture(tex, u.add(vec2(0.0022, 0))), texture(tex, u), texture(tex, u.sub(vec2(0.0022, 0)))];
+  const rgb = vec3(taps[0].r, taps[1].g, taps[2].b);
+  // Procedural motion (uniform gain, so the still text face renders through the same program).
+  const anim = uniform(typeof face === 'string' ? 0 : 1);
+  const lum = dot(rgb, vec3(0.3, 0.59, 0.11));
+  const pulse = sin(time.mul(1.3)).mul(0.5).add(0.5);
+  const glow = smoothstep(0.35, 0.9, lum).mul(pulse).mul(0.28);
+  const sweepX = fract(time.div(6)).mul(1.7).sub(0.35); // a diagonal bar crossing the panel every 6 s
+  const sweep = smoothstep(0.09, 0, abs(uv().x.add(uv().y.mul(0.25)).sub(sweepX))).mul(0.07);
+  const lit = rgb.mul(float(1).add(glow.mul(anim))).add(vec3(0.55, 0.9, 1.0).mul(sweep.mul(anim)));
   const dots = float(1).sub(smoothstep(0.34, 0.5, length(fract(uv().mul(vec2(256, 128))).sub(0.5)))).mul(0.55).add(0.45);
   const scan = step(0.5, fract(uv().y.mul(128).add(time.mul(4)))).mul(0.1).add(0.9);
-  mat.colorNode = vec3(r, gg, bb).mul(dots).mul(scan).mul(3.0);
+  mat.colorNode = lit.mul(dots).mul(scan).mul(3.0);
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
   // Glowing frame
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.8, h + 0.8, 0.3), glowMaterial(PAL.cyan, 2.0));
   frame.position.z = -0.2;
-  const group = new THREE.Group();
   group.add(frame, mesh);
+
+  // The loop: a detached muted video swapped into the same texture taps once its first frame is decoded (the canvas
+  // image is the poster until then). Lite tiers set `novideo` (main.ts), so phones keep the still + the procedural motion.
+  if (typeof face !== 'string' && face.video && !params.has('novideo')) {
+    const v = document.createElement('video');
+    Object.assign(v, { src: face.video, muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto' });
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    group.userData.video = v;
+    const swap = () => {
+      const vt = new THREE.VideoTexture(v);
+      vt.colorSpace = THREE.SRGBColorSpace;
+      for (const t of taps) t.value = vt;
+      group.userData.face = 'video';
+    };
+    const rvfc = (v as HTMLVideoElement & { requestVideoFrameCallback?: (cb: () => void) => number }).requestVideoFrameCallback;
+    if (rvfc) rvfc.call(v, swap); else v.addEventListener('loadeddata', swap, { once: true });
+    v.addEventListener('error', () => console.warn('[night] billboard loop failed', face.video), { once: true });
+    v.play().catch(() => { /* autoplay refused: the poster stays */ });
+  }
   return group;
 }
 

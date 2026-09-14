@@ -69,7 +69,8 @@ export async function start(root: HTMLElement) {
   }
 
   const scene = new THREE.Scene();
-  scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032);
+  const panoUrl = params.get('pano') ? (params.get('pano') === '1' ? '/night/pano/pano-1.jpg' : params.get('pano')!) : null; // preview flag
+  scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032, !!panoUrl);
   const camera = new THREE.PerspectiveCamera(narrow ? 62 : 50, innerWidth / innerHeight, 0.5, 2600);
   scene.add(camera);
 
@@ -88,7 +89,7 @@ export async function start(root: HTMLElement) {
   // ---------- world
   scene.environment = createEnvironment(renderer); // wet-surface reflections for puddles, glass, metal
   scene.environmentIntensity = 0.55;
-  scene.add(createSky(tier));
+  scene.add(createSky(tier, panoUrl ? { url: panoUrl, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15 } : undefined));
   // Phones / WebGL2 get a lighter city: half-res textures + 512 px signature towers from /night-lite,
   // fewer rigs, no far crowd, no ad videos. The URL modifier covers every three loader (default manager).
   const lite = tier === 'low' || narrow;
@@ -108,7 +109,7 @@ export async function start(root: HTMLElement) {
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
-  pending.push(createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e)));
+  if (!panoUrl) pending.push(createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
@@ -155,7 +156,7 @@ export async function start(root: HTMLElement) {
   if (water) scene.add(water);
   scene.add(createBridge());
   scene.add(createQuay(QUAY_Z, ground));
-  const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp' }); // the tower's ad (design/night/prompts/ad-shellworks.txt)
+  const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
   billboard.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5);
   scene.add(billboard);
 
