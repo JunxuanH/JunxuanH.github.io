@@ -46,6 +46,8 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
   right.position.set(W0 * 0.86, Y0, -600);
   group.add(left, right, centre);
 
+  const ring: THREE.Mesh[] = []; // the side plates: main.ts hides them at the harbor (they sat on the water there)
+  group.userData.ring = ring;
   if (opts.ring) {
     const D = 900, k = D / D0, H = H0 * k;
     // [plate, x, z, yaw, bottom fade]: the fade band sits under each plate's own skyline (east keeps its maglev line).
@@ -62,6 +64,7 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
       m.position.set(x, Y0 * k, z);
       m.rotation.y = yaw;
       group.add(m);
+      ring.push(m);
     });
   }
   group.renderOrder = -10;

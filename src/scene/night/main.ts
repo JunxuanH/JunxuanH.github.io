@@ -119,7 +119,10 @@ export async function start(root: HTMLElement) {
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
-  if (!panoUrl) pending.push(createBackdrop({ ring: !params.has('noring') }).then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e))); // skyline plates on every side; ?noring = the north plate only
+  // Skyline plates on every side (?noring = the north plate only). The side plates stay hidden at the harbor, where they
+  // read as a wallpaper pasted onto the water; the rest of the city keeps them.
+  let ringPlates: THREE.Object3D[] = [];
+  if (!panoUrl) pending.push(createBackdrop({ ring: !params.has('noring') }).then((m) => { ringPlates = m.userData.ring ?? []; scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
@@ -567,6 +570,7 @@ export async function start(root: HTMLElement) {
     timed('life', () => { for (const l of life) l.update(dt, camera); });
     dialogue.glance(); // after the mixers: the resident being talked to looks at the player
     timed('districts', () => districts.update(t, p, walkSec));
+    if (ringPlates.length) { const show = nav.section !== 'contact'; if (ringPlates[0].visible !== show) for (const r of ringPlates) r.visible = show; }
     timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));
