@@ -1,8 +1,7 @@
 /**
  * Small helpers shared by the carriers' dock-mode interactions (`Carrier.interact`, see index.ts): the key → action
- * mapping, the `.is-sel` cursor, the one-line hint that hangs under the docked slab, and the glitch veil (a child
- * whose clip-path animates, so the slab itself never gets a transform / opacity / filter — CSS3DRenderer owns those).
- * Styles: styles/carriers/interact.css.
+ * mapping, the `.is-sel` cursor, the key-hint line (the session overlay's footer), the tab strip, and the glitch veil
+ * (a child whose clip-path animates). Styles: styles/carriers/interact.css + terminal-ui.css.
  */
 import type { Carrier } from './index';
 
@@ -22,15 +21,40 @@ export function setSel(rows: HTMLElement[], i: number) {
   rows.forEach((r, k) => r.classList.toggle('is-sel', k === i));
 }
 
-/** One-line control hint under the slab; `html` may carry <kbd> tags (static strings only). */
+/** The overlay footer's hint slot for a slab living in the session, if any. */
+const footHint = (el: HTMLElement) => el.closest('.sheet')?.querySelector<HTMLElement>('.term-hint') ?? null;
+
+/** One-line control hint (the session footer on desktop; hidden on phones, where the chip bar is the hint). `html` may carry <kbd> tags (static strings only). */
 export function hint(el: HTMLElement, html: string) {
-  let h = el.querySelector<HTMLElement>(':scope > .dock-hint');
-  if (!h) { h = document.createElement('div'); h.className = 'dock-hint'; h.setAttribute('aria-hidden', 'true'); el.appendChild(h); }
+  let h = footHint(el);
+  if (!h) {
+    h = el.querySelector<HTMLElement>(':scope > .dock-hint');
+    if (!h) { h = document.createElement('div'); h.className = 'dock-hint'; h.setAttribute('aria-hidden', 'true'); el.appendChild(h); }
+  }
   h.innerHTML = html;
   return h;
 }
 export function clearHint(el: HTMLElement) {
+  const h = footHint(el);
+  if (h) h.innerHTML = '';
   el.querySelector(':scope > .dock-hint')?.remove();
+}
+
+/** Tab strip (`.term-tabs`) as the slab's first child: poster pages, LED-wall channels. Returns the items. */
+export function tabs(el: HTMLElement, labels: string[], cur: number) {
+  let strip = el.querySelector<HTMLElement>(':scope > .term-tabs');
+  if (!strip) {
+    strip = document.createElement('ol');
+    strip.className = 'term-tabs'; strip.setAttribute('aria-hidden', 'true');
+    el.prepend(strip);
+  }
+  if (strip.children.length !== labels.length) { strip.innerHTML = ''; for (const l of labels) { const li = document.createElement('li'); li.textContent = l; strip.appendChild(li); } }
+  const items = [...strip.children] as HTMLElement[];
+  items.forEach((li, k) => li.classList.toggle('is-cur', k === cur));
+  return items;
+}
+export function clearTabs(el: HTMLElement) {
+  el.querySelector(':scope > .term-tabs')?.remove();
 }
 
 /** Re-run a CSS animation bound to `cls` on `el` (remove → reflow → add). */
@@ -41,8 +65,8 @@ export function retrigger(el: HTMLElement, cls: string) {
 }
 
 /**
- * Glitch: the slab gets `is-glitch` and a `.dock-veil` child whose clip-path bands animate (interact.css picks the
- * look per carrier); both go away when the animation ends.
+ * Glitch: the slab gets `is-glitch` and a `.dock-veil` child whose clip-path bands animate (interact.css); both go away
+ * when the animation ends.
  */
 export function glitch(el: HTMLElement) {
   let veil = el.querySelector<HTMLElement>(':scope > .dock-veil');

@@ -9,8 +9,13 @@
  * (content.ts announces them with the `nh:dock` / `nh:undock` events). The sheet's and the nav's measured
  * edges are published as `--sheet-h` / `--nav-b` on the root so the CSS can stack chips, toast and hint
  * around them.
+ *
+ * Transition cutscenes (nav.ts beats → `cutscene`): letterbox bars slide in for the move and the arrival hold,
+ * a "Skip ▸" chip (bottom right, a second in; a button on touch) appears while the move can be cut short, and
+ * under reduced motion a black overlay fades through instead of any camera motion. `is-cutscene` on the root
+ * and `data-cutscene` on <html> let the CSS dim the nav (it floats over the top bar and stays clickable).
  */
-import type { Mode } from './nav';
+import type { Mode, CutsceneState } from './nav';
 import type { DockActions } from './carriers/dock';
 
 const HINT_KEY = 'nh-hint-seen';
@@ -35,6 +40,7 @@ export function createHud() {
   const toastEl = q('.hud-toast'), toastName = q('.hud-toast-name'), toastSub = q('.hud-toast-sub');
   const eBtn = q<HTMLButtonElement>('.hud-btn-e'), eLabel = q('.hud-elabel');
   const chips = q('.hud-chips');
+  const bars = q('.hud-bars'), skipBtn = q<HTMLButtonElement>('.hud-skip'), fadeEl = q('.hud-fade');
   const sheet = document.querySelector<HTMLElement>('.sheet');
   const navEl = document.querySelector<HTMLElement>('.nav');
   const coarse = matchMedia('(pointer: coarse)').matches;
@@ -97,6 +103,19 @@ export function createHud() {
 
   const onBack = (cb: () => void) => backBtn?.addEventListener('click', cb);
 
+  // ---- transition cutscene chrome (nav.ts calls this on every beat change, null when the cutscene ends)
+  function cutscene(state: CutsceneState | null) {
+    const beat = state?.beat ?? null;
+    const on = beat === 'establish' || beat === 'cover' || beat === 'depart' || beat === 'travel' || beat === 'glide' || beat === 'hold' || beat === 'fade';
+    el?.classList.toggle('is-cutscene', on);
+    if (on) document.documentElement.setAttribute('data-cutscene', beat!); else document.documentElement.removeAttribute('data-cutscene');
+    bars?.classList.toggle('is-on', on && beat !== 'fade');
+    // The skip chip: while the move can still be cut short (the CSS delays its fade-in by a second); never under reduced motion.
+    skipBtn?.classList.toggle('is-on', !reducedMotion && (beat === 'establish' || beat === 'cover' || beat === 'depart' || beat === 'travel'));
+    fadeEl?.classList.toggle('is-on', beat === 'fade');
+  }
+  const onSkip = (cb: () => void) => skipBtn?.addEventListener('pointerdown', (e) => { e.preventDefault(); cb(); });
+
   // ---- phone layout: the sheet's height (chips / Back sit on its top edge) and the nav's bottom edge (toast / hint stack under it)
   if (el && 'ResizeObserver' in window) {
     const measure = () => {
@@ -153,7 +172,7 @@ export function createHud() {
   return {
     el,
     get mode() { return mode; },
-    setMode, prompt: showPrompt, showHintOnce, hideHint, toast, onBack, setActions,
+    setMode, prompt: showPrompt, showHintOnce, hideHint, toast, onBack, setActions, cutscene, onSkip,
     /** Touch control elements for input.ts. */
     touch: { zone: q('.stick-zone'), stick: q('.stick'), knob: q('.stick-knob'), buttons: q('.hud-btns') },
   };

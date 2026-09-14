@@ -10,9 +10,9 @@ import { dockPose as dwellPose } from '../nav';
 import type { Carrier, CarrierCtx } from './index';
 
 /*
- * Blimp — the AMD data-center slab as a banner on an airship cruising a closed loop over the Downtown avenue at
+ * Blimp — the AMD data-center board as a banner on an airship cruising a closed loop over the Downtown avenue at
  * y ≈ 40. The camera flies in formation on its port side (journey FOLLOW adds `displacement()` to pos + look), so
- * the DOM slab hangs on the local +x panel and a canvas LED billboard on −x keeps the far side lit. `t = 0` is
+ * the board hangs on the local +x panel and a canvas LED billboard on −x keeps the far side lit. `t = 0` is
  * HOME; reduced motion parks the blimp there.
  */
 
@@ -86,7 +86,7 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   nav.frustumCulled = strobe.frustumCulled = false;
   root.add(nav, strobe);
 
-  // Banner frames on both flanks (one merged draw). +x carries the DOM slab; −x the canvas billboard.
+  // Banner frames on both flanks (one merged draw). +x carries the terminal board; −x the canvas billboard.
   const frames = new THREE.Mesh(mergeGeometries([
     new THREE.BoxGeometry(0.2, 10.7, 16.6).translate(4.25, 0, 0),
     new THREE.BoxGeometry(0.2, 10.7, 16.6).translate(-4.25, 0, 0),
@@ -98,7 +98,7 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   billboard.rotation.y = -Math.PI / 2;
   root.add(billboard);
 
-  // Slab mount flush with the +x frame face. rotation.y = π/2 maps the mount's local +Z to (sin π/2, 0, cos π/2) =
+  // Board mount flush with the +x frame face. rotation.y = π/2 maps the mount's local +Z to (sin π/2, 0, cos π/2) =
   // root-local +x — the camera side (see heading note).
   const mount = new THREE.Object3D();
   mount.position.set(4.35, 0, 0);
@@ -112,7 +112,7 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   // lookAt(ahead, pos) points the root's local +Z along the direction of travel (drones.ts idiom; the hull nose is
   // at +z). Its +X axis is up × Z. At HOME the next waypoint is (0, 41, −178), i.e. travel ≈ −z, so
   // +X = (0,1,0) × (0,0,−1) = (−1, 0, 0): root-local +x faces world −x, toward the formation camera at
-  // (−15, 39, −146), which is 12.5 u to −x of HOME. Hence the DOM slab hangs on the +x panel.
+  // (−15, 39, −146), which is 12.5 u to −x of HOME. Hence the board hangs on the +x panel.
   const curve = new THREE.CatmullRomCurve3(LOOP.map((p) => new THREE.Vector3(...p)), true, 'centripetal');
   const length = curve.getLength();
   const pos = new THREE.Vector3(), ahead = new THREE.Vector3(), disp = new THREE.Vector3();
@@ -131,7 +131,7 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
 
   // ---- dock camera (Carrier.dockPose): the dwell pose (nav.DOCK_P) is a formation slot beside the banner at HOME.
   // Expressed once in the HOME frame and re-applied every frame with the current curve point + heading, it stays on the
-  // port (+x, DOM slab) side as the blimp turns; a translation-only offset would end up reading the banner through the
+  // port (+x, board) side as the blimp turns; a translation-only offset would end up reading the banner through the
   // hull on the far leg of the loop. Uses `pos` (pre-bob) so the camera stays level while the hull bobs.
   // The dwell sits close enough that the 16 u banner overflows a 16:9 frame (fine for a fly-by, not for reading), so
   // the dock slot backs off along the line of sight by DOCK_BACKOFF: the banner then spans ≈ 70 % of the width.
@@ -167,12 +167,13 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
     rotors.instanceMatrix.needsUpdate = true;
   };
 
-  // ---- dock: the camera already rides in formation (nav dockOffset); E toggles the banner's light sweep between the
-  // slow cruise and a fast ticker (interact.css reads --sweep as the animation duration).
-  let fast = false, slab: HTMLElement | null = null, hintEl: HTMLElement | null = null;
+  // ---- dock: the camera already rides in formation (nav dockOffset); the session shows the job with a ticker line
+  // (the bullets as a marquee, `.term-ticker`) and E toggles it between the slow cruise and a fast crawl
+  // (interact.css reads --sweep as the marquee duration).
+  let fast = false, slab: HTMLElement | null = null, ticker: HTMLElement | null = null;
   const setTicker = (el: HTMLElement) => {
-    el.style.setProperty('--sweep', fast ? '1.1s' : '6s');
-    if (hintEl) hintEl.innerHTML = `<kbd>E</kbd> ticker · <b>${fast ? 'FAST' : 'SLOW'}</b>`;
+    ticker?.style.setProperty('--sweep', fast ? '5s' : '18s');
+    hint(el, `<kbd>E</kbd> ticker · <b>${fast ? 'FAST' : 'SLOW'}</b> · <kbd>Esc</kbd> back`);
   };
   const actions: DockActions = { confirm: () => { if (!slab) return; fast = !fast; setTicker(slab); sfx.select(); } };
 
@@ -181,15 +182,27 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
     mount,
     width: 16,
     px: 760,
+    aspect: 10.1 / 16, // fills the banner frame exactly
     style: 'banner',
+    node: 'AIRSHIP UPLINK',
     range: [0.22, 0.78],
     update: ctx.reducedMotion ? undefined : update,
     displacement: (out) => (ctx.reducedMotion ? out.set(0, 0, 0) : out.copy(disp)),
     dockPose: dockPoseFn,
     setSpeedScale: (s) => { speedScale = s; },
     interact: {
-      onEnter(el) { slab = el; fast = false; hintEl = hint(el, ''); setTicker(el); },
-      onExit(el) { el.style.removeProperty('--sweep'); clearHint(el); hintEl = null; slab = null; fast = false; },
+      onEnter(el) {
+        slab = el; fast = false;
+        const items = [...el.querySelectorAll('.bullets li')].map((li) => (li.textContent ?? '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+        ticker = document.createElement('p');
+        ticker.className = 'term-ticker'; ticker.setAttribute('aria-hidden', 'true');
+        const span = document.createElement('span');
+        span.textContent = `${items.join('   ···   ')}   ···   `;
+        ticker.appendChild(span);
+        el.appendChild(ticker);
+        setTicker(el);
+      },
+      onExit(el) { ticker?.remove(); ticker = null; clearHint(el); slab = null; fast = false; },
       onKey: (e) => keyToAction(e, actions),
       actions,
     },

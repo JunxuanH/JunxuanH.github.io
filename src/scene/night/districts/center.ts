@@ -66,7 +66,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const pts: THREE.Vector3[] = [];
   ANCHORS.workSigns.forEach((p, i) => {
     const job = ctx.content.jobs[i] ?? { label: `JOB ${i + 1}`, rows: 3 };
-    const sign = createFlameSign(job.label, job.rows, 40 + i * 7, tints[i], 14, 8.0, T.primary);
+    const sign = createFlameSign(job.label, job.rows, 40 + i * 7, tints[i], 14, 8.0, T.secondary); // cyan rim like the avenue conduits (the near-white primary washed out under bloom)
     sign.position.copy(p);
     sign.rotation.y = p.x < 0 ? Math.PI / 2 - 0.35 : -Math.PI / 2 + 0.35;
     group.add(sign);

@@ -170,7 +170,7 @@ export function createInteractables(opts: InteractablesOptions) {
   for (const child of group.children) if (child.position.x < 100) noReflect(child);
   opts.scene.add(group);
 
-  let current: Interactable | null = null;
+  let current: Interactable | null = null, shownLabel: string | null = null;
   const setHot = (it: Interactable, v: number, burst: boolean) => {
     for (const h of it.hot) {
       gsap.killTweensOf(h);
@@ -178,19 +178,23 @@ export function createInteractables(opts: InteractablesOptions) {
       if (burst) { h.value = 1; gsap.to(h, { value: v, duration: 0.45, ease: 'steps(6)' }); } else h.value = v;
     }
   };
-  const setCurrent = (it: Interactable | null) => {
-    if (it === current) return;
-    if (current) setHot(current, 0, false);
-    current = it;
-    if (it) setHot(it, 0.18, true);
-    opts.prompt(it ? it.label : null);
+  const setCurrent = (it: Interactable | null, suppressPrompt = false) => {
+    if (it !== current) {
+      if (current) setHot(current, 0, false);
+      current = it;
+      if (it) setHot(it, 0.18, true);
+    }
+    // The prompt is edge-published; while suppressed (a resident is nearer: dialogue.ts owns the slot) it reads null.
+    const label = it && !suppressPrompt ? it.label : null;
+    if (label !== shownLabel) { shownLabel = label; opts.prompt(label); }
   };
 
   /**
    * Per frame in walk mode: pick the nearest item of the section in range (horizontal distance from the player),
-   * highlight it, and act on `E` or on stepping onto a pad. Pass `section = null` outside walk mode.
+   * highlight it, and act on `E` or on stepping onto a pad. Pass `section = null` outside walk mode. `suppressPrompt`
+   * keeps the highlight but publishes no label (the dialogue's "Talk to …" is showing instead).
    */
-  function update(player: THREE.Vector3 | null, pressed: boolean, section: WalkSection | null) {
+  function update(player: THREE.Vector3 | null, pressed: boolean, section: WalkSection | null, suppressPrompt = false) {
     if (!section || !player) { setCurrent(null); return; }
     let best: Interactable | null = null, bestD = Infinity;
     for (const it of items) {
@@ -200,7 +204,7 @@ export function createInteractables(opts: InteractablesOptions) {
       const d = tmp.length();
       if (d < it.radius && d < bestD) { best = it; bestD = d; }
     }
-    setCurrent(best);
+    setCurrent(best, suppressPrompt);
     if (!best) return;
     if ((best.auto !== undefined && bestD < best.auto) || pressed) best.action();
   }

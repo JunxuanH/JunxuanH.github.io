@@ -7,10 +7,10 @@ import { keyToAction, hint, clearHint, glitch, clearGlitch, type DockActions } f
 import type { Carrier, CarrierCtx } from './index';
 
 /*
- * Holo — the Apple slab as a hologram thrown up from a projector disc on the +x lobby forecourt (center.ts:
+ * Holo — the Apple board as a hologram thrown up from a projector disc on the +x lobby forecourt (center.ts:
  * the lobby at z −196 puts its black-marble slab centred on x 18.6 with its top at y 0.44). An additive open
- * cone fans from the disc to the slab's lower edge at y 2.6 and flickers in TSL; the camera dwells at
- * (9, 3.2, −186) looking at the slab centre.
+ * cone fans from the disc to the board's lower edge at y 2.6 and flickers in TSL; the camera dwells at
+ * (9, 3.2, −186) looking at the board centre.
  */
 
 const DISC = new THREE.Vector3(18.6, 0.44, -196);
@@ -64,15 +64,15 @@ export function create(_ctx: CarrierCtx): Carrier {
   pool.renderOrder = 4;
   group.add(pool);
 
-  // Slab mount. rotation.y = −0.76 maps local +Z to (sin −0.76, 0, cos −0.76) = (−0.689, 0, 0.725); the dwell camera
+  // Board mount. rotation.y = −0.76 maps local +Z to (sin −0.76, 0, cos −0.76) = (−0.689, 0, 0.725); the dwell camera
   // (9, 3.2, −186) seen from the disc is (−9.6, ·, +10) → (−0.693, 0.721) horizontally, so the screen faces it.
   const mount = new THREE.Object3D();
   mount.position.set(0, 5.15 - DISC.y, 0);
   mount.rotation.y = -0.76;
   group.add(mount);
 
-  // ---- dock: the mount spins a full turn with a glitch on arrival (E re-triggers it); ←/→ turn it ±0.15 rad,
-  // clamped to ±1.2 so the pane never shows its (culled) back face.
+  // ---- dock: the mount (and the board on it) spins a full turn with a glitch on arrival (E re-triggers it); ←/→
+  // turn it ±0.15 rad, clamped to ±1.2 so the pane never shows its (culled) back face.
   const YAW = mount.rotation.y;
   let off = 0, slab: HTMLElement | null = null;
   const spin = () => {
@@ -95,18 +95,19 @@ export function create(_ctx: CarrierCtx): Carrier {
     group,
     mount,
     width: 9,
-    px: 760,
+    px: 600,
     style: 'hologram',
+    node: 'LOBBY HOLOGRAM',
     range: [0.55, 0.72],
     lights: [[18.6, 2.5, -195, PAL.cyan, 500, 16]],
     fit(h) {
-      // Slab bottom stays on the cone's base at y 2.6; only the centre moves with the measured height.
+      // Board bottom stays on the cone's base at y 2.6; only the centre moves with the painted height.
       mount.position.y = SLAB_BOTTOM - DISC.y + h / 2;
     },
     interact: {
       onEnter(el) {
         slab = el; off = 0;
-        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> turn · <kbd>E</kbd> respin');
+        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> turn · <kbd>E</kbd> respin · <kbd>Esc</kbd> back');
         spin();
       },
       onExit(el) {

@@ -19,8 +19,6 @@ a { color: inherit; }
 
 .stage { position: fixed; inset: 0; z-index: 0; touch-action: none; }
 .stage canvas { display: block; }
-.css3d { position: absolute !important; inset: 0; pointer-events: none; }
-.css3d a, .css3d button { pointer-events: auto; }
 
 /* The 3D page never scrolls: the nav pans the camera and the character walks (scene/night/nav.ts). The plain-links
    footer only exists for the flat page; in the city the departures board carries the contact links. */
@@ -90,7 +88,9 @@ html.no-3d body { background: radial-gradient(120% 80% at 50% 100%, #2a0f2a 0%, 
 
 @media (prefers-reduced-motion: reduce) { .neon-btn { transition: none; } }
 
-/* ---------- Content slabs (CSS3D in the scene, bottom sheet on phones, stacked on the flat page) */
+/* ---------- Content slabs: the base (holo) look is the flat page's; in the city each section is painted as a terminal
+   board on its carrier (scene/night/slabcanvas.ts) and read in the terminal session overlay (carriers/terminal-ui.css,
+   terminal.css), which restyles these same elements under `.sheet`. */
 .skip { position: absolute; left: -9999px; top: 8px; z-index: 20; padding: 8px 14px; background: var(--yellow); color: #101008; font-family: var(--font-display); }
 .skip:focus { left: 12px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -123,16 +123,15 @@ html.no-3d body { background: radial-gradient(120% 80% at 50% 100%, #2a0f2a 0%, 
 .slab.job { min-height: 430px; display: flex; flex-direction: column; justify-content: center; }
 .slab.job .bullets { margin-top: 2px; }
 
-/* Project cards (Flip-3D stack). Rules are on .card itself: CSS3DRenderer re-parents the cards out of .stack. */
+/* Project cards (the flat page's document look; the session restyles them as directory rows). */
 .card {
   width: 640px; background: rgb(9 11 22 / 0.94); border: 1px solid rgb(255 43 214 / 0.6);
   box-shadow: 0 0 36px rgb(255 43 214 / 0.18); position: relative; color: var(--ink);
-  pointer-events: auto; cursor: pointer;
+  pointer-events: auto;
 }
-/* No overflow:hidden / filter on CSS3D elements: they force Chrome to flatten the card into a clip layer and the
-   text loses the 3D transform. The screenshot is dimmed with an overlay instead. */
-.card::before { content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 300px; background: rgb(8 10 20 / 0.16); pointer-events: none; }
-.slab, .card { backface-visibility: hidden; }
+/* The screenshot is dimmed with an overlay on its wrapper. */
+.card .shot { position: relative; }
+.card .shot::before { content: ''; position: absolute; inset: 0; background: rgb(8 10 20 / 0.16); pointer-events: none; }
 .card:focus-visible { outline: 3px solid var(--yellow); }
 .card img { display: block; width: 100%; height: 300px; object-fit: cover; object-position: top; border-bottom: 1px solid rgb(255 43 214 / 0.4); background: #0b0d1c; }
 .card-body { padding: 20px 26px 24px; font-size: 22px; line-height: 1.3; }
@@ -145,48 +144,16 @@ html.no-3d body { background: radial-gradient(120% 80% at 50% 100%, #2a0f2a 0%, 
 .card-body .links a { color: var(--cyan); text-decoration: none; }
 .card-body .links a:hover { text-shadow: 0 0 10px var(--cyan); }
 .card-body .muted { color: rgb(234 252 255 / 0.6); font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; }
-.card.is-front { cursor: default; }
-.stack-nav { display: none; }
 
-/* Reveal: glitch-in when a slab's window opens */
-/* No `transform` and no fill-mode here: CSS3DRenderer owns the inline transform/opacity of these elements. */
-.slab.is-on, .card.is-on { animation: holo-in 0.45s steps(8); }
-@keyframes holo-in {
-  0% { clip-path: inset(40% 0 40% 0); }
-  40% { clip-path: inset(10% 2% 55% 0); }
-  70% { clip-path: inset(0 0 0 2%); }
-  100% { clip-path: inset(0 0 0 0); }
-}
-@media (prefers-reduced-motion: reduce) { .slab.is-on, .card.is-on { animation: none; } }
-
-/* Phones: slabs live in a bottom sheet instead of the 3D scene */
-.sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; max-height: 52vh; overflow: auto;
-  padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch;
-  background: linear-gradient(180deg, rgb(7 7 12 / 0) 0, rgb(7 7 12 / 0.92) 22px);
-}
-.sheet .slab, .sheet .card { width: auto; max-width: 720px; margin: 0 auto; font-size: 15px; }
-.sheet .slab h2 { font-size: 26px; }
-.sheet .slab .cols { grid-template-columns: 1fr; gap: 14px; }
-.sheet .stack { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
-.sheet .card { flex: 0 0 88%; scroll-snap-align: center; }
-.sheet .card img { height: 150px; }
-.sheet .card-body { padding: 12px 14px 14px; font-size: 14px; }
-.sheet .card-body .chips li { font-size: 12px; padding: 3px 10px; }
-.sheet .card-body .tagline { font-size: 13px; }
-.sheet .card-body .links { font-size: 16px; }
-.sheet .card-body h3 { font-size: 22px; }
-.sheet .slab .actions .neon-btn { font-size: 16px; padding: 8px 18px; }
+/* The terminal session (`.sheet`, phones and desktop) is styled in styles/carriers/terminal-ui.css + terminal.css. */
 
 /* Flat page (?flat, no WebGL, or the scene failed): everything stacks as a normal document */
 html.no-3d .ui-src { display: grid; gap: 36px; padding-bottom: 40px; }
 html.no-3d .hero-copy { margin-top: 10vh; }
 html.no-3d .slab, html.no-3d .card { width: auto; max-width: 100%; }
 html.no-3d .stack { display: grid; gap: 24px; }
-html.no-3d .card { cursor: default; }
 html.no-3d .stage, html.no-3d .sheet, html.no-3d .audio-toggle { display: none; }
 html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; transform: none; width: max-content; max-width: calc(100% - 32px); flex-wrap: wrap; justify-content: center; }
-html.no-3d .slab.is-on, html.no-3d .card.is-on { animation: none; }
 @media (max-width: 760px) {
   /* One row of five stops plus the audio toggle; the type shrinks with the viewport instead of wrapping. */
   .nav { top: max(8px, env(safe-area-inset-top)); padding: 3px; gap: 0; max-width: calc(100% - 16px); flex-wrap: nowrap; justify-content: center; letter-spacing: 0.06em; }

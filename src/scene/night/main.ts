@@ -1,5 +1,4 @@
 import * as THREE from 'three/webgpu';
-import { CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js';
 import { createContent } from './content';
 import { boot } from './boot';
 import { dedupeMaterials } from './districts/shared';
@@ -31,14 +30,16 @@ import { createNav, SPAWN } from './nav';
 import { createPlayer } from './player';
 import { createInput } from './input';
 import { createHud } from './hud';
+import { createCine } from './cutscene';
 import { createInteractables } from './interactables';
+import { createDialogue, walkerTargets, carrierTarget, type Target } from './dialogue';
 import { buildAreas, type WalkSection } from './walkable';
 import { THEMES } from './theme';
 import type { PropPlacement } from './props';
 
 /**
  * Neon Harbor. Bay vista hero → the nav pans the camera along the rail to a district, where the visitor takes
- * over the netrunner on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
+ * over the protagonist (the `agent` rig) on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
  * All lights are emissive; bloom is the light source. `?q=high|med|low`, `?p=0.4` (start the ride at that progress),
  * `?nobloom ?noca ?nosharp ?norain ?novideo ?kenney ?nokit ?noglb ?nowater ?debug`.
  */
@@ -99,8 +100,9 @@ export async function start(root: HTMLElement) {
     });
   }
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
-  const RIGS_ALL = ['netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;
-  const RIGS_LITE = ['netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const;
+  const PROTAGONIST = 'agent'; // the player's rig (rigs.ts row: height 1.80, cyan rim); netrunner stays a crowd rig
+  const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;
+  const RIGS_LITE = [PROTAGONIST, 'netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const;
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
@@ -210,6 +212,7 @@ export async function start(root: HTMLElement) {
 
   // ---------- people, robots, drones (rigged fal characters; walkers stay visible out to 140 u)
   const life: { update(dt: number, cam: THREE.Camera): void }[] = [];
+  const crowds: { id: string; walkers: ReturnType<typeof createCrowd>['walkers'] }[] = []; // the walkers, for the dialogue
   if (!params.has('nopeople')) {
     try {
       boot.phase('waking the residents', 0.62);
@@ -222,6 +225,7 @@ export async function start(root: HTMLElement) {
         const near = createCrowd({ path: d.path, assets, count: d.count[tier], seed: 7, cullDistance: 140 });
         scene.add(near.group);
         life.push(near);
+        crowds.push({ id: d.path.id, walkers: near.walkers });
       }
       if (rigs['sec-bot']) {
         const robots = createRobots({ asset: rigs['sec-bot'], patrols: PATROLS, height: 2.1, searchlight: tier !== 'low' });
@@ -264,9 +268,9 @@ export async function start(root: HTMLElement) {
   const propsBuilt = await propsReady.catch(() => null);
   const placements = (propsBuilt as unknown as { placements?: PropPlacement[] } | null)?.placements ?? null;
   const areas = buildAreas(placements);
-  const protagonist = params.has('nopeople') ? null : await loadCharacter('netrunner').catch(() => null);
+  const protagonist = params.has('nopeople') ? null : await loadCharacter(PROTAGONIST).catch(() => null);
   const footstep = (audio as unknown as { step?: () => void }).step; // audio.ts grows `step()` with the interactions pass
-  const player = protagonist ? createPlayer({ asset: protagonist, onStep: () => footstep?.call(audio) }) : null;
+  const player = protagonist ? createPlayer({ asset: protagonist, rim: PAL.cyan, onStep: () => footstep?.call(audio) }) : null;
   if (player) {
     scene.add(player.root);
     player.setArea(areas.education);
@@ -275,18 +279,22 @@ export async function start(root: HTMLElement) {
   const playerPos = new THREE.Vector3(); // player feet, or the spawn when there is no character (`?nopeople`)
   const dockTarget = new THREE.Vector3(), dockNormal = new THREE.Vector3();
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
+  // Generated video cutscenes over the nav transitions (desktop only; cutscene.ts decides). Clips are warmed per section.
+  const cine = createCine({ lite, narrow });
   const nav = createNav({
     journey,
+    cover: cine.cover,
     onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
     onSection: (id) => navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === id)),
     onEnterWalk: (id) => {
       const s = SPAWN[id];
       playerPos.fromArray(s.pos);
       if (player) { player.setArea(areas[id]); player.teleport(...s.pos, s.yaw); }
-      const th = THEMES[id];
-      hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase());
       hud.showHintOnce();
     },
+    // The camera has settled on the district's establishing shot (the cutscene's hold): the title card.
+    onArrive: (id) => { if (id !== 'city') { const th = THEMES[id]; hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase()); } cine.preload(id); },
+    onBeat: (s) => hud.cutscene(s), // letterbox bars, the skip chip, the reduced-motion fade
     onDock: (id) => {
       content.dock(id);
       // The character turns to the carrier: the follow camera (and the phone dock framing) look at it too.
@@ -313,6 +321,7 @@ export async function start(root: HTMLElement) {
     },
   });
   hud.onBack(() => nav.undock());
+  hud.onSkip(() => nav.skip());
   const input = createInput({
     stage: root, touch: hud.touch,
     enabled: () => nav.mode === 'walk',
@@ -323,18 +332,27 @@ export async function start(root: HTMLElement) {
       return false;
     },
   });
-  const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => hud.prompt(l), landingCar });
+  // One HUD prompt slot, two writers: the residents' "Talk to …" (dialogue.ts) wins over the carriers' prompt.
+  const prompts: { talk: string | null; use: string | null } = { talk: null, use: null };
+  const publishPrompt = () => hud.prompt(prompts.talk ?? prompts.use);
+  const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => { prompts.use = l; publishPrompt(); }, landingCar });
+  // ---------- talking to the residents (dialogue.ts): every crowd walker, plus the two carrier NPCs matched by where they stand
+  const NPC_RIGS: [x: number, z: number, rig: string, section: WalkSection][] = [[-81.6, -97.4, 'schoolgirl-hacker', 'education'], [-16.4, -100.3, 'oni-bouncer', 'work']];
+  const npcAt = new THREE.Vector3();
+  const dialogueTargets: Target[] = crowds.flatMap((c) => walkerTargets(c.walkers, null, c.id));
+  for (const npc of content.npcs) {
+    npc.root.getWorldPosition(npcAt);
+    const row = NPC_RIGS.find(([x, z]) => Math.hypot(npcAt.x - x, npcAt.z - z) < 3);
+    if (row) dialogueTargets.push(carrierTarget(npc, row[2], row[3]));
+  }
+  const dialogue = createDialogue({ hud, prompt: (l) => { prompts.talk = l; publishPrompt(); }, getTargets: () => dialogueTargets, playerYaw: () => player?.yaw ?? null });
   const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
   jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); a.blur(); nav.panTo(a.dataset.section as SectionId); }));
   (window as any).__player = player ? { position: player.position, teleport: player.teleport, get speed() { return player.speed; } } : null;
   (window as any).__content = content;
 
-  // ---------- hero copy (CSS3D slab anchored to the camera, lower-left)
-  const cssRenderer = new CSS3DRenderer();
-  cssRenderer.setSize(innerWidth, innerHeight);
-  cssRenderer.domElement.classList.add('css3d');
-  root.appendChild(cssRenderer.domElement);
-  // The hero slab is camera-locked, so it is plain fixed DOM (2D parallax below) rather than a CSS3D object:
+  // ---------- hero copy (anchored to the camera, lower-left)
+  // The hero slab is camera-locked, so it is plain fixed DOM (2D parallax below):
   // Safari hit-tests 3D-transformed elements inside a perspective context a few pixels off their paint.
   const heroCopy = document.getElementById('hero-copy')!;
   document.body.appendChild(heroCopy);
@@ -410,6 +428,7 @@ export async function start(root: HTMLElement) {
   // ---------- journey: ride at p (the hero, or a `?p=` override) until the nav or the hero button pans somewhere
   if (player) player.root.visible = false;
   nav.start();
+  cine.preload(nav.section); // the four clips out of the starting section, once the first frame is up and the thread idle
   const railPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
@@ -447,17 +466,23 @@ export async function start(root: HTMLElement) {
     const dt = Math.min(clock.getDelta(), 0.05);
     govern(dt);
     eased.lerp(pointer, 0.05);
+    const inp = input.poll();
+    if (inp.skip) nav.skip(); // Esc / Enter / Space / a tap on the stage: cut the transition cutscene to its arrival
+    nav.tick(dt);             // advance the cutscene: journey.p along the paced move, the beats, the hand-over to the character
     const p = journey.p;
     const mode = nav.mode;
     const walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
-    const inp = input.poll();
     if (mode === 'dock' && inp.walkIntent) nav.undock(); // walking away leaves the carrier
     if (player) {
       player.update(dt, inp, nav.mode === 'walk');
       if (nav.mode !== 'ride') playerPos.copy(player.position);
     }
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
-    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact, nav.mode === 'walk' ? walkSec ?? null : null));
+    // Residents first: a box open or a resident in reach takes E (and the prompt slot) from the carriers; never docked or mid-cutscene.
+    const talkSec = nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null;
+    let talk = false;
+    timed('talk', () => { talk = dialogue.update(talkSec ? playerPos : null, talkSec, inp.interact, inp.back, inp.walkIntent, dt); });
+    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk, nav.mode === 'walk' ? walkSec ?? null : null, talk));
     const rigP = nav.samplePath(pos, look); // rail pose, or the fly-over's during a non-adjacent jump
     content.followOffset(p, off);
     pos.add(off); look.add(off);
@@ -477,6 +502,7 @@ export async function start(root: HTMLElement) {
     timed('traffic', () => traffic.update(dt, t, camera.position));
     timed('ads', () => ads.update(t));
     timed('life', () => { for (const l of life) l.update(dt, camera); });
+    dialogue.glance(); // after the mixers: the resident being talked to looks at the player
     timed('districts', () => districts.update(t, p, walkSec));
     timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
@@ -484,7 +510,6 @@ export async function start(root: HTMLElement) {
     timed('audio', () => audio.update(p));
     const t0 = performance.now();
     timed('render', () => pipeline.render());
-    timed('css3d', () => cssRenderer.render(scene, camera));
     if (firstFrame) {
       firstFrame = false; boot.done();
       if (params.has('prof')) {
@@ -503,7 +528,6 @@ export async function start(root: HTMLElement) {
     heroScale();
     renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight);
-    cssRenderer.setSize(innerWidth, innerHeight);
   });
 
   document.documentElement.classList.add('is-3d');

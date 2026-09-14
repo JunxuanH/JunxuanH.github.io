@@ -5,15 +5,15 @@ import { facadeBlock } from '../districts/shared';
 import { THEMES } from '../theme';
 import { PAL } from '../palette';
 import { sfx } from '../audio';
-import { keyToAction, hint, clearHint, retrigger, glitch, clearGlitch, type DockActions } from './dock';
+import { keyToAction, hint, clearHint, glitch, clearGlitch, tabs, clearTabs, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 /*
- * Megascreen — the KIOXIA slab as a giant LED wall on a dedicated media tower east of the Downtown avenue.
+ * Megascreen — the KIOXIA board as a giant LED wall on a dedicated media tower east of the Downtown avenue.
  * The tower box spans x 27…41, z −129…−107 (main.ts keeps the kitbash out of [34, −118] r 17); the wall hangs
- * on its −x face from y 14 up, and the camera cranes up to (4, 15, −113) → (27, 22, −118). The DOM slab is
- * opaque, so the LED backing is the lit halo around it (0.5 u margin) and what the wall shows while the slab
- * is off; fit() stretches backing + frame to the measured slab height.
+ * on its −x face from y 14 up, and the camera cranes up to (4, 15, −113) → (27, 22, −118). The board is
+ * opaque, so the LED backing is the lit halo around it (0.5 u margin) and what the wall shows while the board
+ * is off; fit() stretches backing + frame to the board's height.
  */
 
 const TOWER = new THREE.Vector3(34, 0, -118);
@@ -69,17 +69,18 @@ export function create(ctx: CarrierCtx): Carrier {
   blinker.position.set(TOWER.x, 46 + 6.25, TOWER.z);
   group.add(blinker);
 
-  // Slab mount 0.05 u in front of the backing. rotation.y = −π/2 maps local +Z to (sin −π/2, 0, cos −π/2) =
+  // Board mount 0.05 u in front of the backing. rotation.y = −π/2 maps local +Z to (sin −π/2, 0, cos −π/2) =
   // (−1, 0, 0): the screen normal points west, at the craned camera (4, 15, −113), which sits 23 u to −x.
   const mount = new THREE.Object3D();
   mount.position.set(FACE_X - 0.2, 22.2, TOWER.z);
   mount.rotation.y = -Math.PI / 2;
   group.add(mount);
 
-  // ---- dock: three channels — Ch1 the job (the slab as is), Ch2 a mock ad (index.astro `.ch-ad`), Ch3 SYSTEM: the live
+  // ---- dock: three channels as tabs — JOB (the section as is), AD (a mock ad, index.astro `.ch-ad`), SYSTEM: the live
   // fps / draw calls / triangles / pixel ratio read from window.__perf (main.ts) four times a second.
   interface PerfHook { frames: number; dpr: number; renderer?: { info?: { render?: { drawCalls?: number; calls?: number; triangles?: number } } } }
-  let ch = 1, slab: HTMLElement | null = null, badge: HTMLElement | null = null, timer = 0, lastFrames = 0, lastT = 0;
+  const CHANNELS = ['JOB', 'AD', 'SYSTEM'];
+  let ch = 1, slab: HTMLElement | null = null, timer = 0, lastFrames = 0, lastT = 0;
   const fmt = (n: number | undefined) => n === undefined ? '—' : n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e4 ? `${(n / 1e3).toFixed(1)}K` : String(n);
   const readout = () => {
     if (!slab) return;
@@ -98,7 +99,7 @@ export function create(ctx: CarrierCtx): Carrier {
     if (!slab) return;
     ch = ((ch - 1 + d + 3) % 3) + 1;
     slab.dataset.ch = String(ch);
-    if (badge) { badge.textContent = `CH ${ch}`; retrigger(badge, 'is-new'); }
+    tabs(slab, CHANNELS, ch - 1);
     glitch(slab);
     sfx.static();
     clearInterval(timer); timer = 0;
@@ -110,12 +111,13 @@ export function create(ctx: CarrierCtx): Carrier {
     group,
     mount,
     width: 20,
-    px: 760,
+    px: 600,
     style: 'led-wall',
+    node: 'MEDIA TOWER',
     range: [0.3, 0.5],
     lights: [[20, 22, -118, PAL.cyan, 600, 40]],
     fit(h) {
-      // Backing = slab + 1.0, frame = slab + 1.6; everything re-centred so the wall's lower edge stays at y 14.
+      // Backing = board + 1.0, frame = board + 1.6; everything re-centred so the wall's lower edge stays at y 14.
       const cy = WALL_BOTTOM + h / 2;
       backing.scale.y = (h + 1.0) / BACK_H;
       frame.scale.y = (h + 1.6) / FRAME_H;
@@ -124,20 +126,14 @@ export function create(ctx: CarrierCtx): Carrier {
     interact: {
       onEnter(el) {
         slab = el; ch = 1;
-        // Ch2 / Ch3 take the job's content height so the backing (fit to Ch1) keeps wrapping the slab.
-        const cs = getComputedStyle(el);
-        el.style.setProperty('--ch-h', `${el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`);
         el.dataset.ch = '1';
-        badge = document.createElement('span');
-        badge.className = 'ch-badge'; badge.textContent = 'CH 1'; badge.setAttribute('aria-hidden', 'true');
-        el.appendChild(badge);
-        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> channel · <b>1</b> job · <b>2</b> ad · <b>3</b> system');
+        tabs(el, CHANNELS, 0);
+        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> channel · <b>JOB</b> · <b>AD</b> · <b>SYSTEM</b> · <kbd>Esc</kbd> back');
       },
       onExit(el) {
         clearInterval(timer); timer = 0;
-        delete el.dataset.ch; el.style.removeProperty('--ch-h');
-        badge?.remove(); badge = null;
-        clearGlitch(el); clearHint(el);
+        delete el.dataset.ch;
+        clearGlitch(el); clearHint(el); clearTabs(el);
         slab = null; ch = 1;
       },
       onKey: (e) => keyToAction(e, actions),

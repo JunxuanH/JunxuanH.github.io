@@ -6,8 +6,9 @@ import '@fontsource/rajdhani/600.css';
 import '@fontsource/rajdhani/700.css';
 import '../styles/night.css';
 import '../styles/hud.css';
+import '../styles/cine.css';
 import { profile, education, jobs, projects, WINDOWS } from '../content';
-// Per-carrier slab styles (terminal, poster, led-wall, banner, hologram, flap-board).
+// Terminal session styles (terminal-ui: overlay chrome; terminal: the look; interact: dock-mode states).
 import.meta.glob('../styles/carriers/*.css', { eager: true });
 
 const sections = [
@@ -101,7 +102,7 @@ const win = (k: string) => WINDOWS[k].join(',');
               {j.team && <p class="team">{j.team}</p>}
             </header>
             {j.pages ? (
-              <!-- Poster pages (bus-stop dock: ←/→ flip; the flat page stacks them). -->
+              <!-- Pages (bus-stop dock: tabs 2017 / 2018, ←/→ flip; the flat page stacks them). -->
               <div class="pages">
                 {j.pages.map((pg, k) => (
                   <div class={k === 0 ? 'page is-cur' : 'page'} data-page={k}>
@@ -113,7 +114,7 @@ const win = (k: string) => WINDOWS[k].join(',');
               </div>
             ) : j.bullets.length > 0 && <ul class="bullets">{j.bullets.map((b) => <li>{b}</li>)}</ul>}
             {j.id === 'kioxia' && (
-              <!-- LED-wall channels (megascreen dock: ←/→). Ch1 is the job above; these stay hidden unless data-ch selects them. -->
+              <!-- LED-wall channels (megascreen dock: tabs JOB / AD / SYSTEM, ←/→). JOB is the section above; these stay hidden unless data-ch selects them. -->
               <div class="ch ch-ad" data-ch="2" aria-hidden="true">
                 <span class="ad-brand">NEO-CHROMA</span>
                 <span class="ad-line">DRINK THE GLOW · NOW AT PIER 9</span>
@@ -136,21 +137,21 @@ const win = (k: string) => WINDOWS[k].join(',');
           <h2 class="visually-hidden">Projects</h2>
           {projects.map((p, i) => (
             <article class="card" data-card={p.id} data-index={i} tabindex="0">
-              <img src={p.shot} alt={`${p.name} screenshot`} width="1280" height="800" loading="eager" decoding="async" />
+              <!-- The screenshot: the terminal session's framebuffer in the detail view (scanlines on .shot::after). -->
+              <div class="shot"><img src={p.shot} alt={`${p.name} screenshot`} width="1280" height="800" loading="eager" decoding="async" /></div>
               <div class="card-body">
                 <h3>{p.name}{p.status && <small>{p.status}</small>}</h3>
                 <p class="tagline">{p.tagline}</p>
                 <p class="desc">{p.description}</p>
                 <ul class="chips">{p.stack.map((s) => <li>{s}</li>)}</ul>
                 <p class="links">
-                  {p.github && <a href={p.github} target="_blank" rel="noopener">GitHub ↗</a>}
-                  {p.live && <a href={p.live} target="_blank" rel="noopener">Live ↗</a>}
-                  {!p.github && !p.live && <span class="muted">Private repo — showcase only</span>}
+                  {p.github && <a href={p.github} target="_blank" rel="noopener">Open repo ↗</a>}
+                  {p.live && <a href={p.live} target="_blank" rel="noopener">Open live ↗</a>}
+                  {!p.github && !p.live && <span class="muted">Private — showcase only</span>}
                 </p>
               </div>
             </article>
           ))}
-          <div class="stack-nav" aria-hidden="true">{projects.map((p, i) => <button type="button" data-goto={i} title={p.name}></button>)}</div>
         </section>
 
         <section class="slab contact-slab" id="contact" data-slab="contact" data-window={win('contact')} aria-labelledby="contact-h">
@@ -169,10 +170,20 @@ const win = (k: string) => WINDOWS[k].join(',');
       </div>
     </main>
 
-    <aside class="sheet" hidden aria-live="polite"></aside>
+    <!-- Terminal session (scene/night/session.ts, styles/carriers/terminal-ui.css): the docked section's element moves into
+         .term-body. Keeps the `sheet` class: hud.ts measures it to park the phone chip bar on its top edge. -->
+    <aside class="sheet term" hidden aria-live="polite" aria-label="Terminal session">
+      <header class="term-head" aria-hidden="true"><span class="term-node">NEON HARBOR // TERMINAL</span><span class="term-tty">TTY01</span></header>
+      <div class="term-body"></div>
+      <footer class="term-foot" aria-hidden="true"><span class="term-hint"></span><span class="term-status">Ready<i class="term-cursor">▮</i></span></footer>
+    </aside>
 
     <!-- Walk-mode HUD (scene/night/hud.ts, styles/hud.css). data-mode: ride | walk | dock. -->
     <div id="hud" class="hud" data-mode="ride">
+      <!-- Transition cutscene (scene/night/nav.ts beats → hud.cutscene): letterbox bars, the skip chip, the reduced-motion fade. -->
+      <div class="hud-bars" aria-hidden="true"><i class="hud-bar top"></i><i class="hud-bar bottom"></i></div>
+      <button class="hud-skip" type="button" tabindex="-1">Skip <span>▸</span></button>
+      <div class="hud-fade" aria-hidden="true"></div>
       <div class="hud-toast" hidden aria-live="polite"><span class="hud-toast-name"></span><small class="hud-toast-sub"></small></div>
       <div class="hud-prompt" hidden aria-live="polite"><kbd>E</kbd><span class="hud-prompt-label"></span></div>
       <div class="hud-hint" hidden>

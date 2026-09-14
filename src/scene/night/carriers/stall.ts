@@ -1,6 +1,6 @@
 /**
- * Market holo stall: a vendor's counter with a projector puck; the Flip-3D project cards (CSS3D, mounted
- * by content.ts under `mount`) rise out of its light cone when the projects window opens.
+ * Market holo stall: a vendor's counter with a projector puck; the projects board (a directory listing painted
+ * by content.ts under `mount`) hangs in its light cone, which rises when the projects window opens.
  * Stands at the east end of the market street, facing the camera's approach from the west.
  */
 import * as THREE from 'three/webgpu';
@@ -10,12 +10,12 @@ import gsap from 'gsap';
 import { THEMES } from '../theme';
 import { neonText } from '../signs';
 import { sfx } from '../audio';
-import { hint, clearHint, retrigger, type DockActions } from './dock';
+import { keyToAction, setSel, hint, clearHint, retrigger, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const POS = new THREE.Vector3(72, 0.22, -227);
-const YAW = -Math.PI / 2 + 0.55;      // stack faces west-south-west, toward the dwell camera at (62.5, 4.6, -224.6)
-const CARD_BOTTOM = 3.1;              // front card's lower edge (content.ts mounts cards at y 6.6 ± 3.5)
+const YAW = -Math.PI / 2 + 0.55;      // board faces west-south-west, toward the dwell camera at (62.5, 4.6, -224.6)
+const CARD_BOTTOM = 3.1;              // board's lower edge (fit() centres the mount above it)
 
 export function create(ctx: CarrierCtx): Carrier {
   const T = THEMES.projects;
@@ -49,7 +49,7 @@ export function create(ctx: CarrierCtx): Carrier {
   sign.position.set(0, 2.55, 1.26);
   group.add(counter, posts, railMesh, crates, noren, sign);
 
-  // Projector puck + ring on the counter; the additive cone reaches the front card's bottom edge.
+  // Projector puck + ring on the counter; the additive cone reaches the board's bottom edge.
   const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.22, 24).translate(0, 1.11, 0), dark);
   const ringGain = new THREE.Vector3(1.6, 0, 0);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 6, 40).rotateX(Math.PI / 2).translate(0, 1.24, 0), glowMaterial(T.secondary, 2.4));
@@ -63,7 +63,7 @@ export function create(ctx: CarrierCtx): Carrier {
   cone.scale.y = 0.001;
   group.add(puck, ring, cone);
 
-  // Cards mount here: the stack root sits above the counter, facing the same way as the group.
+  // The board mounts here, above the counter, facing the same way as the group (fit() lifts it to sit on the cone).
   const mount = new THREE.Object3D();
   mount.position.set(0, 6.6, 0);
   group.add(mount);
@@ -75,39 +75,76 @@ export function create(ctx: CarrierCtx): Carrier {
     if (open) { gsap.killTweensOf(ringGain); gsap.fromTo(ringGain, { x: 2.4 }, { x: 1.6, duration: 1.2, ease: 'power2.out' }); }
   };
 
-  // ---- dock: ←/→ flipping is content.ts's default (the stack owns the cards); Enter opens the front card's GitHub in a
-  // new tab, or pulses its "private beta" badge. The cards live in the CSS3D layer, so they are looked up globally.
-  const cards = () => [...document.querySelectorAll<HTMLElement>('.card')];
-  const frontCard = () => document.querySelector<HTMLElement>('.card.is-front') ?? cards()[0] ?? null;
-  const flip = (d: number) => {
-    const all = cards(), i = Number(frontCard()?.dataset.index ?? -1);
-    if (i < 0 || !all.length) return;
-    document.querySelector<HTMLButtonElement>(`.stack-nav [data-goto="${(i + d + all.length) % all.length}"]`)?.click();
+  // ---- dock: the projects are a directory listing (one row per card, `.is-sel` cursor); ↑/↓ move, Enter opens the row's
+  // detail view (screenshot, description, stack, the repo link), Enter again opens the repo in a new tab (public) or
+  // pulses the "showcase only" line (private); Esc / ◀ go back to the list. Esc in the list is left to the nav (undock).
+  let stack: HTMLElement | null = null, cards: HTMLElement[] = [], sel = 0, detail = false;
+  const listHint = () => { if (stack) hint(stack, '<kbd>↑</kbd><kbd>↓</kbd> select · <kbd>Enter</kbd> open · <kbd>Esc</kbd> back'); };
+  const detailHint = () => {
+    if (!stack) return;
+    const pub = !!cards[sel]?.querySelector('.links a');
+    hint(stack, pub ? '<kbd>Enter</kbd> open repo ↗ · <kbd>Esc</kbd> list' : '<b>PRIVATE</b> showcase only · <kbd>Esc</kbd> list');
+  };
+  const move = (d: number) => {
+    if (!cards.length || detail) return;
+    sel = (sel + d + cards.length) % cards.length;
+    setSel(cards, sel);
     sfx.select();
   };
-  const open = () => {
-    const card = frontCard();
-    if (!card) return;
-    const link = card.querySelector<HTMLAnchorElement>('.links a[href*="github.com"]');
+  const closeDetail = () => {
+    if (!detail || !stack) return;
+    detail = false;
+    stack.classList.remove('is-detail');
+    cards.forEach((c) => c.classList.remove('is-open', 'is-in'));
+    listHint();
+  };
+  const confirm = () => {
+    const card = cards[sel];
+    if (!card || !stack) return;
+    if (!detail) {
+      detail = true;
+      stack.classList.add('is-detail');
+      card.classList.add('is-open');
+      retrigger(card, 'is-in');
+      detailHint();
+      sfx.confirm();
+      return;
+    }
+    const link = card.querySelector<HTMLAnchorElement>('.links a');
     if (link) { window.open(link.href, '_blank', 'noopener'); sfx.confirm(); return; }
-    const badge = card.querySelector<HTMLElement>('h3 small');
+    const badge = card.querySelector<HTMLElement>('.links .muted') ?? card.querySelector<HTMLElement>('h3 small');
     if (badge) retrigger(badge, 'is-pulse');
     sfx.select();
   };
-  const actions: DockActions = { left: () => flip(-1), right: () => flip(1), confirm: open };
+  const actions: DockActions = { up: () => move(-1), down: () => move(1), left: () => { if (detail) { closeDetail(); sfx.select(); } }, confirm };
 
   return {
-    group, mount, width: 10, px: 640, style: '',
+    group, mount, width: 10, px: 720, style: '', node: 'HOLO STALL',
     range: [0.55, 0.95],
     lights: [[72, 3.5, -226, T.secondary, 500, 16]],
     rise,
+    fit(h) {
+      // The board's bottom edge sits on the cone's top; the centre rises with the painted height.
+      mount.position.y = CARD_BOTTOM + h / 2;
+    },
     interact: {
-      onEnter() { for (const c of cards()) hint(c, '<kbd>◀</kbd><kbd>▶</kbd> flip · <kbd>Enter</kbd> open'); },
-      onExit() { for (const c of cards()) { clearHint(c); c.querySelector('h3 small')?.classList.remove('is-pulse'); } },
+      onEnter(el) {
+        stack = el;
+        cards = [...el.querySelectorAll<HTMLElement>('.card')];
+        sel = 0; detail = false;
+        setSel(cards, sel);
+        listHint();
+      },
+      onExit(el) {
+        closeDetail();
+        setSel(cards, -1);
+        for (const c of cards) { c.querySelector('h3 small')?.classList.remove('is-pulse'); c.querySelector('.links .muted')?.classList.remove('is-pulse'); }
+        clearHint(el);
+        stack = null; cards = []; detail = false;
+      },
       onKey(e) {
-        if (e.key !== 'Enter' && e.code !== 'KeyE') return false; // ←/→ fall through to the stack's own flip
-        if (!e.repeat) open();
-        return true;
+        if (e.key === 'Escape') { if (!detail) return false; closeDetail(); sfx.select(); return true; }
+        return keyToAction(e, actions);
       },
       actions,
     },

@@ -15,7 +15,7 @@ import type { Instance } from './characters';
  * Reduced motion: no tweens, instant states.
  */
 
-export interface CrowdLike { walkers?: { inst: Instance }[]; instances?: { root: THREE.Object3D; headBone?: THREE.Bone }[] }
+export interface CrowdLike { walkers?: { inst: Instance }[]; instances?: { root: THREE.Object3D; headBone?: THREE.Bone; headY?: number }[] }
 
 export interface InteractOptions {
   camera: THREE.Camera;
@@ -77,10 +77,10 @@ export function createInteract(opts: InteractOptions) {
   // ---- NPC look-at
   const camPos = new THREE.Vector3(), npcPos = new THREE.Vector3(), headPos = new THREE.Vector3(), toCam = new THREE.Vector3(), fwd = new THREE.Vector3();
   const lookM = new THREE.Matrix4(), lookQ = new THREE.Quaternion(), headWorld = new THREE.Quaternion(), parentWorld = new THREE.Quaternion();
-  const npcs = (): { root: THREE.Object3D; headBone?: THREE.Bone }[] => {
-    const out: { root: THREE.Object3D; headBone?: THREE.Bone }[] = [];
+  const npcs = (): { root: THREE.Object3D; headBone?: THREE.Bone; headY?: number }[] => {
+    const out: { root: THREE.Object3D; headBone?: THREE.Bone; headY?: number }[] = [];
     for (const c of opts.crowds ?? []) {
-      if (c.walkers) for (const w of c.walkers) out.push({ root: w.inst.root, headBone: w.inst.headBone });
+      if (c.walkers) for (const w of c.walkers) out.push({ root: w.inst.root, headBone: w.inst.headBone, headY: w.inst.headY });
       if (c.instances) out.push(...c.instances);
     }
     return out;
@@ -103,7 +103,7 @@ export function createInteract(opts: InteractOptions) {
         head.getWorldQuaternion(headWorld);
         head.parent!.getWorldQuaternion(parentWorld);
         // Head world rotation that faces the camera (eye = head, target = camera).
-        headPos.set(npcPos.x, npcPos.y + 1.5, npcPos.z);
+        headPos.set(npcPos.x, npcPos.y + (n.headY ?? 1.5), npcPos.z); // rigs.ts head height (1.5 for carrier NPCs that pass none)
         lookM.lookAt(camPos, headPos, THREE.Object3D.DEFAULT_UP); // three: +Z of the result points from target to eye
         lookQ.setFromRotationMatrix(lookM);
         // desired local = inverse(parentWorld) * lookQ

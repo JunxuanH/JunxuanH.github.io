@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import { uv, float, smoothstep, color, sin, time, fract, step, hash } from './tsl';
-import { instantiate, type CharacterAsset, type SkinOptions } from './characters';
+import { instantiate, strideOf, type CharacterAsset, type SkinOptions } from './characters';
 import type { PathDef } from './paths';
 
 /**
@@ -49,29 +49,28 @@ export function createRobots(opts: RobotsOptions) {
   const count = opts.count ?? opts.patrols.length;
   const accents = opts.accents ?? [0x00e5ff, 0xff2bd6];
   const speed = opts.speed ?? 1.1;
-  const stride = opts.strideSpeed ?? 1.2;
   const tmp = new THREE.Vector3(), tan = new THREE.Vector3(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
 
   for (let i = 0; i < count; i++) {
     const path = opts.patrols[i % opts.patrols.length];
     const curve = new THREE.CatmullRomCurve3(path.points.map((p) => new THREE.Vector3(...p)), path.closed, 'centripetal');
     const accent = accents[i % accents.length];
-    const inst = instantiate(opts.asset, { rim: accent, rimStrength: 0.9, glow: true, glowStrength: 2.6, height: opts.height ?? 2.1, ...opts.skin });
+    const inst = instantiate(opts.asset, { rim: accent, rimStrength: 0.9, glow: true, glowStrength: 2.6, height: opts.height, ...opts.skin });
     inst.play('walk', 0);
     const a = inst.actions.get('walk');
-    if (a) a.timeScale = speed / stride;
+    if (a) a.timeScale = speed / (opts.strideSpeed ?? strideOf(inst)); // rigs.ts stride: no foot slide
     group.add(inst.root);
     const r: Robot = {
       inst, curve, length: curve.getLength(), stalls: path.stalls ?? [], t: (i / Math.max(1, count)) * 0.5, state: 'walk', until: 0, lastStall: -1, phase: i * 1.7,
     };
     if (opts.searchlight !== false) {
       const light = new THREE.SpotLight(accent, 40, 26, Math.PI / 9, 0.6, 1.2);
-      light.position.set(0.35, (opts.height ?? 2.1) * 0.82, 0.1);
+      light.position.set(0.35, inst.height * 0.82, 0.1);
       light.target.position.set(0.35, 0, 6);
       inst.root.add(light, light.target);
       const cone = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 20, 1, true), coneMaterial(accent));
       cone.rotation.x = Math.PI / 2 + 0.28;
-      cone.position.set(0.35, (opts.height ?? 2.1) * 0.82, 4.4);
+      cone.position.set(0.35, inst.height * 0.82, 4.4);
       inst.root.add(cone);
       cone.visible = false;
       r.light = light; r.cone = cone;

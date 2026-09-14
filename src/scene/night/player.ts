@@ -1,26 +1,28 @@
 /**
- * The protagonist (netrunner rig) and the third-person camera that follows it. Movement is camera-relative
- * (yaw of the follow camera), walk 2.2 / run 4.2 u/s with 12 u/s² acceleration, the heading slerps toward
- * the move direction, and idle / walk / run are chosen by speed. Ground height and collisions come from
- * walkable.ts. The camera hangs 5.5 u behind and 2.4 u above the feet (orbit yaw/pitch from drag), looks at
- * the head + 2 u ahead, damps exponentially, shortens its boom against walls and bobs a little on the move.
+ * The protagonist (the `agent` rig by default — main.ts picks it) and the third-person camera that follows
+ * it. Movement is camera-relative (yaw of the follow camera), walk 2.2 / run 4.2 u/s with 12 u/s²
+ * acceleration, the heading slerps toward the move direction, and idle / walk / run are chosen by speed.
+ * Ground height and collisions come from walkable.ts. The camera hangs 5.5 u behind and 2.4 u above the
+ * feet (orbit yaw/pitch from drag), looks at the head + 2 u ahead, damps exponentially, shortens its boom
+ * against walls and bobs a little on the move. Height, head height, clip stride speeds and the footstep
+ * length come from the rig's rigs.ts row (through the instance), so any audited rig can be the player.
  */
 import * as THREE from 'three/webgpu';
-import { instantiate, type CharacterAsset, type Instance } from './characters';
+import { instantiate, strideOf, type CharacterAsset, type Instance } from './characters';
 import { PAL } from './palette';
 import { limitCamera, resolve, groundY, type Area } from './walkable';
 import type { InputState } from './input';
 
 export const WALK = 2.2, RUN = 4.2, ACCEL = 12, DECEL = 18;
-const STRIDE_WALK = 1.2;   // clip stride speed at timeScale 1 (characters.ts walkers)
-const STRIDE_RUN = 3.4;
 const BOOM = 5.8, PITCH0 = Math.asin(1.8 / 5.8); // 5.5 back, 2.4 up at the default pitch (pivot 0.6 above the feet)
 const PITCH_MIN = THREE.MathUtils.degToRad(-10), PITCH_MAX = THREE.MathUtils.degToRad(35);
-const HEAD = 1.6;
 
 export interface PlayerOptions {
   asset: CharacterAsset;
+  /** World height (default: the rig's rigs.ts height). */
   height?: number;
+  /** Neon rim colour (default: the CTA yellow). */
+  rim?: THREE.ColorRepresentation;
   /** Footstep cue (stride phase). */
   onStep?: () => void;
 }
@@ -28,10 +30,16 @@ export interface PlayerOptions {
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
 export function createPlayer(opts: PlayerOptions) {
-  const inst: Instance = instantiate(opts.asset, { height: opts.height ?? 1.75, rim: PAL.yellow, rimStrength: 0.9 });
+  const inst: Instance = instantiate(opts.asset, { height: opts.height, rim: opts.rim ?? PAL.yellow, rimStrength: 0.9 });
   const root = inst.root;
   root.name = 'player';
   inst.play('idle', 0);
+  // Rig-specific numbers (rigs.ts row scaled to the instance): clip stride speeds at timeScale 1 (u/s),
+  // head height (camera focus) and the distance between footfalls (step cue).
+  const STRIDE_WALK = strideOf(inst, 'walk'), STRIDE_RUN = strideOf(inst, 'run');
+  const HEAD = inst.headY;
+  const rigScale = inst.height / inst.meta.height;
+  const STEP_WALK = inst.meta.stepLen * rigScale, STEP_RUN = inst.meta.stepLenRun * rigScale;
 
   let area: Area | null = null;
   const pos = root.position;                 // feet
@@ -141,7 +149,7 @@ export function createPlayer(opts: PlayerOptions) {
     if (runA) runA.timeScale = clip === 'run' ? THREE.MathUtils.clamp(speed / STRIDE_RUN, 0.7, 1.5) : 1;
     inst.mixer.update(dt);
     if (speed > 0.3) {
-      phase += (speed * dt) / (clip === 'run' ? 1.5 : 0.9);
+      phase += (speed * dt) / (clip === 'run' ? STEP_RUN : STEP_WALK);
       const i = Math.floor(phase);
       if (i !== stepIdx) { stepIdx = i; opts.onStep?.(); }
       bob += dt * (2.2 + speed * 1.6);

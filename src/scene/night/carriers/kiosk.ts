@@ -1,7 +1,7 @@
 /**
  * Campus street terminal (education). A CRT housing leaning back on a plinth at the plaza edge, facing +z
- * toward the dwell camera at (−80, 2.25, −96.6); the `terminal` slab sits on the housing face and types
- * itself in, and an amber scanline plane glows through as the DOM fades. ~8 draws + the NPC.
+ * toward the dwell camera at (−80, 2.25, −96.6); the education board sits on the housing face and an amber
+ * scanline plane glows through as it fades. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
 import { color, step, fract, uv, time, glowMaterial as glow } from '../tsl';
@@ -66,7 +66,7 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     new THREE.BoxGeometry(0.06, HOUSING_H, 0.06).translate(-1.65 + 0.03, 0, 0.16),
   ], false)!, glow(T.primary, 1.8));
   face.add(bezel);
-  // Amber scanline backing just in front of the housing face: what you see when the DOM slab fades.
+  // Amber scanline backing just in front of the housing face: what you see when the board fades.
   const backMat = new THREE.MeshBasicNodeMaterial();
   const scan = step(0.5, fract(uv().y.mul(160).add(time.mul(2))));
   backMat.colorNode = color(0xffb000).mul(0.35).mul(scan.mul(0.65).add(0.35));
@@ -84,7 +84,7 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
   tray.add(keys);
   group.add(tray);
 
-  // Slab mount: on the screen plane, a hair in front of the backing.
+  // Board mount: on the screen plane, a hair in front of the backing.
   const mount = new THREE.Object3D();
   mount.position.set(0, SCREEN_Y, 0.22);
   mount.rotation.x = TILT;
@@ -105,7 +105,7 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     } catch (e) { console.warn('[kiosk] NPC unavailable', e); }
   }
 
-  // ---- dock: the slab is a menu (certification + toolbox rows, `data-detail` from content.ts); ↑/↓ move the cursor,
+  // ---- dock: the section is a menu (certification + toolbox rows, `data-detail` from content.ts); ↑/↓ move the cursor,
   // Enter types the row's detail into an output line under the columns (one row open at a time).
   let rows: HTMLElement[] = [], sel = 0, open = -1, out: HTMLElement | null = null;
   const closeRow = () => {
@@ -135,23 +135,19 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
   const actions: DockActions = { up: () => move(-1), down: () => move(1), confirm: toggle };
 
   return {
-    group, mount, width: 3.0, px: 720, style: 'terminal', range: [0.08, 0.34],
+    group, mount, width: 3.0, px: 640, style: 'terminal', node: 'CAMPUS TERMINAL', range: [0.08, 0.34],
     lights: [[-80, 2.8, -98.4, 0xffb000, 350, 12]],
     npcs,
     update(_t, dt) { mixer?.update(dt); },
     fit(h) {
-      // Housing wraps the slab with a 0.15 lip; the bezel scales with it (bars stay ~0.06 thick).
+      // Housing wraps the board with a 0.15 lip; the bezel scales with it (bars stay ~0.06 thick).
       const k = (h + 0.3) / HOUSING_H;
       housing.scale.y = k;
       bezel.scale.y = k;
       backing.scale.y = (h + 0.06) / 2.0;
-      // The DOM is composited over the canvas, so keep the keypad below the slab's bottom edge.
+      // Keep the keypad below the board's bottom edge.
       const y = Math.min(KEY_Y, SCREEN_Y - h / 2 - 0.08);
       tray.position.set(0, y, faceZ(y) + 0.18);
-    },
-    prepare(el) {
-      el.querySelectorAll<HTMLElement>('.kicker, h2, .meta > span, h3, .bullets li, .chips li')
-        .forEach((n, i) => n.style.setProperty('--i', String(i)));
     },
     interact: {
       onEnter(el) {

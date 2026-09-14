@@ -1,14 +1,17 @@
 /**
- * Content carriers: the in-world objects that hold the résumé slabs (CSS3D DOM, mounted by content.ts).
- * One module per carrier; each builds its geometry, exposes a `mount` (slab centre, local +Z = screen
- * normal), the slab size/style, and optional per-frame behaviour. main.ts adds the groups, lights and
- * props; districts-style visibility gating happens here via `range`.
+ * Content carriers: the in-world objects that hold the résumé sections. Each carrier's content surface is a canvas
+ * "terminal board" painted by content.ts (slabcanvas.ts) onto a plane on the carrier's `mount`; docking opens the
+ * section in the 2D terminal session overlay (session.ts) and routes keys to the carrier's `interact` block.
+ * One module per carrier; each builds its geometry, exposes a `mount` (board centre, local +Z = screen normal),
+ * the board size, and optional per-frame behaviour. main.ts adds the groups, lights and props; districts-style
+ * visibility gating happens here via `range`.
  */
 import * as THREE from 'three/webgpu';
 import type { Tier } from '../palette';
 import type { DistrictTextures, LightSpec } from '../districts/shared';
 import type { PropPlacement } from '../props';
 import type { SectionId } from '../journey';
+import type { TermDoc } from '../slabcanvas';
 
 export interface CarrierCtx {
   scene: THREE.Scene;
@@ -21,28 +24,33 @@ export interface CarrierCtx {
   onFlap?: () => void;
 }
 
+/** A carrier's painted board (content.ts): repaint from the section's DOM, optionally transforming the doc first. */
+export interface Board {
+  repaint(mutate?: (doc: TermDoc) => TermDoc): void;
+}
+
 export interface Carrier {
   group: THREE.Group;
-  /** The CSS3D slab parents here at the origin; local +Z is the screen normal. */
+  /** The board parents here at the origin; local +Z is the screen normal. */
   mount: THREE.Object3D;
-  /** Slab world width (u) and CSS pixel width; `style` is the class added to the slab element (desktop only). */
+  /** Board world width (u) and layout width in px (the type scales with it); `style` is informational. */
   width: number;
   px: number;
   style: string;
+  /** Exact board height / width (the banner fills its frame); otherwise the height follows the content. */
+  aspect?: number;
+  /** Name in the session header: `NEON HARBOR // <node> — <section>`. */
+  node?: string;
   /** Scroll window in which the group is visible. */
   range: [number, number];
   lights?: LightSpec[];
   props?: PropPlacement[];
   npcs?: { root: THREE.Object3D; headBone?: THREE.Bone }[];
   update?(t: number, dt: number, p: number): void;
-  /** Called once after mount with the measured slab height (u) so frames/backings can match the DOM. */
-  fit?(slabHeightU: number): void;
-  /** One-time DOM prep (e.g. `--i` indices for staggered reveals). */
-  prepare?(el: HTMLElement): void;
-  /** The slab's window just opened. */
-  onShow?(el: HTMLElement): void;
+  /** Called once with the painted board's height (u) so frames / backings match it. */
+  fit?(boardHeightU: number): void;
   /** Fired once when p crosses `p` upward; re-armed when p drops below `p - 0.05`. */
-  cue?: { p: number; run(el: HTMLElement): void };
+  cue?: { p: number; run(board: Board): void };
   /** Moving carriers: world position minus the home pose (camera follow). */
   displacement?(out: THREE.Vector3): THREE.Vector3;
   /**
@@ -51,11 +59,12 @@ export interface Carrier {
    * offset with its heading instead of only translating it.
    */
   dockPose?(pos: THREE.Vector3, look: THREE.Vector3): void;
-  /** Extra behaviour hooks used by content.ts (e.g. stall.rise). */
+  /** The board just appeared / went away (the stall's projector cone). */
   rise?(open: boolean): void;
   /**
    * Dock-mode mini-interaction (walk mode: the player presses E next to the carrier, the camera parks on the dwell
-   * pose and content.ts routes keys here). `label` overrides the HUD prompt ("Read the terminal").
+   * pose, the section opens in the session overlay and content.ts routes keys here). `el` is the section's DOM
+   * element inside the overlay. `label` overrides the HUD prompt ("Read the terminal").
    */
   interact?: {
     label?: string;
@@ -63,7 +72,7 @@ export interface Carrier {
     onExit?(el: HTMLElement): void;
     /** Return true when the key was handled. Escape arrives here first; when unhandled it undocks. */
     onKey?(e: KeyboardEvent, el: HTMLElement): boolean | void;
-    /** The same handlers as named actions, for the phone sheet's chip bar (▲▼ / ◀▶ / ✓). Valid while docked. */
+    /** The same handlers as named actions, for the phone HUD's chip bar (▲▼ / ◀▶ / ✓). Valid while docked. */
     actions?: { up?(): void; down?(): void; left?(): void; right?(): void; confirm?(): void };
   };
 }

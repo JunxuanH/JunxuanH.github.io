@@ -1,7 +1,7 @@
 /**
  * Downtown bus shelter (AMD intern). A glass shelter on the west sidewalk, 8 u along z with its back wall
- * on the façade line and open to the road; the backlit ad panel on the back wall carries the `poster`
- * slab facing +x toward the dwell camera at (−14.8, 1.7, −90.6). Bench, stop flag "47", a bouncer
+ * on the façade line and open to the road; the backlit panel on the back wall carries the AMD intern board
+ * facing +x toward the dwell camera at (−14.8, 1.7, −90.6). Bench, stop flag "47", a bouncer
  * waiting outside the south end. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
@@ -12,7 +12,7 @@ import { CURB_H } from '../streets';
 import { neonText } from '../signs';
 import { loadCharacter, instantiate } from '../characters';
 import { sfx } from '../audio';
-import { keyToAction, hint, clearHint, retrigger, type DockActions } from './dock';
+import { keyToAction, hint, clearHint, retrigger, tabs, clearTabs, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const CX = -17.0, CZ = -94.9;  // shelter centre; footprint x −17.9…−16.1, z −98.9…−90.9
@@ -58,7 +58,7 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
   glass.renderOrder = 3;
   group.add(glass);
 
-  // Ad panel on the back wall: dark housing, bright backlight plane the poster sits on (blooms round it).
+  // Panel on the back wall: dark housing, bright backlight plane the board sits on (blooms round it).
   const housing = new THREE.Mesh(new THREE.BoxGeometry(0.12, PANEL.h, 4.5), metal);
   housing.position.set(PANEL.x, PANEL.y, PANEL.z);
   const backlight = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 2.5), glow(0xdfe8ff, 0.5));
@@ -98,21 +98,23 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     } catch (e) { console.warn('[busstop] NPC unavailable', e); }
   }
 
-  // ---- dock: the poster has two pages (index.astro `.pages`, one per summer); ←/→ or E flip them with a print wipe.
-  let pages: HTMLElement[] = [], dots: HTMLElement[] = [], cur = 0, hintEl: HTMLElement | null = null;
+  // ---- dock: the section has two pages (index.astro `.pages`, one per summer) shown as tabs `2017 / 2018`; ←/→ or E
+  // flip them with a typed wipe.
+  let pages: HTMLElement[] = [], cur = 0, slab: HTMLElement | null = null;
+  const year = (pg: HTMLElement) => (pg.querySelector('h3')?.textContent ?? '').match(/\d{4}/)?.[0] ?? '';
   const show = (i: number, wipe: boolean) => {
-    if (!pages.length) return;
+    if (!pages.length || !slab) return;
     cur = ((i % pages.length) + pages.length) % pages.length;
     pages.forEach((pg, k) => { pg.classList.toggle('is-cur', k === cur); pg.classList.remove('is-in'); });
-    dots.forEach((d, k) => d.classList.toggle('is-cur', k === cur));
+    tabs(slab, pages.map(year), cur);
     if (wipe) retrigger(pages[cur], 'is-in');
-    if (hintEl) hintEl.innerHTML = `<kbd>◀</kbd><kbd>▶</kbd> flip the poster · <b>${cur + 1} / ${pages.length}</b>`;
+    hint(slab, `<kbd>◀</kbd><kbd>▶</kbd> page · <b>${cur + 1} / ${pages.length}</b> · <kbd>Esc</kbd> back`);
   };
   const flip = (d: number) => { if (pages.length < 2) return; show(cur + d, true); sfx.select(); };
   const actions: DockActions = { left: () => flip(-1), right: () => flip(1), confirm: () => flip(1) };
 
   return {
-    group, mount, width: 4.4, px: 720, style: 'poster', range: [0.2, 0.42],
+    group, mount, width: 4.4, px: 640, style: 'poster', node: 'STOP 47 PANEL', range: [0.2, 0.42],
     lights: [[-16.8, 2.8, -94.6, 0xdfe8ff, 220, 12]],
     npcs,
     update(_t, dt) { mixer?.update(dt); },
@@ -120,7 +122,7 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
       const H = h + 0.15;
       housing.scale.y = H / PANEL.h;
       backlight.scale.y = (h + 0.05) / 2.5;
-      // A poster taller than the shelter lifts the roof; posts and glass stretch with it.
+      // A board taller than the shelter lifts the roof; posts and glass stretch with it.
       const lift = Math.max(0, PANEL.y + H / 2 + 0.1 - (ROOF_Y - 0.07));
       if (lift > 0) {
         roof.position.y = ROOF_Y + lift;
@@ -130,15 +132,14 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     },
     interact: {
       onEnter(el) {
+        slab = el;
         pages = [...el.querySelectorAll<HTMLElement>('.page')];
-        dots = [...el.querySelectorAll<HTMLElement>('.page-dots li')];
-        hintEl = hint(el, '');
         show(0, false);
       },
       onExit(el) {
         show(0, false);
-        clearHint(el);
-        hintEl = null; pages = []; dots = [];
+        clearHint(el); clearTabs(el);
+        slab = null; pages = [];
       },
       onKey: (e) => keyToAction(e, actions),
       actions,

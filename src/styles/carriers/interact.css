@@ -1,28 +1,13 @@
-/* Dock-mode mini-interactions (scene/night/carriers/*.ts `interact` blocks + carriers/dock.ts).
-   Rules: never transform / opacity / filter on the slab or card element itself (CSS3DRenderer writes those inline);
-   selection, wipes and glitches use clip-path, colours and children.
-   The same DOM lives in three places — the CSS3D slab (carrier style class present), the phone sheet and the flat
-   page (no carrier class) — so the working rules key on `.slab` / `.is-docked` / data attributes, and the
-   carrier classes only tint them. Selectors carry one extra class so they win over the per-carrier files that load
-   after this one (the carriers glob is alphabetical). */
+/* Dock-mode mini-interactions (scene/night/carriers/*.ts `interact` blocks + carriers/dock.ts), on the section's DOM
+   inside the terminal session (`.sheet`, terminal.css). The `.is-docked` element is the section; selection is inverse
+   video, wipes and glitches use clip-path on children. The flat page never carries these states. */
 
-/* ---------- hint line hanging under the docked slab (hidden for touch and in the sheet: the chip bar is the hint there) */
-.dock-hint {
-  position: absolute; left: 50%; top: 100%; transform: translate(-50%, 10px);
-  padding: 4px 12px; white-space: nowrap; pointer-events: none;
-  font: 500 0.7em/1.3 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; text-shadow: none;
-  color: var(--cyan); background: rgb(5 7 13 / 0.85); border: 1px solid rgb(0 229 255 / 0.5);
-}
-.dock-hint kbd { font: inherit; padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; margin: 0 2px; }
-.dock-hint b { color: var(--yellow); font-weight: 500; }
-.card .dock-hint { display: none; }
-.card.is-front .dock-hint { display: block; }
-.sheet .dock-hint, html.no-3d .dock-hint { display: none; }
-@media (pointer: coarse) { .dock-hint { display: none; } }
+/* ---------- legacy hint element (only used when a slab is not inside the session; the footer carries hints there) */
+.dock-hint { display: none; }
 
-/* ---------- glitch veil: a child whose clip-path bands animate; the carrier picks the tint */
-.dock-veil { position: absolute; inset: 0; pointer-events: none; clip-path: inset(100% 0 0 0); background: repeating-linear-gradient(0deg, rgb(0 229 255 / 0.4) 0 3px, transparent 3px 7px); }
-.slab.is-glitch > .dock-veil { animation: dock-glitch 0.4s steps(7) both; }
+/* ---------- glitch veil: a child whose clip-path bands animate (hologram respin, LED-wall channel change) */
+.dock-veil { position: absolute; inset: 0; pointer-events: none; z-index: 1; clip-path: inset(100% 0 0 0); background: repeating-linear-gradient(0deg, rgb(255 176 0 / 0.35) 0 3px, transparent 3px 7px, rgb(125 255 154 / 0.25) 7px 8px); }
+.is-glitch > .dock-veil { animation: dock-glitch 0.4s steps(7) both; }
 @keyframes dock-glitch {
   0% { clip-path: inset(0 0 70% 0); }
   15% { clip-path: inset(30% 0 40% 0); }
@@ -33,100 +18,51 @@
   100% { clip-path: inset(100% 0 0 0); }
 }
 
-/* ---------- menu cursor (terminal rows, departures rows) */
-.slab.is-docked :is(.bullets li, .chips li) { cursor: default; }
-.slab.is-docked :is(.bullets li, .chips li).is-sel {
-  background: var(--sel, var(--yellow)); color: #101008; text-shadow: none; border-color: var(--sel, var(--yellow));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--sel, var(--yellow)) 50%, transparent);
-}
-.slab.is-docked .bullets li.is-sel::marker { color: #101008; }
-.slab.is-docked .bullets li.is-sel::before { color: #101008; content: '▶ '; }
-.slab.is-docked :is(.bullets li, .chips li).is-open::after { content: ' ▾'; }
-.slab.terminal { --sel: #ffb000; }
+/* ---------- menu cursor: terminal rows / toolbox chips / departure rows / project rows — inverse video */
+.sheet .is-docked :is(.bullets li, .chips li, .actions a, .card:not(.is-open)).is-sel { background: #ffb000; color: #101008; text-shadow: none; }
+.sheet .is-docked :is(.bullets li, .card:not(.is-open)).is-sel::before { content: '▶ '; color: #101008; }
+.sheet .is-docked .chips li.is-sel::before, .sheet .is-docked .chips li.is-sel::after { color: #101008; }
+.sheet .is-docked .actions a.is-sel::before, .sheet .is-docked .actions a.is-sel::after { color: #101008; }
+.sheet .is-docked .card.is-sel:not(.is-open) :is(.tagline, .chips, h3 small) { color: #101008; }
+/* Detail view: only the title row carries the cursor band; description, stack and links stay amber on black below it. */
+.sheet .is-docked .card.is-open.is-sel .card-body h3 { padding: 4px 10px; background: #ffb000; color: #101008; text-shadow: none; }
+.sheet .is-docked .card.is-open.is-sel .card-body h3::before, .sheet .is-docked .card.is-open.is-sel .card-body h3 small { color: #101008; }
+.sheet .is-docked :is(.bullets li, .chips li).is-open::after { content: ' ▾'; }
+.sheet .is-docked .chips li.is-open::after { content: ' ] ▾'; }
 
 /* ---------- terminal output line: the selected row's detail types in (kiosk.ts appends `.term-out` while docked) */
-.slab .term-out {
-  margin: 14px 0 0; padding-top: 8px; border-top: 1px dashed rgb(255 255 255 / 0.25);
-  font-family: var(--mono); font-size: 16px; line-height: 1.4; color: var(--out, var(--cyan)); min-height: 1.4em;
-  clip-path: inset(0 100% 0 0);
+.sheet .term-out {
+  margin: 14px 0 0; padding-top: 8px; border-top: 1px dashed rgb(255 176 0 / 0.45);
+  font: 400 14px/1.45 var(--mono); color: #7dff9a; text-shadow: 0 0 6px rgb(125 255 154 / 0.5); min-height: 1.45em;
+  text-transform: none; letter-spacing: 0.02em; clip-path: inset(0 100% 0 0);
 }
-.slab.terminal .term-out { --out: #7dff9a; border-top-color: rgb(255 176 0 / 0.45); text-shadow: 0 0 6px rgb(125 255 154 / 0.5); }
-.slab .term-out.is-typing { animation: dock-type 0.6s steps(24) forwards; }
-.slab .term-out.is-typing::after { content: '▮'; margin-left: 0.15em; animation: dock-blink 1s steps(1) infinite; }
+.sheet .term-out.is-typing { animation: dock-type 0.6s steps(24) forwards; }
+.sheet .term-out.is-typing::after { content: '▮'; margin-left: 0.15em; animation: term-blink 1s steps(1) infinite; }
 @keyframes dock-type { to { clip-path: inset(0); } }
-@keyframes dock-blink { 50% { opacity: 0; } }
 
-/* ---------- poster pages: stacked in one grid cell so the slab keeps the taller page's height; ←/→ wipe the next in */
-.slab .pages { display: grid; }
-.slab .page { grid-area: 1 / 1; visibility: hidden; }
-.slab .page.is-cur { visibility: visible; }
-.slab .page.is-in { animation: dock-wipe 0.35s steps(14) both; }
+/* ---------- pages (bus stop): one at a time; ←/→ wipe the next in (the tabs strip shows which) */
+.sheet .pages { display: block; }
+.sheet .page { display: none; }
+.sheet .page.is-cur { display: block; }
+.sheet .page.is-in { animation: dock-wipe 0.35s steps(14) both; }
 @keyframes dock-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
-.slab .page h3 { font-size: 0.8em; letter-spacing: 0.18em; margin-bottom: 10px; }
-.slab .page-dots { grid-area: 2 / 1; display: flex; gap: 10px; justify-content: center; list-style: none; margin: 14px 0 0; padding: 0; }
-.slab .page-dots li { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--dot, var(--cyan)); }
-.slab .page-dots li.is-cur { background: var(--dot, var(--cyan)); }
-.slab.poster { --dot: #d0202a; }
+.sheet .page h3 { margin-top: 0; }
+.sheet .page-dots { display: none; }
 html.no-3d .slab .pages { display: block; }
 html.no-3d .slab .page { visibility: visible; margin-bottom: 14px; }
 html.no-3d .slab .page-dots { display: none; }
+html.no-3d .ch { display: none; }
 
-/* ---------- LED-wall channels: `data-ch` on the slab (megascreen.ts) picks the job (1), the mock ad (2) or SYSTEM (3) */
-.ch { display: none; position: relative; box-sizing: border-box; height: var(--ch-h, auto); }
-.slab[data-ch="2"] :is(header, .bullets), .slab[data-ch="3"] :is(header, .bullets) { display: none; }
-.slab[data-ch="2"] .ch-ad, .slab[data-ch="3"] .ch-sys { display: flex; }
-.ch-ad {
-  flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 8px; padding: 26px 30px;
-  background: #04050a url('/night/ads/ad-1.webp') center 28% / cover no-repeat; min-height: 300px;
-}
-.ch-ad::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgb(4 5 10 / 0.9)); pointer-events: none; }
-.ad-brand { position: relative; font: 700 78px/1 var(--font-display); letter-spacing: 0.04em; color: #fff; text-shadow: 0 0 22px var(--cyan), 0 0 4px #fff; }
-.ad-line { position: relative; font: 500 21px/1.3 var(--mono); letter-spacing: 0.22em; color: var(--yellow); }
-.ch-sys { flex-direction: column; justify-content: space-between; gap: 18px; padding: 8px 4px; min-height: 300px; }
-.sys-title { font: 500 24px var(--mono); letter-spacing: 0.3em; color: var(--yellow); }
-.sys-title::before { content: '●'; margin-right: 12px; color: #ff2030; animation: dock-blink 1.2s steps(1) infinite; }
-.sys { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 36px; margin: 0; }
-.sys dt { font: 500 20px var(--mono); letter-spacing: 0.24em; text-transform: uppercase; color: var(--cyan); }
-.sys dd { margin: 4px 0 0; font: 700 84px/1 var(--font-display); color: #fff; text-shadow: 0 0 18px rgb(0 229 255 / 0.6); font-variant-numeric: tabular-nums; }
-.sys-note { margin: 0; font-size: 26px; color: rgb(255 255 255 / 0.85); }
-.ch-badge {
-  position: absolute; top: 18px; right: 22px; z-index: 2; padding: 4px 14px;
-  font: 600 24px/1.2 var(--mono); letter-spacing: 0.24em; color: var(--yellow); border: 2px solid var(--yellow);
-  background: rgb(4 5 10 / 0.7); text-shadow: 0 0 10px rgb(242 255 61 / 0.6);
-}
-.ch-badge.is-new { animation: dock-flash 0.25s steps(1) 3; }
-@keyframes dock-flash { 50% { background: var(--yellow); color: #101008; } }
-.slab.led-wall > .dock-veil { background: repeating-linear-gradient(0deg, #04050a 0 5px, #0a1220 5px 8px, rgb(0 229 255 / 0.35) 8px 9px); }
-/* Phone sheet: the same channels at sheet scale. */
-.sheet .ch { height: auto; min-height: 200px; }
-.sheet .ad-brand { font-size: 40px; }
-.sheet .ad-line { font-size: 13px; }
-.sheet .sys-title { font-size: 14px; }
-.sheet .sys dt { font-size: 12px; }
-.sheet .sys dd { font-size: 44px; }
-.sheet .sys-note { font-size: 15px; }
-.sheet .ch-badge { top: 10px; right: 10px; font-size: 13px; padding: 2px 8px; }
+/* ---------- departures: Enter flaps the row's status to BOARDED (a flash) and opens the link */
+.sheet .is-docked .actions a[data-status="BOARDED"]::after { color: #ffd27a; }
+.sheet .is-docked .actions a.is-flip { animation: dock-flash 0.12s steps(1) 4; }
+@keyframes dock-flash { 50% { background: #7dff9a; color: #101008; } }
 
-/* ---------- blimp banner: E toggles the sweep speed (banner.css owns the animation; only its duration moves) */
-.slab.banner.is-on.is-docked::after { animation-duration: var(--sweep, 6s); }
-
-/* ---------- hologram: glitch veil in brighter cyan bands */
-.slab.hologram > .dock-veil { background: repeating-linear-gradient(0deg, rgb(0 229 255 / 0.45) 0 3px, transparent 3px 7px, rgb(255 255 255 / 0.25) 7px 8px); }
-
-/* ---------- stall cards: private-beta badge pulse */
-.card-body h3 small.is-pulse { animation: dock-pulse 0.3s steps(2) 3; }
-@keyframes dock-pulse { 50% { background: var(--sodium); color: #101008; box-shadow: 0 0 14px var(--sodium); } }
-
-/* ---------- departures board: row cursor + BOARDED flap (flap-board.css draws the rows; these are the docked states) */
-.slab.is-docked .actions a.is-sel { box-shadow: inset 5px 0 0 var(--sel, var(--yellow)), 0 0 14px color-mix(in srgb, var(--sel, var(--yellow)) 25%, transparent); }
-.slab.flap-board { --sel: #ffb000; }
-.slab.flap-board.is-docked .actions a.is-sel { background: #1a1d27; color: #fff3d0; }
-.slab.flap-board.is-docked .actions a[data-status="BOARDED"]::after { color: #ffb000; }
-.slab.flap-board.is-docked .actions a.is-flip::before { animation: dock-flap 0.12s linear 4 both; animation-delay: 0s; }
-@keyframes dock-flap { from { transform: rotateX(0); } to { transform: rotateX(-180deg); } }
+/* ---------- projects: the "showcase only" line / private badge pulses when Enter can't open a repo */
+.sheet .is-pulse { animation: dock-pulse 0.3s steps(2) 3; }
+@keyframes dock-pulse { 50% { background: #ffb000; color: #101008; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .slab.is-glitch > .dock-veil, .slab .term-out.is-typing, .slab .page.is-in, .ch-badge.is-new,
-  .card-body h3 small.is-pulse, .slab.flap-board.is-docked .actions a.is-flip::before { animation: none; }
-  .slab .term-out, .slab .page.is-cur { clip-path: inset(0); }
+  .is-glitch > .dock-veil, .sheet .term-out.is-typing, .sheet .term-out.is-typing::after, .sheet .page.is-in, .sheet .is-docked .actions a.is-flip, .sheet .is-pulse { animation: none; }
+  .sheet .term-out { clip-path: inset(0); }
 }

@@ -1,52 +1,135 @@
-/* Campus street terminal: amber phosphor CRT on near-black; lines type themselves in when the window opens.
-   Never animate or set transform / opacity / filter on `.slab.terminal` itself: CSS3DRenderer writes those
-   inline every frame. Children and pseudo-elements are fine. */
-.slab.terminal {
-  background: #070603;
-  color: #ffb000;
-  font-family: var(--mono);
-  font-size: 18px;
-  line-height: 1.4;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 6px rgb(255 176 0 / 0.6);
-  border: 1px solid #3a2a08;
-  box-shadow: none;
+/* The terminal look inside the session overlay (`.sheet`, terminal-ui.css): every section's DOM — the slabs, the project
+   cards, the LED-wall channels — restyled as amber phosphor mono. `> ` kickers and rows, `## ` headings, `[ chips ]`,
+   departure rows as dark tiles, project cards as directory rows with a detail view. Scoped under `.sheet` so the flat
+   page (html.no-3d) keeps night.css's document look. The in-scene boards (slabcanvas.ts) paint the same vocabulary. */
+.sheet .slab, .sheet .slab.job, .sheet .slab.contact-slab, .sheet .stack {
+  width: auto; max-width: none; min-height: 0; margin: 0; padding: 0; display: block;
+  background: none; border: 0; box-shadow: none; color: inherit; font: inherit; text-shadow: inherit;
 }
-.slab.terminal::before { border-color: #ffb000; }
-/* Scanlines + vignette over the whole screen (replaces the bottom-right corner bracket). */
-.slab.terminal::after {
-  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
-  background:
-    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.32) 0 1px, transparent 1px 3px),
-    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55));
-}
-.slab.terminal h2 { font-family: var(--mono); font-size: 28px; letter-spacing: 0; color: #ffd27a; }
-.slab.terminal .kicker, .slab.terminal h3 { color: #7dff9a; text-shadow: 0 0 6px rgb(125 255 154 / 0.5); }
-.slab.terminal .kicker::before { content: '> '; }
-.slab.terminal .meta { color: rgb(255 176 0 / 0.75); }
-.slab.terminal .team { color: rgb(255 176 0 / 0.75); }
-/* Outside markers would be clipped by the typed reveal, so the prompt is an inline glyph instead. */
-.slab.terminal .bullets { list-style: none; padding-left: 0; }
-.slab.terminal .bullets li::before { content: '> '; color: #7dff9a; }
-.slab.terminal .chips li { border: 1px solid #ffb000; border-radius: 0; color: #ffb000; }
+.sheet .slab::before, .sheet .slab::after { display: none; }
+.sheet .slab header { margin: 0 0 14px; padding: 0 0 10px; border-bottom: 1px dashed rgb(255 176 0 / 0.3); }
+.sheet .kicker { display: block; font: 500 13px/1.4 var(--mono); letter-spacing: 0.2em; color: #7dff9a; text-shadow: 0 0 6px rgb(125 255 154 / 0.5); }
+.sheet .kicker::before { content: '> '; }
+.sheet .slab h2 { margin: 4px 0 6px; font: 500 26px/1.15 var(--mono); letter-spacing: 0; color: #ffd27a; }
+.sheet .slab h2::after { content: '▮'; margin-left: 0.15em; animation: term-blink 1s steps(1) infinite; }
+.sheet .slab .meta { gap: 2px 16px; font-size: 13px; letter-spacing: 0.06em; color: rgb(255 176 0 / 0.75); }
+.sheet .slab .meta span + span::before { content: '· '; }
+.sheet .slab .team { margin: 4px 0 0; font-size: 14px; color: rgb(255 176 0 / 0.75); }
+.sheet .slab h3 { margin: 12px 0 6px; font: 500 12px/1.4 var(--mono); letter-spacing: 0.2em; color: #7dff9a; text-shadow: 0 0 6px rgb(125 255 154 / 0.5); }
+.sheet .slab h3::before { content: '## '; opacity: 0.8; }
+.sheet .cols { display: block; }
+.sheet .bullets { list-style: none; margin: 0; padding: 0; }
+.sheet .bullets li { margin: 0 0 4px; padding: 3px 8px 3px 26px; text-indent: -18px; }
+.sheet .bullets li::before { content: '> '; color: #7dff9a; }
+.sheet .chips { gap: 4px 6px; }
+.sheet .chips li { padding: 3px 4px; border: 0; border-radius: 0; font: inherit; font-size: 13px; color: #ffb000; }
+.sheet .chips li::before { content: '[ '; color: rgb(255 176 0 / 0.5); }
+.sheet .chips li::after { content: ' ]'; color: rgb(255 176 0 / 0.5); }
+.sheet .slab .lede { margin: 0 0 14px; font-size: 14px; color: #ffd9a0; }
 
-/* Typed reveal: every line starts clipped and is uncovered left-to-right in steps, staggered by --i. */
-.slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { clip-path: inset(0 100% 0 0); }
-.slab.terminal.is-on :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) {
-  animation: type-in 0.5s steps(18) forwards;
-  animation-delay: calc(var(--i, 0) * 110ms);
-}
-@keyframes type-in { to { clip-path: inset(0); } }
-.slab.terminal.is-on h2::after { content: '▮'; margin-left: 0.15em; animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-/* CRT switch-on instead of the holo glitch (clip-path only). */
-.slab.terminal.is-on { animation: crt-on 0.25s steps(6); }
-@keyframes crt-on { from { clip-path: inset(49% 0 49% 0); } to { clip-path: inset(0); } }
+/* ---------- tabs (dock.ts `tabs()`): poster pages, LED-wall channels */
+.term-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.term-tabs li { padding: 3px 12px; border: 1px solid rgb(255 176 0 / 0.5); font-size: 12px; letter-spacing: 0.18em; color: rgb(255 176 0 / 0.8); }
+.term-tabs li.is-cur { background: #ffb000; color: #101008; text-shadow: none; }
 
+/* ---------- departures (contact): the links as rows — label left, status right (data-status), dark tiles */
+.sheet .slab .actions { display: grid; gap: 6px; margin: 4px 0 0; }
+.sheet .slab .actions a {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0 10px; padding: 10px 16px;
+  background: #111319; color: #ffb000; border: 0; border-radius: 0; box-shadow: none; text-decoration: none; text-shadow: inherit;
+  font: 500 17px/1.2 var(--mono); letter-spacing: 0.12em; transform: none; transition: none;
+}
+.sheet .slab .actions a::before { content: '> '; color: #7dff9a; }
+.sheet .slab .actions a::after {
+  content: attr(data-status); position: static; inset: auto; z-index: auto; border-radius: 0; background: none;
+  font-size: 12px; letter-spacing: 0.18em; color: #7dff9a;
+}
+.sheet .slab .actions a:hover { color: #ffd27a; }
+
+/* ---------- LED-wall channels (`data-ch` on the slab, megascreen.ts): JOB (1) is the section, AD (2), SYSTEM (3) */
+.sheet .ch { display: none; position: relative; }
+.sheet .slab[data-ch="2"] :is(header, .bullets), .sheet .slab[data-ch="3"] :is(header, .bullets) { display: none; }
+.sheet .slab[data-ch="2"] .ch-ad, .sheet .slab[data-ch="3"] .ch-sys { display: flex; }
+/* AD: a video feed in a bracketed frame — the picture stays a picture, the caption is terminal type. */
+.sheet .ch-ad {
+  flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 6px; min-height: 240px; padding: 18px 20px;
+  border: 1px solid #3a2a08; background: #04050a url('/night/ads/ad-1.webp') center 28% / cover no-repeat;
+}
+.sheet .ch-ad::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 40%, rgb(4 5 10 / 0.92)), repeating-linear-gradient(0deg, rgb(0 0 0 / 0.25) 0 1px, transparent 1px 3px); }
+.sheet .ch-ad::after { content: '> CH 2 · AD FEED · NEO-CHROMA'; position: absolute; left: 20px; top: 14px; font-size: 11px; letter-spacing: 0.2em; color: #7dff9a; }
+.sheet .ad-brand { position: relative; font: 700 44px/1 var(--font-display); letter-spacing: 0.04em; color: #fff; text-shadow: 0 0 22px var(--cyan), 0 0 4px #fff; }
+.sheet .ad-line { position: relative; font: 500 12px/1.3 var(--mono); letter-spacing: 0.22em; color: #ffd27a; }
+/* SYSTEM: the wall profiles itself — a live table (megascreen.ts writes the dd's four times a second). */
+.sheet .ch-sys { flex-direction: column; gap: 14px; }
+.sheet .sys-title { font-size: 13px; letter-spacing: 0.3em; color: #7dff9a; }
+.sheet .sys-title::before { content: '●'; margin-right: 10px; color: #ff2030; animation: term-blink 1.2s steps(1) infinite; }
+.sheet .sys { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin: 0; }
+.sheet .sys dt { font-size: 11px; letter-spacing: 0.24em; color: rgb(255 176 0 / 0.7); }
+.sheet .sys dt::before { content: '## '; opacity: 0.8; }
+.sheet .sys dd { margin: 2px 0 0; font: 500 34px/1 var(--mono); color: #ffd27a; font-variant-numeric: tabular-nums; }
+.sheet .sys-note { margin: 0; font-size: 13px; color: #ffd9a0; }
+.sheet .sys-note::before { content: '> '; color: #7dff9a; }
+
+/* ---------- blimp ticker (blimp.ts): the bullets as a marquee; E toggles --sweep (slow / fast) */
+.term-ticker { margin: 14px 0 0; padding: 8px 0; border-top: 1px dashed rgb(255 176 0 / 0.3); border-bottom: 1px dashed rgb(255 176 0 / 0.3); overflow: hidden; white-space: nowrap; font-size: 13px; color: #ffd27a; }
+.term-ticker > span { display: inline-block; padding-left: 100%; animation: term-marquee var(--sweep, 18s) linear infinite; }
+@keyframes term-marquee { to { transform: translateX(-100%); } }
+
+/* ---------- projects: cards as directory rows; Enter opens one as the detail view (stall.ts) */
+.sheet .stack { display: grid; gap: 4px; }
+.sheet .card {
+  width: auto; padding: 4px 8px 4px 26px; text-indent: -18px; position: relative;
+  background: none; border: 0; box-shadow: none; color: inherit; cursor: default;
+}
+.sheet .card::before { content: '> '; position: static; width: auto; height: auto; background: none; color: #7dff9a; }
+.sheet .card .shot { display: none; }
+.sheet .card-body { display: inline; padding: 0; font-size: inherit; line-height: inherit; }
+.sheet .card-body h3 { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: inherit; text-transform: inherit; }
+.sheet .card-body h3 small { margin-left: 8px; padding: 0; border: 0; font: inherit; font-size: 11px; letter-spacing: 0.18em; color: #7dff9a; }
+.sheet .card-body h3 small::before { content: '['; } .sheet .card-body h3 small::after { content: ']'; }
+.sheet .card-body .tagline { display: inline; margin: 0; font: inherit; letter-spacing: inherit; color: rgb(255 176 0 / 0.7); }
+.sheet .card-body .tagline::before { content: ' · '; }
+.sheet .card-body .desc, .sheet .card-body .links { display: none; }
+.sheet .card-body .chips { display: block; margin: 2px 0 0; text-indent: 0; font-size: 11px; color: rgb(255 176 0 / 0.55); }
+.sheet .card-body .chips li { display: inline; padding: 0 6px 0 0; font-size: inherit; color: inherit; }
+.sheet .card-body .chips li::before { content: ''; } .sheet .card-body .chips li::after { content: ' /'; }
+.sheet .card-body .chips li:last-child::after { content: ''; }
+/* detail view */
+.sheet .stack.is-detail .card:not(.is-open) { display: none; }
+.sheet .card.is-open { padding: 0; text-indent: 0; }
+.sheet .card.is-open::before { content: none; }
+.sheet .card.is-open .shot { display: block; position: relative; margin: 0 0 14px; border: 1px solid #3a2a08; }
+.sheet .card.is-open .shot::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 3px); }
+.sheet .card.is-open .shot::after { content: '> FB0 · 1280×800'; position: absolute; left: 10px; bottom: 8px; padding: 2px 8px; background: rgb(7 6 3 / 0.85); font-size: 11px; letter-spacing: 0.18em; color: #7dff9a; }
+.sheet .card.is-open img { display: block; width: 100%; height: auto; max-height: 280px; object-fit: cover; object-position: top; border: 0; background: #0b0906; }
+.sheet .card.is-open .card-body { display: block; }
+.sheet .card.is-open .card-body h3 { display: flex; align-items: baseline; gap: 12px; margin: 0 0 4px; font-size: 24px; color: #ffd27a; }
+.sheet .card.is-open .card-body h3::before { content: '> '; color: #7dff9a; }
+.sheet .card.is-open .card-body .tagline { display: block; margin: 0 0 10px; color: rgb(255 176 0 / 0.75); }
+.sheet .card.is-open .card-body .tagline::before { content: ''; }
+.sheet .card.is-open .card-body .desc { display: block; margin: 0 0 12px; font-size: 14px; color: #ffd9a0; text-transform: none; letter-spacing: 0.02em; }
+.sheet .card.is-open .card-body .chips { display: flex; margin: 0; font-size: 13px; color: #ffb000; }
+.sheet .card.is-open .card-body .chips li { display: block; padding: 3px 4px; }
+.sheet .card.is-open .card-body .chips li::before { content: '[ '; color: rgb(255 176 0 / 0.5); }
+.sheet .card.is-open .card-body .chips li::after { content: ' ]'; color: rgb(255 176 0 / 0.5); }
+.sheet .card.is-open .card-body .links { display: flex; gap: 14px; margin: 14px 0 0; font: 500 13px/1.4 var(--mono); letter-spacing: 0.16em; }
+.sheet .card.is-open .card-body .links a { padding: 6px 12px; background: #7dff9a; color: #101008; text-decoration: none; text-shadow: none; }
+.sheet .card.is-open .card-body .links a:hover { background: #ffb000; }
+.sheet .card.is-open .card-body .muted { padding: 6px 12px; border: 1px solid rgb(255 176 0 / 0.5); font: inherit; color: rgb(255 176 0 / 0.75); }
+.sheet .card.is-in { animation: dock-wipe 0.35s steps(14) both; }
+
+@media (max-width: 760px), (pointer: coarse) {
+  .sheet .slab h2 { font-size: 20px; }
+  .sheet .slab .meta { font-size: 11px; }
+  .sheet .chips li, .sheet .bullets li { font-size: 12px; }
+  .sheet .slab .actions a { font-size: 15px; padding: 9px 12px; }
+  .sheet .sys dd { font-size: 26px; }
+  .sheet .ad-brand { font-size: 34px; }
+  .sheet .card.is-open .card-body h3 { font-size: 19px; }
+  .sheet .card.is-open img { max-height: 160px; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .slab.terminal.is-on,
-  .slab.terminal.is-on h2::after,
-  .slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { animation: none; }
-  .slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { clip-path: inset(0); }
+  .sheet .slab h2::after, .sheet .sys-title::before, .term-ticker > span, .sheet .card.is-in { animation: none; }
+  .term-ticker > span { padding-left: 0; white-space: normal; }
+  .term-ticker { white-space: normal; }
 }

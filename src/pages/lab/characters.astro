@@ -1,0 +1,40 @@
+---
+// Rig QA viewer (no city): see src/scene/night/rigview.ts for the query modes.
+//   /lab/characters?name=agent&clip=walk&view=front
+//   /lab/characters?sheet=all&clip=walk&view=front&t=0.3&audit=1
+//   /lab/characters?turntable=agent
+//   /lab/characters?audit=all           → window.__audit
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Night City · rig QA</title>
+    <style is:global>
+      html, body { margin: 0; background: #0b0d14; color: #cfe; font: 12px/1.45 ui-monospace, Menlo, monospace; overflow: hidden; }
+      #stage { position: fixed; inset: 0; }
+      #stage canvas { display: block; }
+      #hud { position: fixed; left: 10px; bottom: 10px; padding: 8px 10px; background: rgb(8 10 20 / .78); border: 1px solid #00e5ff55; border-radius: 6px; white-space: pre-wrap; max-width: min(96vw, 1200px); max-height: 46vh; overflow: auto; }
+      #hud b { color: #00e5ff; }
+      .labels { position: absolute; inset: 0; display: grid; pointer-events: none; }
+      .label { padding: 4px 6px; align-self: start; font-size: 11px; color: #dfe; text-shadow: 0 1px 2px #000; border-left: 1px solid #ffffff18; border-top: 1px solid #ffffff18; }
+      .label b { color: #00e5ff; }
+      .label.is-flagged b { color: #ff9f43; }
+      .label s { color: #ff2bd6; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="hud">loading…</div>
+    <script>
+      import { mountRigView } from '../../scene/night/rigview';
+      const hud = document.getElementById('hud')!;
+      mountRigView(document.getElementById('stage')!, hud).catch((e) => {
+        hud.textContent = `error: ${e?.message ?? e}`;
+        console.error(e);
+        (window as any).__view = { ready: true, error: String(e?.message ?? e) };
+      });
+    </script>
+  </body>
+</html>

@@ -10,7 +10,11 @@ export interface Stall {
   pos: Vec3;
   /** Point to face while stalled (a stall, a partner, the camera path). */
   face?: Vec3;
-  /** Clip to play while stalled: idle | talk | wave | sit (falls back to idle). */
+  /**
+   * Clip to play while stalled: idle | talk | wave | sit. Every rig has idle; talk + wave ship with vendor,
+   * punk, salaryman and geisha-bot (rigs.ts / README). A stall asking for a clip waits for a walker whose
+   * rig owns it (characters.ts createCrowd), then falls back to idle after 20 s.
+   */
   clip?: string;
 }
 

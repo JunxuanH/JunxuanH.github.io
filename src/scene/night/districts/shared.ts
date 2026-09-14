@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs, uniform, glowMaterial } from '../tsl';
 import { PAL, rng } from '../palette';
 import { neonText } from '../signs';
@@ -79,9 +80,13 @@ export function createFlameSign(label: string, rows: number, seed: number, tint:
   const group = new THREE.Group();
   const backing = new THREE.Mesh(new THREE.BoxGeometry(w + 1.0, h + 1.0, 0.3), new THREE.MeshStandardNodeMaterial({ color: 0x05060c, roughness: 0.6 }));
   group.add(backing);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 1.2, h + 1.2, 0.2), glowMaterial(frameTint, 1.6));
-  frame.position.z = -0.1;
-  group.add(frame);
+  // Neon rim around the backing (four bars in the backing's own depth): a full glowing box behind the backing read as a
+  // white plate from behind and washed the whole sign out under bloom from the avenue.
+  const rim = mergeGeometries([
+    new THREE.BoxGeometry(w + 1.4, 0.2, 0.3).translate(0, h / 2 + 0.6, 0), new THREE.BoxGeometry(w + 1.4, 0.2, 0.3).translate(0, -h / 2 - 0.6, 0),
+    new THREE.BoxGeometry(0.2, h + 1.0, 0.3).translate(w / 2 + 0.6, 0, 0), new THREE.BoxGeometry(0.2, h + 1.0, 0.3).translate(-w / 2 - 0.6, 0, 0),
+  ], false)!;
+  group.add(new THREE.Mesh(rim, glowMaterial(frameTint, 1.3)));
   const r = rng(seed);
   const barGeo = new THREE.BoxGeometry(1, 1, 0.25);
   const cols = [PAL.cyan, tint, 0xdfe8ff];
