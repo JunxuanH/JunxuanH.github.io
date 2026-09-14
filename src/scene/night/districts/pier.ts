@@ -46,7 +46,12 @@ function lighthouse(tint: number) {
   const cap = new THREE.Mesh(new THREE.ConeGeometry(1.9, 1.6, 12).translate(0, 17, 0), new THREE.MeshStandardNodeMaterial({ color: 0x14161c }));
   // Rotating beam: an additive cone that sweeps. Narrow, faint and fading along its length: a wide bright
   // wedge read as a solid white shape from the pier.
-  const beam = new THREE.Mesh(new THREE.ConeGeometry(3.2, 90, 16, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -45), beamMaterial(tint, 0.14, 0.25, 0.9));
+  // Apex at the lamp, widening 90 u out along −z (it was rotated the other way: wide at the lamp). v flipped so the
+  // beam shader (bright at uv.y 0) is brightest at the lamp.
+  const beamGeo = new THREE.ConeGeometry(3.2, 90, 16, 1, true).rotateX(Math.PI / 2).translate(0, 0, -45);
+  const bu = beamGeo.attributes.uv;
+  for (let i = 0; i < bu.count; i++) bu.setY(i, 1 - bu.getY(i));
+  const beam = new THREE.Mesh(beamGeo, beamMaterial(tint, 0.14, 0.25, 0.9));
   beam.position.y = 15.1;
   const pivot = new THREE.Group();
   pivot.add(beam);

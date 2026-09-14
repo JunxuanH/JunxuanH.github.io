@@ -155,7 +155,7 @@ export async function start(root: HTMLElement) {
   if (water) scene.add(water);
   scene.add(createBridge());
   scene.add(createQuay(QUAY_Z, ground));
-  const billboard = createBillboard('Ivan He', 'GPU Software Performance Engineer');
+  const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp' }); // the tower's ad (design/night/prompts/ad-shellworks.txt)
   billboard.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5);
   scene.add(billboard);
 
@@ -285,7 +285,10 @@ export async function start(root: HTMLElement) {
     journey,
     cover: cine.cover,
     onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
-    onSection: (id) => navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === id)),
+    onSection: (id) => {
+      navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === id));
+      if (id !== 'city') document.documentElement.classList.add('has-entered'); // the nav appears once the visitor enters
+    },
     onEnterWalk: (id) => {
       const s = SPAWN[id];
       playerPos.fromArray(s.pos);
@@ -437,7 +440,28 @@ export async function start(root: HTMLElement) {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
   const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
-  addEventListener('pointermove', (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1));
+  addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1); });
+  // Phones: device tilt drives the same parallax as the mouse, a little stronger. iOS only grants motion access from a
+  // user gesture, so the permission is requested on the first touch; Android delivers events directly. `?nogyro` opts out.
+  if (matchMedia('(pointer: coarse)').matches && !reducedMotion && !params.has('nogyro') && 'DeviceOrientationEvent' in window) {
+    rig.parallaxScale = 2.2;
+    let base: { x: number; y: number } | null = null;
+    const onTilt = (e: DeviceOrientationEvent) => {
+      if (e.beta == null || e.gamma == null) return;
+      const angle = Number(screen.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0);
+      let x = e.gamma, y = e.beta; // portrait: gamma = roll left/right, beta = pitch toward/away
+      if (angle === 90) { x = e.beta; y = -e.gamma; } else if (angle === -90 || angle === 270) { x = -e.beta; y = e.gamma; }
+      if (!base) base = { x, y };
+      base.x += (x - base.x) * 0.004; base.y += (y - base.y) * 0.004; // slow re-centre: the neutral grip drifts with the hand
+      pointer.set(THREE.MathUtils.clamp((x - base.x) / 16, -1, 1), THREE.MathUtils.clamp((y - base.y) / 16, -1, 1));
+    };
+    const listen = () => addEventListener('deviceorientation', onTilt);
+    const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+    if (typeof DOE.requestPermission === 'function') {
+      addEventListener('pointerdown', () => { DOE.requestPermission!().then((s) => { if (s === 'granted') listen(); }).catch(() => {}); }, { once: true, capture: true });
+    } else listen();
+    (window as any).__tilt = (beta: number, gamma: number) => onTilt({ beta, gamma } as DeviceOrientationEvent); // probes
+  }
 
   const clock = new THREE.Timer();
   const perf = { cpu: 0, frames: 0, renderer, dpr };
@@ -450,7 +474,7 @@ export async function start(root: HTMLElement) {
     else if (ema < 12.5) { slow = 0; if (++fast > 240 && dpr < dprCap) { dpr = Math.min(dprCap, dpr + 0.05); fast = 0; apply(); } }
     else { slow = 0; fast = 0; }
   };
-  const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); perf.dpr = dpr; };
+  const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(root.clientWidth || innerWidth, root.clientHeight || innerHeight); perf.dpr = dpr; };
   (window as any).__perf = perf;
   (window as any).__scene = scene;
   (window as any).__camera = camera;
@@ -526,13 +550,24 @@ export async function start(root: HTMLElement) {
     perf.cpu += performance.now() - t0;
     perf.frames++;
   });
-  addEventListener('resize', () => {
-    camera.aspect = innerWidth / innerHeight;
+  // Size from the stage's own box (fixed, inset 0) and re-check on every way a phone changes it: window resize, the
+  // visual viewport (toolbars, zoom), orientation, and the stage box itself.
+  let lastW = 0, lastH = 0;
+  const resize = () => {
+    const w = root.clientWidth || innerWidth, h = root.clientHeight || innerHeight;
+    if (w === lastW && h === lastH) return;
+    lastW = w; lastH = h;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
     heroScale();
     renderer.setPixelRatio(dpr);
-    renderer.setSize(innerWidth, innerHeight);
-  });
+    renderer.setSize(w, h);
+  };
+  addEventListener('resize', resize);
+  visualViewport?.addEventListener('resize', resize);
+  addEventListener('orientationchange', () => setTimeout(resize, 300));
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(root);
+  resize();
 
   document.documentElement.classList.add('is-3d');
   return { tier, isWebGPU, towers: kit?.count ?? 0, screens: kit?.screens ?? 0, cars: traffic.count, ads: ads.count, sections: SECTIONS.length };

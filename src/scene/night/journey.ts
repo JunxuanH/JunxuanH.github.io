@@ -192,6 +192,8 @@ const bank: [number, number] = [0, 0];
 let prevP: number | null = null, pRate = 0;
 
 export const rig = {
+  /** Parallax amplitude multiplier (phones driving it by device tilt use more). */
+  parallaxScale: 1,
   /** True while a nav pan is in flight: the pointer parallax fades out so the shot reads as one camera move. */
   navFlight: false,
   /** Forget motion history (call when entering ride mode after a walk or a teleport, so no stale dp/dt leaks into the bank/lead). */
@@ -227,7 +229,7 @@ export const rig = {
     spring(par.gain, this.navFlight ? 0 : 1, 5, dt);
     spring(par.x, pointer.x, 7, dt);
     spring(par.y, pointer.y, 7, dt);
-    const g = par.gain[0];
+    const g = par.gain[0] * this.parallaxScale;
     camera.position.set(pos.x + par.x[0] * PARALLAX.x * g, pos.y + Math.sin(t * 0.6) * 0.1 - par.y[0] * PARALLAX.y * g, pos.z);
     camera.lookAt(look);
 

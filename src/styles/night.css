@@ -18,7 +18,13 @@ html, body { margin: 0; background: var(--asphalt); color: var(--ink); font-fami
 a { color: inherit; }
 
 .stage { position: fixed; inset: 0; z-index: 0; touch-action: none; }
-.stage canvas { display: block; }
+/* The canvas always fills the stage: three writes a pixel size inline, which went stale on iOS after toolbar/zoom
+   changes and left a black strip. main.ts also resizes from the stage's own box. */
+.stage canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* Hero: the nav waits until the visitor enters the city (main.ts adds html.has-entered on the first pan). */
+.nav { transition: opacity 0.5s ease, transform 0.5s ease, visibility 0s linear 0s; }
+html.is-3d:not(.has-entered) .nav { opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-50%, -14px); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s; }
 
 /* The 3D page never scrolls: the nav pans the camera and the character walks (scene/night/nav.ts). The plain-links
    footer only exists for the flat page; in the city the departures board carries the contact links. */

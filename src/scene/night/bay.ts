@@ -9,7 +9,7 @@ import { groundMaterial } from './streets';
 
 /**
  * Hero bay: dark water with a planar reflection of the skyline, a cable-stayed bridge the camera
- * flies over, and the "IVAN HE" LED billboard on the central tower.
+ * flies over, and the LED billboard on the central tower (a cyberpunk ad, `createBillboard({ image })`).
  */
 /**
  * Bay water: a subdivided plane displaced by a sum of sines (real swell, analytic normals so the
@@ -172,29 +172,44 @@ export function createBridge() {
 }
 
 /** Big LED billboard: canvas text → LED-dot mask, chromatic offset, scanlines, rare glitch band. */
-export function createBillboard(name: string, subtitle: string, w = 36, h = 18) {
+/**
+ * LED billboard: a 2048×1024 canvas — either a name + subtitle in the site's type (the blimp's banner) or a full-bleed
+ * image (`{ image }`, cover-fit; the tower's ad) — behind one LED-dot / chromatic / scanline / glitch material, so both
+ * faces share the program. The image loads through the default manager (lite URL rewrite, boot progress) over a dark
+ * placeholder.
+ */
+export function createBillboard(face: string | { image: string }, subtitle = '', w = 36, h = 18) {
   const c = document.createElement('canvas');
   c.width = 2048; c.height = 1024;
   const g = c.getContext('2d')!;
   g.fillStyle = '#05060c';
   g.fillRect(0, 0, c.width, c.height);
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  g.fillStyle = '#eafcff';
-  g.font = '700 400px "Rajdhani", "Chakra Petch", "Impact", sans-serif';
-  g.fillText(name.toUpperCase(), c.width / 2, c.height * 0.42);
-  g.fillStyle = '#00e5ff';
-  g.font = '500 92px "IBM Plex Mono", ui-monospace, monospace';
-  g.fillText(subtitle.toUpperCase(), c.width / 2, c.height * 0.78);
-  // corner brackets
-  g.strokeStyle = '#00e5ff'; g.lineWidth = 12;
-  const b = 90, m = 60;
-  for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
-    const x0 = sx > 0 ? m : c.width - m, y0 = sy > 0 ? m : c.height - m;
-    g.beginPath(); g.moveTo(x0, y0 + sy * b); g.lineTo(x0, y0); g.lineTo(x0 + sx * b, y0); g.stroke();
-  }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
+  if (typeof face === 'string') {
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = '#eafcff';
+    g.font = '700 400px "Rajdhani", "Chakra Petch", "Impact", sans-serif';
+    g.fillText(face.toUpperCase(), c.width / 2, c.height * 0.42);
+    g.fillStyle = '#00e5ff';
+    g.font = '500 92px "IBM Plex Mono", ui-monospace, monospace';
+    g.fillText(subtitle.toUpperCase(), c.width / 2, c.height * 0.78);
+    // corner brackets
+    g.strokeStyle = '#00e5ff'; g.lineWidth = 12;
+    const b = 90, m = 60;
+    for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      const x0 = sx > 0 ? m : c.width - m, y0 = sy > 0 ? m : c.height - m;
+      g.beginPath(); g.moveTo(x0, y0 + sy * b); g.lineTo(x0, y0); g.lineTo(x0 + sx * b, y0); g.stroke();
+    }
+  } else {
+    new THREE.ImageLoader(THREE.DefaultLoadingManager).load(face.image, (img) => {
+      const k = Math.max(c.width / img.width, c.height / img.height); // cover-fit, centred
+      const dw = img.width * k, dh = img.height * k;
+      g.drawImage(img, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+      tex.needsUpdate = true;
+    }, undefined, () => console.warn('[night] billboard image failed', face.image));
+  }
 
   const mat = new THREE.MeshBasicNodeMaterial();
   const glitch = step(0.985, hash(floor(time.mul(7)))).mul(hash(floor(uv().y.mul(18)).add(floor(time.mul(7)))).sub(0.5)).mul(0.05);

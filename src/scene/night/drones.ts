@@ -116,8 +116,13 @@ export async function createDrones(opts: DronesOptions) {
         light.position.set(0, -0.1, 0);
         light.target.position.set(0, -20, 6);
         root.add(light, light.target);
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(3.2, 18, 20, 1, true), beamMaterial(0xdff2ff, 0.18, 0.1));
-        cone.rotation.x = Math.PI - 0.28;
+        // Apex at the drone, wide end on the ground ahead (tilted 16°). The beam shader is bright at uv.y 0, so v is
+        // flipped: brightest at the lamp, fading toward the pool of light. (Was rotated by π: wide at the drone.)
+        const beamGeo = new THREE.ConeGeometry(3.2, 18, 20, 1, true);
+        const bu = beamGeo.attributes.uv;
+        for (let i = 0; i < bu.count; i++) bu.setY(i, 1 - bu.getY(i));
+        const cone = new THREE.Mesh(beamGeo, beamMaterial(0xdff2ff, 0.18, 0.1));
+        cone.rotation.x = -0.28;
         cone.position.set(0, -9, 2.6);
         root.add(cone);
       }
