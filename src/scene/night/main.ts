@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { createContent } from './content';
+import { boot } from './boot';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -39,12 +40,18 @@ export async function start(root: HTMLElement) {
   const narrow = matchMedia('(max-width: 760px)').matches;
   const renderer = new THREE.WebGPURenderer({ antialias: false, powerPreference: 'high-performance' });
   await renderer.init();
+  boot.phase('renderer up', 0.05);
   const isWebGPU = (renderer.backend as any).isWebGPUBackend === true;
   // Default to medium on WebGPU: same look as high minus grain/CA/sharpen at roughly half the frame cost.
   const tier: Tier = (params.get('q') as Tier) || (isWebGPU ? 'med' : 'low');
   document.documentElement.dataset.tier = tier;
   document.documentElement.dataset.backend = isWebGPU ? 'webgpu' : 'webgl2';
-  renderer.setPixelRatio(Math.min(devicePixelRatio, tier === 'low' ? 1.0 : 1.25));
+  // Resolution is budgeted in pixels, not device ratio: a Retina desktop or a 3× phone would otherwise
+  // render 3–5× the pixels of a laptop. The governor below then trims/raises it from measured frame time.
+  const PIXEL_BUDGET = { high: 2.4e6, med: 1.7e6, low: 0.9e6 }[tier];
+  const dprCap = Math.min(devicePixelRatio, tier === 'low' ? 1.5 : 1.25, Math.sqrt(PIXEL_BUDGET / (innerWidth * innerHeight)));
+  let dpr = Number(params.get('dpr')) || Math.max(0.6, dprCap);
+  renderer.setPixelRatio(dpr);
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = Number(params.get('exp')) || 1.0;
@@ -75,6 +82,17 @@ export async function start(root: HTMLElement) {
   scene.environment = createEnvironment(renderer); // wet-surface reflections for puddles, glass, metal
   scene.environmentIntensity = 0.55;
   scene.add(createSky(tier));
+  // Phones / WebGL2 get a lighter city: half-res textures + 512 px signature towers from /night-lite,
+  // fewer rigs, no far crowd, no ad videos. The URL modifier covers every three loader (default manager).
+  const lite = tier === 'low' || narrow;
+  if (lite || params.has('lite')) {
+    THREE.DefaultLoadingManager.setURLModifier((url) => {
+      if (/^\/night\/(facades|ads|ground|signs|backdrop)\//.test(url) || /^\/night\/models\/tower-[a-d]\.glb$/.test(url)) return url.replace('/night/', '/night-lite/');
+      if (url === '/textures/waternormals.jpg') return '/night-lite/textures/waternormals.jpg';
+      return url;
+    });
+  }
+  boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e));
@@ -91,6 +109,7 @@ export async function start(root: HTMLElement) {
     loader.loadAsync('/night/facades/storefronts.jpg').then(srgb).catch(() => null),
   ]);
   const margin = SIDEWALK + 1;
+  boot.phase('raising the skyline', 0.22);
   const kit = params.has('nokit') ? null : createKitbash({
     tier, keepOut, atlas: params.has('noatlas') ? null : facadeTex, screens: screensTex, storefronts: storefrontTex,
     clear: (x, z, hw, hd) => Math.abs(x) - hw > AVENUE_HALF + margin && CROSS_Z.every((cz) => Math.abs(z - cz) - hd > CROSS_HALF + margin),
@@ -135,6 +154,7 @@ export async function start(root: HTMLElement) {
     { x: 72, y: 6.5, z: -238, yaw: 0.3, w: 3.5 }, { x: -20, y: 8, z: -70, yaw: Math.PI / 2, w: 4 }, { x: 20, y: 9, z: -140, yaw: -Math.PI / 2, w: 4 },
   ]);
   scene.add(signs);
+  if (lite) params.set('novideo', '1');
   const ads = await createAds([{ x: -12, y: 38, z: -70 }, { x: 14, y: 42, z: -104 }, { x: -14, y: 30, z: -168 }, { x: 16, y: 48, z: -180 }]);
   scene.add(ads.group);
   const traffic = await createTraffic([
@@ -153,6 +173,7 @@ export async function start(root: HTMLElement) {
   const rainCount = params.has('norain') ? 0 : { high: 5000, med: 2500, low: 0 }[tier];
   if (rainCount) scene.add(createRain(rainCount));
 
+  boot.phase('wiring the districts', 0.45);
   const districts = await createDistricts({
     content: {
       // The job slabs live on their own carriers (content.ts); the flame signs stay as short neon labels.
@@ -180,18 +201,28 @@ export async function start(root: HTMLElement) {
   const life: { update(dt: number, cam: THREE.Camera): void }[] = [];
   if (!params.has('nopeople')) {
     try {
-      const names = ['netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot'] as const;
-      const rigs = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await loadCharacter(n)]))) as Record<(typeof names)[number], Awaited<ReturnType<typeof loadCharacter>>>;
-      const kenney = await Promise.all(['character-male-a', 'character-female-b', 'character-male-c'].map((f) => loadKenney(f)));
+      boot.phase('waking the residents', 0.62);
+      const all = ['netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot'] as const;
+      const names = lite ? (['netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const) : all;
+      const rigs = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await loadCharacter(n)]))) as Partial<Record<(typeof all)[number], Awaited<ReturnType<typeof loadCharacter>>>>;
+      const kenney = lite ? [] : await Promise.all(['character-male-a', 'character-female-b', 'character-male-c'].map((f) => loadKenney(f)));
       for (const d of DISTRICT_CROWDS) {
-        const near = createCrowd({ path: d.path, assets: d.assets.map((n) => rigs[n]), count: d.count[tier], seed: 7 });
-        const far = createCrowd({ path: d.path, assets: kenney, count: d.count[tier], height: 1.6, seed: 11, cullDistance: 140 });
-        scene.add(near.group, far.group);
-        life.push(near, far);
+        const assets = d.assets.map((n) => rigs[n]).filter((a): a is NonNullable<typeof a> => !!a);
+        if (!assets.length) continue;
+        const near = createCrowd({ path: d.path, assets, count: d.count[tier], seed: 7 });
+        scene.add(near.group);
+        life.push(near);
+        if (kenney.length) {
+          const far = createCrowd({ path: d.path, assets: kenney, count: d.count[tier], height: 1.6, seed: 11, cullDistance: 140 });
+          scene.add(far.group);
+          life.push(far);
+        }
       }
-      const robots = createRobots({ asset: rigs['sec-bot'], patrols: PATROLS, height: 2.1, searchlight: tier !== 'low' });
-      scene.add(robots.group);
-      life.push(robots);
+      if (rigs['sec-bot']) {
+        const robots = createRobots({ asset: rigs['sec-bot'], patrols: PATROLS, height: 2.1, searchlight: tier !== 'low' });
+        scene.add(robots.group);
+        life.push(robots);
+      }
       const drones = await createDrones({ lanes: DRONE_LANES, tier });
       scene.add(drones.group);
       life.push(drones);
@@ -203,8 +234,9 @@ export async function start(root: HTMLElement) {
   bindAudioToggle(audio, document.querySelector('.audio-toggle'));
 
   // ---------- résumé content: slabs on their carriers (kiosk, bus stop, LED wall, blimp, hologram, stall, departures board)
+  boot.phase('mounting the résumé', 0.82);
   const content = await createContent({
-    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople'),
+    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople') && !lite, // carrier NPCs are desktop-only
     onFlap: () => audio.clack(6, 0.07),
   });
   for (const [x, y, z, c, i, d] of content.lights) lamp(x, y, z, c, i, d);
@@ -232,11 +264,13 @@ export async function start(root: HTMLElement) {
 
   // ---------- post
   const pipeline = createPost(renderer, scene, camera, tier);
+  boot.phase('first light', 0.94);
+  let firstFrame = true;
 
   // ---------- journey
   const journey = { p: Number(params.get('p')) || 0 };
   ScrollTrigger.create({
-    trigger: '.journey', start: 'top top', end: 'bottom bottom', scrub: 0.8,
+    trigger: '.journey', start: 'top top', end: 'bottom bottom', scrub: 0.4,
     onUpdate: (st) => { if (!params.has('p')) journey.p = st.progress; },
   });
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
@@ -244,7 +278,7 @@ export async function start(root: HTMLElement) {
   const scrollTo = (id: SectionId) => {
     const y = journeyEl.offsetTop + sectionStart(id) * (journeyEl.offsetHeight - innerHeight) + 2;
     if (reducedMotion) window.scrollTo(0, y);
-    else gsap.to(window, { scrollTo: y, duration: 1.4, ease: 'power2.inOut' });
+    else gsap.to(window, { scrollTo: y, duration: 1.0, ease: 'power2.inOut' });
   };
   navLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); scrollTo(a.dataset.section as SectionId); }));
   let currentSection: SectionId | null = null;
@@ -254,19 +288,31 @@ export async function start(root: HTMLElement) {
 
   const clock = new THREE.Timer();
   const pos = new THREE.Vector3(), look = new THREE.Vector3(), off = new THREE.Vector3();
-  const perf = { cpu: 0, frames: 0, renderer };
+  const perf = { cpu: 0, frames: 0, renderer, dpr };
+  // Adaptive resolution: drop the pixel ratio when frames run long, creep back up when there is headroom.
+  let ema = 16, slow = 0, fast = 0;
+  const govern = (dt: number) => {
+    if (params.has('dpr')) return;
+    ema += (dt * 1000 - ema) * 0.1;
+    if (ema > 24) { fast = 0; if (++slow > 30 && dpr > 0.6) { dpr = Math.max(0.6, dpr - 0.1); slow = 0; apply(); } }
+    else if (ema < 12.5) { slow = 0; if (++fast > 240 && dpr < dprCap) { dpr = Math.min(dprCap, dpr + 0.05); fast = 0; apply(); } }
+    else { slow = 0; fast = 0; }
+  };
+  const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); perf.dpr = dpr; };
   (window as any).__perf = perf;
+  (window as any).__scene = scene;
   renderer.setAnimationLoop(() => {
     clock.update();
     const t = reducedMotion ? 0 : clock.getElapsed();
     const dt = Math.min(clock.getDelta(), 0.05);
+    govern(dt);
     eased.lerp(pointer, 0.05);
     const p = journey.p;
     content.update(p, t, dt); // carriers first so the blimp's displacement is current
     poseAt(p, pos, look);
     content.followOffset(p, off);
     pos.add(off); look.add(off);
-    camera.position.set(pos.x + eased.x * 1.2, pos.y + Math.sin(t * 0.6) * 0.3 - eased.y * 0.5, pos.z);
+    camera.position.set(pos.x + eased.x * 1.2, pos.y + Math.sin(t * 0.6) * 0.1 - eased.y * 0.5, pos.z); // small bob: the CSS3D slabs re-rasterize when their screen scale changes
     camera.lookAt(look);
     camera.rotation.z -= eased.x * 0.02;
     heroCopy.style.opacity = String(THREE.MathUtils.clamp(1 - (p - 0.05) * 25, 0, 1));
@@ -277,7 +323,7 @@ export async function start(root: HTMLElement) {
       currentSection = sec;
       navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === sec));
     }
-    traffic.update(dt, t);
+    traffic.update(dt, t, camera.position);
     ads.update(t);
     for (const l of life) l.update(dt, camera);
     districts.update(t, p);
@@ -287,12 +333,14 @@ export async function start(root: HTMLElement) {
     const t0 = performance.now();
     pipeline.render();
     cssRenderer.render(scene, camera);
+    if (firstFrame) { firstFrame = false; boot.done(); }
     perf.cpu += performance.now() - t0;
     perf.frames++;
   });
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight);
     cssRenderer.setSize(innerWidth, innerHeight);
   });

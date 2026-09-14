@@ -29,6 +29,31 @@ const win = (k: string) => WINDOWS[k].join(',');
   </head>
   <body>
     <a class="skip" href="#education">Skip to content</a>
+    <div id="boot" class="boot" role="status" aria-live="polite" aria-busy="true">
+      <div class="boot-inner">
+        <p class="boot-kicker">Night City · boot sequence</p>
+        <p class="boot-wordmark" data-text="IVAN HE">IVAN HE</p>
+        <div class="boot-bar" aria-hidden="true"><i></i></div>
+        <p class="boot-pct" aria-hidden="true">00%</p>
+        <ol class="boot-log" aria-hidden="true"><li class="is-live">downloading the city</li></ol>
+        <p class="boot-msg"></p>
+        <a class="boot-skip" href="?flat">Skip the render → text version</a>
+        <p class="boot-hint">Heavy on phones — the text version has everything.</p>
+      </div>
+    </div>
+    <script is:inline>
+      // Runs before the app bundle arrives: creep the boot bar toward 12% so the download phase isn't a frozen screen.
+      (function () {
+        var bar = document.querySelector('.boot-bar i'), pct = document.querySelector('.boot-pct'), t0 = Date.now();
+        function tick() {
+          if (!bar || document.documentElement.classList.contains('is-booted') || bar.dataset.owned) return;
+          var s = Date.now() - t0, v = 12 * (1 - Math.exp(-s / 5000));
+          bar.style.width = v.toFixed(1) + '%'; pct.textContent = String(Math.round(v)).padStart(2, '0') + '%';
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      })();
+    </script>
     <nav class="nav" aria-label="Primary">
       {sections.map((s) => <a href={`#${s.id}`} data-section={s.id}>{s.name}{s.label && <small>{s.label}</small>}</a>)}
       <button class="audio-toggle" type="button" aria-pressed="false" aria-label="Unmute ambient sound"><span class="on">♪</span><span class="off">♪̸</span></button>
@@ -126,13 +151,15 @@ const win = (k: string) => WINDOWS[k].join(',');
 
     <script>
       import { start } from '../scene/night/main';
+      import { boot } from '../scene/night/boot';
       const stage = document.getElementById('stage')!;
       const flat = new URLSearchParams(location.search).has('flat') || !('WebGLRenderingContext' in window);
-      if (flat) document.documentElement.classList.add('no-3d');
+      if (flat) { document.documentElement.classList.add('no-3d'); boot.hide(); }
       else start(stage)
         .then((info) => console.info('[night]', info))
         .catch((err) => {
           console.error('[night] falling back to static page', err);
+          boot.fail(String(err?.message ?? err).slice(0, 80));
           document.documentElement.classList.add('no-3d');
         });
     </script>

@@ -35,10 +35,10 @@ export async function createDistricts(ctx: DistrictCtx) {
     // Districts are only drawn near their own section (hundreds of small meshes each; invisible from the vista anyway).
     update: (t: number, p: number) => {
       pi.update(t);
-      jp.group.visible = p < 0.34;
+      jp.group.visible = p > 0.08 && p < 0.34; // not part of the bay vista (and it would be mirrored by the water)
       ce.group.visible = p > 0.08 && p < 0.78;
       ka.group.visible = p > 0.55 && p < 0.95;
-      pi.group.visible = p > 0.8 || p < 0.12;
+      pi.group.visible = p > 0.8;
     },
   };
 }

@@ -15,7 +15,7 @@ export function createPost(renderer: THREE.WebGPURenderer, scene: THREE.Scene, c
   const pipeline = new THREE.RenderPipeline(renderer);
   const bounded = (n: any) => vec4(n.rgb.min(vec3(6.0)), n.a);
   if (tier === 'low') {
-    const p = pass(scene, camera, { samples: 4 });
+    const p = pass(scene, camera);
     pipeline.outputNode = params.has('nobloom') ? p : p.add(bloom(bounded(p), 0.4, 0.4, 1.5));
     return pipeline;
   }

@@ -5,7 +5,8 @@ const queries = process.argv.length > 2 ? process.argv.slice(2) : ['q=high', 'q=
 const base = process.env.URL || 'http://localhost:4321/';
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--ignore-gpu-blocklist'] });
 for (const q of queries) {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+  const [vw, vh] = (process.env.VIEW || '1600x900').split('x').map(Number);
+  const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: Number(process.env.DPR) || 1 });
   await page.goto(`${base}?${q}`);
   await page.waitForTimeout(8000);
   const r = await page.evaluate(() => new Promise((res) => {
@@ -15,11 +16,11 @@ for (const q of queries) {
       const d = ts.slice(1).map((t, i) => t - ts[i]).sort((a, b) => a - b);
       const cpu = p && p.frames > fr0 ? ((p.cpu - cpu0) / (p.frames - fr0)).toFixed(1) : '?';
       const info = p?.renderer?.info?.render;
-      res({ median: d[d.length >> 1].toFixed(1), p95: d[Math.floor(d.length * 0.95)].toFixed(1), cpu, draws: info?.drawCalls, tris: info?.triangles });
+      res({ median: d[d.length >> 1].toFixed(1), p95: d[Math.floor(d.length * 0.95)].toFixed(1), cpu, draws: info?.drawCalls, tris: info?.triangles, dpr: p?.dpr?.toFixed(2) });
     } };
     requestAnimationFrame(f);
   }));
-  console.log(q.padEnd(40), 'median', r.median, 'p95', r.p95, 'cpu', r.cpu, 'draws', r.draws, 'tris', r.tris);
+  console.log(q.padEnd(40), 'median', r.median, 'p95', r.p95, 'cpu', r.cpu, 'draws', r.draws, 'tris', r.tris, 'dpr', r.dpr);
   await page.close();
 }
 await browser.close();

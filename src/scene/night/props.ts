@@ -117,10 +117,11 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
   const density = { high: 1, med: 0.7, low: 0.4 }[tier];
   // Catenary cables (thin dark tubes) — between power poles and across the avenue.
   const cableMat = new THREE.MeshStandardNodeMaterial({ color: 0x05060a, roughness: 0.9 });
+  const cableGeos: THREE.BufferGeometry[] = [];
   const cable = (a: THREE.Vector3, b: THREE.Vector3, sag: number) => {
     const pts: THREE.Vector3[] = [];
     for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push(a.clone().lerp(b, t).setY(a.y + (b.y - a.y) * t - Math.sin(t * Math.PI) * sag)); }
-    group.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.05, 4), cableMat));
+    cableGeos.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.05, 4));
   };
 
   // Avenue sidewalks: lamps every 14 u alternating sides, clutter in between.
@@ -195,5 +196,7 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
     if (CROSS_Z.some((cz) => Math.abs(z - cz) < CROSS_HALF + 4)) continue;
     for (let k = 0; k < 2; k++) cable(new THREE.Vector3(-(AVENUE_HALF + SIDEWALK), 9 + k * 1.2, z + k * 0.6), new THREE.Vector3(AVENUE_HALF + SIDEWALK, 9 + k * 1.2, z + k * 0.6), 1.6);
   }
+  // One draw for every cable in the city (same material, static).
+  if (cableGeos.length) { const m = new THREE.Mesh(mergeGeometries(cableGeos, false)!, cableMat); m.frustumCulled = false; group.add(m); }
   return { group, count: total };
 }

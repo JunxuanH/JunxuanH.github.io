@@ -1,20 +1,43 @@
 import * as THREE from 'three/webgpu';
 import { texture, uv, vec3, color, mix, step, fract, smoothstep, luminance, positionLocal, float, pow, time } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, params, rng, type Tier } from './palette';
 
 export interface Lane { pts: [number, number, number][]; speed: number; ground?: boolean }
 
 const gltf = new GLTFLoader();
 
+/** Bake a loaded model into one mesh per material bucket (a car is ~15 primitives otherwise → 15 draws each). */
+function bakeModel(root: THREE.Object3D, bucket: (o: THREE.Mesh) => string, materialFor: (key: string, first: any) => THREE.Material) {
+  root.updateMatrixWorld(true);
+  const inv = root.matrixWorld.clone().invert();
+  const groups = new Map<string, { geos: THREE.BufferGeometry[]; first: THREE.Mesh }>();
+  root.traverse((o: any) => {
+    if (!o.isMesh) return;
+    const g = o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
+    if (!g.attributes.normal) g.computeVertexNormals();
+    const key = bucket(o as THREE.Mesh);
+    const e = groups.get(key) ?? { geos: [] as THREE.BufferGeometry[], first: o as THREE.Mesh };
+    e.geos.push(g);
+    groups.set(key, e);
+  });
+  const out = new THREE.Group();
+  out.position.copy(root.position); out.quaternion.copy(root.quaternion); out.scale.copy(root.scale);
+  for (const [key, e] of groups) {
+    const merged = mergeGeometries(e.geos, false);
+    if (merged) out.add(new THREE.Mesh(merged, materialFor(key, e.first)));
+  }
+  return out;
+}
+
 /** Night repaint for the Kenney cars: dark bodies, keep wheels, warm/cool light strips from the palette. */
 function nightCar(scene: THREE.Object3D, tint: number) {
-  scene.traverse((o: any) => {
-    if (!o.isMesh) return;
+  return bakeModel(scene, (o) => (/wheel|tire/i.test(o.name) ? 'wheel' : 'body'), (key) => {
     const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.35, metalness: 0.6 });
-    const base = /wheel|tire/i.test(o.name) ? color(0x0a0a0d) : mix(color(0x141826), color(tint), 0.35);
-    m.colorNode = base;
-    o.material = m;
+    m.colorNode = key === 'wheel' ? color(0x0a0a0d) : mix(color(0x141826), color(tint), 0.35);
+    return m;
   });
 }
 
@@ -32,16 +55,14 @@ async function loadCarModels() {
       g.scene.position.y = -box.min.y * k;
       g.scene.rotation.y = size.x > size.z ? Math.PI / 2 : 0;
       for (const tint of [PAL.cyan, PAL.magenta]) {
-        const body = g.scene.clone(true);
-        body.traverse((o: any) => {
-          if (!o.isMesh) return;
-          const map = o.material?.map;
+        const body = bakeModel(g.scene, () => 'body', (_k, first: any) => {
+          const map = first.material?.map;
           const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.3, metalness: 0.7 });
           const base = map ? texture(map, uv()).rgb : vec3(0.12, 0.13, 0.18);
           const strip = smoothstep(0.45, 0.7, luminance(base));
           m.colorNode = base.mul(0.5);
           m.emissiveNode = mix(color(tint), color(0xffffff), step(0.5, fract(positionLocal.z.mul(0.3)))).mul(strip).mul(3.0);
-          o.material = m;
+          return m;
         });
         const wrap = new THREE.Group();
         wrap.add(body);
@@ -59,9 +80,8 @@ async function loadCarModels() {
       g.scene.scale.setScalar(k);
       g.scene.position.y = -box.min.y * k;
       g.scene.rotation.y = size.x > size.z ? Math.PI / 2 : 0;
-      nightCar(g.scene, tints[i % tints.length]);
       const wrap = new THREE.Group();
-      wrap.add(g.scene);
+      wrap.add(nightCar(g.scene, tints[i % tints.length]));
       ground.push(wrap);
     } catch { /* missing */ }
   }));
@@ -74,9 +94,22 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
   const group = new THREE.Group();
   const curves = lanes.map((l) => new THREE.CatmullRomCurve3(l.pts.map((p) => new THREE.Vector3(...p)), false, 'centripetal'));
   const { hover, ground } = await loadCarModels();
-  const cars: { root: THREE.Object3D; lane: number; t: number; speed: number; ground: boolean }[] = [];
+  const cars: { root: THREE.Object3D; lane: number; t: number; speed: number; ground: boolean; extras: THREE.Object3D[] }[] = [];
   const perLane = { high: 9, med: 6, low: 3 }[tier];
   const r = rng(99);
+  // Light quads share materials (one pipeline each) and are hidden beyond LIGHT_RANGE — from the vista they are sub-pixel.
+  const LIGHT_RANGE2 = 140 * 140;
+  const poolMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
+  { const d = uv().sub(vec2f(0.5, 0.15)); poolMat.colorNode = color(0xfff1d0).mul(1.6); poolMat.opacityNode = float(1).sub(smoothstep(0.1, 0.55, d.length())).mul(0.45).mul(step(0.15, uv().y)); }
+  const glowMats = [PAL.cyan, PAL.magenta].map((tint) => {
+    const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
+    const dd = uv().sub(0.5).length();
+    m.colorNode = color(tint).mul(2.5);
+    m.opacityNode = float(1).sub(smoothstep(0.15, 0.5, dd)).mul(0.6);
+    return m;
+  });
+  const tailMat = new THREE.MeshBasicNodeMaterial({ color: 0xff2040 }), headMat = new THREE.MeshBasicNodeMaterial({ color: 0xffffff });
+  const poolGeo = new THREE.PlaneGeometry(5, 9), glowGeo = new THREE.PlaneGeometry(4.5, 2.6), tailGeo = new THREE.PlaneGeometry(1.6, 0.22), headGeo = new THREE.PlaneGeometry(1.6, 0.18);
   lanes.forEach((lane, li) => {
     const models = lane.ground ? ground : hover;
     if (!models.length) return;
@@ -84,30 +117,24 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
     for (let k = 0; k < n; k++) {
       const root = new THREE.Group();
       root.add(models[(k + li) % models.length].clone(true));
+      const extras: THREE.Object3D[] = [];
       if (lane.ground) {
         // Headlight pool on the asphalt ahead + red tail glow.
-        const poolMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
-        const d = uv().sub(vec2f(0.5, 0.15));
-        poolMat.colorNode = color(0xfff1d0).mul(1.6);
-        poolMat.opacityNode = float(1).sub(smoothstep(0.1, 0.55, d.length())).mul(0.45).mul(step(0.15, uv().y));
-        const pool = new THREE.Mesh(new THREE.PlaneGeometry(5, 9), poolMat);
+        const pool = new THREE.Mesh(poolGeo, poolMat);
         pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.06, -6.5);
-        root.add(pool);
+        extras.push(pool);
       } else {
-        const glowMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
-        const dd = uv().sub(0.5).length();
-        glowMat.colorNode = color(k % 2 ? PAL.magenta : PAL.cyan).mul(2.5);
-        glowMat.opacityNode = float(1).sub(smoothstep(0.15, 0.5, dd)).mul(0.6);
-        const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 2.6), glowMat);
+        const glow = new THREE.Mesh(glowGeo, glowMats[k % 2]);
         glow.rotation.x = -Math.PI / 2; glow.position.y = -0.2;
-        root.add(glow);
+        extras.push(glow);
       }
-      const tail = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.22), new THREE.MeshBasicNodeMaterial({ color: 0xff2040 }));
+      const tail = new THREE.Mesh(tailGeo, tailMat);
       tail.position.set(0, 0.7, 2.2);
-      const head = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.18), new THREE.MeshBasicNodeMaterial({ color: 0xffffff }));
+      const head = new THREE.Mesh(headGeo, headMat);
       head.position.set(0, 0.7, -2.2); head.rotation.y = Math.PI;
-      root.add(tail, head);
-      cars.push({ root, lane: li, t: (k + r() * 0.5) / n, speed: lane.speed * (0.8 + r() * 0.5), ground: !!lane.ground });
+      extras.push(tail, head);
+      root.add(...extras);
+      cars.push({ root, lane: li, t: (k + r() * 0.5) / n, speed: lane.speed * (0.8 + r() * 0.5), ground: !!lane.ground, extras });
       group.add(root);
     }
   });
@@ -126,9 +153,10 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
     }
   });
   const tmp = new THREE.Vector3(), ahead = new THREE.Vector3();
-  const update = (dt: number, t: number) => {
+  const update = (dt: number, t: number, viewer?: THREE.Vector3) => {
     for (const c of cars) {
       c.t = (c.t + c.speed * dt) % 1;
+      if (viewer) { const near = c.root.position.distanceToSquared(viewer) < LIGHT_RANGE2; if (c.extras[0].visible !== near) for (const e of c.extras) e.visible = near; }
       const curve = curves[c.lane];
       curve.getPointAt(c.t, tmp);
       curve.getPointAt((c.t + 0.005) % 1, ahead);
