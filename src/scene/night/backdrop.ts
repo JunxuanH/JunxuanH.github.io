@@ -8,7 +8,7 @@ import { loader, loadSRGB } from './palette';
  *
  * - North (−z, behind the city seen from the vista): the original plate at z −560, mirrored to both sides so wide
  *   viewports never see its edge.
- * - `ring` (east +x, west −x, south +z): three more plates in the same style (design/night/prompts/plate-aerial-*.txt)
+ * - `ring` (east +x, west −x): two more plates in the same style (design/night/prompts/plate-aerial-*.txt)
  *   stand around the rest of the map, so every street-level view past the city's edge ends in skyline rather than sky.
  *   Each is scaled with its distance so the horizon sits at the same angle as the north plate. Same material graph as
  *   the north plate (one program; only the textures differ).
@@ -54,7 +54,7 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
     const sides: [string, number, number, number, [number, number]][] = [
       ['ring-east', D, 0, -Math.PI / 2, [0.08, 0.26]], // at +x, facing the centre (−x)
       ['ring-west', -D, 0, Math.PI / 2, [0.16, 0.36]],
-      ['ring-south', 0, D, Math.PI, [0.24, 0.46]],
+      // No south plate: it sits across the bay behind the bridge and read as a wallpaper on the water (Ivan, 2026-09-14).
     ];
     const loaded = await Promise.all(sides.map(([name]) => load(name).catch((e) => { console.warn('[night] backdrop plate', name, e); return null; })));
     sides.forEach(([, x, z, yaw, bottom], i) => {
