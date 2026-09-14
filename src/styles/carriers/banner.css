@@ -1,0 +1,33 @@
+/* Blimp banner (blimp carrier): wide two-column panel with a 4 px LED grid and a slow light sweep.
+   Overrides `.slab` / `.slab.job` from night.css (loaded before this via the carriers glob).
+   Never set transform / opacity / filter on the slab itself — CSS3DRenderer writes those inline;
+   the sweep animates the ::after background-position only, and only while `.is-on`. */
+.slab.banner {
+  background: #05070d; background-image: none;
+  font-size: 25px; padding: 20px 30px; min-height: 0;
+  border: 1px solid rgb(0 229 255 / 0.5); box-shadow: none;
+}
+.slab.job.banner { min-height: 0; } /* wins over `.slab.job` regardless of stylesheet order */
+.slab.banner header { display: grid; grid-template-columns: auto 1fr; gap: 6px 24px; align-items: baseline; margin-bottom: 12px; }
+.slab.banner h2 { font-size: 46px; margin: 0; }
+/* Row 1 = kicker | title; meta and team take full rows so a long org · dates · location line can't squeeze the h2. */
+.slab.banner .meta, .slab.banner .team { grid-column: 1 / -1; }
+.slab.banner .team { margin: 0; }
+.slab.banner .bullets { columns: 2; column-gap: 28px; font-size: 23px; }
+.slab.banner .bullets li { break-inside: avoid; }
+
+/* No corner brackets; ::after = LED dots + a 40 %-wide light sweep that starts fully off-screen left. */
+.slab.banner::before { display: none; }
+.slab.banner::after {
+  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
+  background:
+    radial-gradient(circle, transparent 0 1.1px, rgb(0 0 0 / 0.5) 1.5px) 0 0 / 4px 4px,
+    linear-gradient(90deg, transparent, rgb(0 229 255 / 0.12), transparent) -70% 0 / 40% 100% no-repeat;
+}
+.slab.banner.is-on::after { animation: banner-sweep 6s linear infinite; }
+/* With a 40 % image, position −70 % / 170 % puts it just outside either edge (offset = p × 60 %). */
+@keyframes banner-sweep {
+  from { background-position: 0 0, -70% 0; }
+  to { background-position: 0 0, 170% 0; }
+}
+@media (prefers-reduced-motion: reduce) { .slab.banner.is-on::after { animation: none; } }

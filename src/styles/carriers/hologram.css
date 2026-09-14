@@ -1,0 +1,29 @@
+/* Hologram (holo carrier): translucent cyan glass, glowing text, scanlines and a refresh band.
+   Overrides `.slab` / `.slab.job` from night.css (loaded before this via the carriers glob).
+   Never set transform / opacity / filter on the slab itself — CSS3DRenderer writes those inline;
+   the band animates the ::after background-position only, and only while `.is-on`. */
+.slab.hologram {
+  background: rgb(0 229 255 / 0.06); background-image: none;
+  border: 1px solid rgb(0 229 255 / 0.35); color: #eafcff;
+  font-size: 21px; min-height: 0;
+  text-shadow: 0 0 8px rgb(0 229 255 / 0.55);
+  box-shadow: 0 0 40px rgb(0 229 255 / 0.15), inset 0 0 60px rgb(0 229 255 / 0.08);
+}
+.slab.job.hologram { min-height: 0; } /* wins over `.slab.job` regardless of stylesheet order */
+.slab.hologram h2 { color: #fff; }
+.slab.hologram .kicker { color: var(--cyan); }
+
+/* Keep the top-left bracket (::before); ::after becomes the overlay: 5 px scanlines + a 12 px refresh band
+   parked just above the top edge until `.is-on` sweeps it down. */
+.slab.hologram::after {
+  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgb(0 229 255 / 0.10) 0 2px, transparent 2px 5px),
+    linear-gradient(rgb(0 229 255 / 0.25), transparent) 0 -12px / 100% 12px no-repeat;
+}
+.slab.hologram.is-on::after { animation: holo-band 3.5s linear infinite; }
+@keyframes holo-band {
+  from { background-position: 0 0, 0 -12px; }
+  to { background-position: 0 0, 0 calc(100% + 12px); }
+}
+@media (prefers-reduced-motion: reduce) { .slab.hologram.is-on::after { animation: none; } }

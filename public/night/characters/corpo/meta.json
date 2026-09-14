@@ -1,0 +1,15 @@
+{
+  "name": "corpo",
+  "generate_type": "LowPoly",
+  "height_meters": 1.75,
+  "concept": "concept-v2-1.png",
+  "fal_requests": "rig=01a09d08-d389-74e0-af82-66f811caf66c",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-13T23:12:08Z"
+}

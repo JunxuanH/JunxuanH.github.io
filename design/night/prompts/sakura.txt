@@ -1,0 +1,1 @@
+A sprite sheet of 8 single cherry-blossom petals, arranged in a 4x2 grid of equal cells, each petal at a different angle and slight curl, soft pink with a faint white edge glow, slightly translucent, night-lit. On a completely flat, solid, uniform green (#00FF00) background. No shadows, no branches, no text, no watermark. Thin black gutters between cells.

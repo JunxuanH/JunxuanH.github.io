@@ -1,0 +1,139 @@
+{
+  "schema": "playweave.cc0-assets/v1",
+  "generatedAt": "2026-09-12T02:09:28.978Z",
+  "packs": [
+    {
+      "id": "cars",
+      "name": "Kenney Car Kit",
+      "version": "3.1",
+      "url": "https://kenney.nl/assets/car-kit",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "people",
+      "name": "Kenney Mini Characters",
+      "version": "1.0",
+      "url": "https://kenney.nl/assets/mini-characters",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  ],
+  "files": [
+    {
+      "path": "/cc0/sedan.glb",
+      "pack": "cars",
+      "source": "sedan.glb",
+      "sourceSha256": "b532ea7d2c59f7f6b22b138cf1955218a2c1898f1cea932af4d3fd563c3959b7",
+      "sha256": "badd8e47d316a71508eae4881f41039666d37d5bb7fb265d213bb41e949f217a",
+      "byteLength": 66008,
+      "triangles": 1368,
+      "clips": [],
+      "transformation": "dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/taxi.glb",
+      "pack": "cars",
+      "source": "taxi.glb",
+      "sourceSha256": "3803539718ffd3b84b515dbce8ed6b489f1ff5be58edb1903d2c5db5c584bdc7",
+      "sha256": "389bbca6871727221460b311d46016081e86cf794066a1d5c97537597052f480",
+      "byteLength": 64220,
+      "triangles": 1408,
+      "clips": [],
+      "transformation": "dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/suv.glb",
+      "pack": "cars",
+      "source": "suv.glb",
+      "sourceSha256": "9df31f6e89e927a8176fc792aa125f0b19dc1ba29d2025bfef7c4f4d6ab1778a",
+      "sha256": "7d84b4b07c8084d6f7fbf2704888b6aa4baa78768043612c77e551aef6ad980f",
+      "byteLength": 74744,
+      "triangles": 1810,
+      "clips": [],
+      "transformation": "dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/hatchback-sports.glb",
+      "pack": "cars",
+      "source": "hatchback-sports.glb",
+      "sourceSha256": "bd5c9d4c3b4bdd254a66b8426563a68b1487ae7a5076df3a2488e6ffed7be64f",
+      "sha256": "7c4eeb7f8b5623728ebcc144ba9967d926e68d817c4ce93192073c0bba81f671",
+      "byteLength": 68204,
+      "triangles": 1424,
+      "clips": [],
+      "transformation": "dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/delivery.glb",
+      "pack": "cars",
+      "source": "delivery.glb",
+      "sourceSha256": "426a3e3a2c242c05c889b1445ba02ef95b2c8b7cd6f597e1275ef736a826014b",
+      "sha256": "74c20543a9f9be23939580824da562cec26a24c8b82319df02a19e2841eb20e2",
+      "byteLength": 71788,
+      "triangles": 1620,
+      "clips": [],
+      "transformation": "dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/character-male-a.glb",
+      "pack": "people",
+      "source": "character-male-a.glb",
+      "sourceSha256": "77572792bfe2773b715b8cd8e18644b52b3e1f155fe10450254b50f9c364382a",
+      "sha256": "7596c3150637d9de103ebf7582611b0f080934541798b8dbf310062350be77a1",
+      "byteLength": 124488,
+      "triangles": 723,
+      "clips": [
+        "idle",
+        "walk",
+        "sit"
+      ],
+      "transformation": "clips kept: idle, walk, sit; dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/character-female-b.glb",
+      "pack": "people",
+      "source": "character-female-b.glb",
+      "sourceSha256": "2288438e7baf9acc91a870c82dc00d66710bb486592cfc3474ef8ed93a03863a",
+      "sha256": "c9ccb2ab61ee10c72a90824f45404c0d48556bf99ebbd25cbfa34a01b78454e4",
+      "byteLength": 124184,
+      "triangles": 742,
+      "clips": [
+        "idle",
+        "walk",
+        "sit"
+      ],
+      "transformation": "clips kept: idle, walk, sit; dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/character-male-c.glb",
+      "pack": "people",
+      "source": "character-male-c.glb",
+      "sourceSha256": "672a6506f7475bbd655da1d7ff712c1729a430f134c62385a4e5d3c1378acb40",
+      "sha256": "098e1d6aafe42d7fa869babd78672f558773a4203ecb21ce4b194a1500b5a67e",
+      "byteLength": 127760,
+      "triangles": 793,
+      "clips": [
+        "idle",
+        "walk",
+        "sit"
+      ],
+      "transformation": "clips kept: idle, walk, sit; dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    },
+    {
+      "path": "/cc0/character-female-d.glb",
+      "pack": "people",
+      "source": "character-female-d.glb",
+      "sourceSha256": "67f61708743bd34f91a4c2ba8160b61bf2e7d4ec2ca6647dfe99873422561410",
+      "sha256": "a076407a8a4435adadac5914c498dff26a328ff6c4c7e4c139e5d8705078fad6",
+      "byteLength": 126556,
+      "triangles": 797,
+      "clips": [
+        "idle",
+        "walk",
+        "sit"
+      ],
+      "transformation": "clips kept: idle, walk, sit; dedup/prune/weld/resample; textures 256px PNG; KHR_mesh_quantization"
+    }
+  ]
+}

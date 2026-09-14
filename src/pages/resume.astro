@@ -1,0 +1,71 @@
+---
+import '@fontsource-variable/source-sans-3';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/rajdhani/600.css';
+import '@fontsource/rajdhani/700.css';
+import '../styles/resume.css';
+import { profile, education, jobs, projects } from '../content';
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ivan He · Résumé</title>
+    <meta name="description" content={`Résumé of ${profile.name}, ${profile.title}.`} />
+    <link rel="icon" href="/logo.ico" />
+  </head>
+  <body>
+    <nav class="bar">
+      <a href="/">← Back to the city</a>
+      <a class="dl" href="/Ivan-He-Resume.pdf" download>Download PDF</a>
+    </nav>
+    <main class="paper">
+      <header class="head">
+        <div>
+          <h1>{profile.name}</h1>
+          <p class="title">{profile.title}</p>
+          <p class="summary">{profile.summary}</p>
+        </div>
+        <ul class="contacts">
+          <li>{profile.location}</li>
+          <li><a href={profile.links.linkedin}>linkedin.com/in/ivan-he-026355130</a></li>
+          <li><a href={profile.links.github}>github.com/JunxuanH</a></li>
+          <li><a href={profile.links.site}>junxuanh.github.io</a></li>
+        </ul>
+      </header>
+
+      <section>
+        <h2>Experience</h2>
+        {[...jobs].reverse().map((j) => (
+          <article class="job">
+            <div class="row"><h3>{j.role}</h3><span class="dates">{j.dates}</span></div>
+            <p class="org">{j.org} · {j.location}{j.team && <> · <em>{j.team}</em></>}</p>
+            {j.bullets.length > 0 && <ul>{j.bullets.map((b) => <li>{b}</li>)}</ul>}
+          </article>
+        ))}
+      </section>
+
+      <section>
+        <h2>Education</h2>
+        <article class="job">
+          <div class="row"><h3>{education.school}</h3><span class="dates">{education.dates}</span></div>
+          <p class="org">{education.degree} · {education.location}</p>
+        </article>
+        <p class="line"><strong>Certifications:</strong> {education.certifications.join(' · ')}</p>
+        <p class="line"><strong>Skills:</strong> {education.skills.join(' · ')}</p>
+      </section>
+
+      <section>
+        <h2>Projects</h2>
+        {projects.map((p) => (
+          <article class="job">
+            <div class="row"><h3>{p.name}</h3><span class="dates">{p.stack.join(' · ')}</span></div>
+            <p class="org">{p.tagline} {p.github && <a href={p.github}>{p.github.replace('https://', '')}</a>}{p.status && <em> · {p.status}</em>}</p>
+            <p class="line">{p.description}</p>
+          </article>
+        ))}
+      </section>
+    </main>
+  </body>
+</html>

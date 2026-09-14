@@ -1,0 +1,11 @@
+{
+  "name": "drone-police",
+  "generate_type": "Normal",
+  "height_meters": 1.75,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09cf4-119b-7811-90f3-b16d75f325fd",
+  "files": [
+    "model.glb"
+  ],
+  "generated": "2026-09-13T22:49:34Z"
+}

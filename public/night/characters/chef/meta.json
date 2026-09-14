@@ -1,0 +1,15 @@
+{
+  "name": "chef",
+  "generate_type": "LowPoly",
+  "height_meters": 1.78,
+  "concept": "concept-v2-1.png",
+  "fal_requests": "3d=01a09d21-8144-7bb2-b1ee-cc77ee31aaf1 rig=01a09d27-b173-7c50-91aa-ef84b3751dd4",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-13T23:47:08Z"
+}

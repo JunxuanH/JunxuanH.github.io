@@ -1,0 +1,15 @@
+{
+  "name": "idol",
+  "generate_type": "LowPoly",
+  "height_meters": 1.65,
+  "concept": "concept-1.png",
+  "fal_requests": "rig=01a09d58-fc8f-7783-a37f-7539e7791b4b",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T00:39:52Z"
+}

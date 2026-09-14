@@ -1,0 +1,15 @@
+{
+  "name": "maid-bot",
+  "generate_type": "LowPoly",
+  "height_meters": 1.70,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09d4d-fdfb-7033-9d79-797e484a1086 rig=01a09d54-8fef-79b2-8bf3-71887ccbf4f6",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T00:34:32Z"
+}

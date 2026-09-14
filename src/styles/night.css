@@ -1,0 +1,194 @@
+:root {
+  --cyan: #00e5ff;
+  --magenta: #ff2bd6;
+  --yellow: #f2ff3d;
+  --sodium: #ff9a3d;
+  --ink: #eafcff;
+  --asphalt: #07070c;
+  --holo: rgb(8 10 20 / 0.62);
+  --font-display: 'Rajdhani', 'Chakra Petch', 'Impact', sans-serif;
+  --font: 'Source Sans 3 Variable', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--asphalt); color: var(--ink); font-family: var(--font); }
+a { color: inherit; }
+
+.stage { position: fixed; inset: 0; z-index: 0; }
+.stage canvas { display: block; }
+.css3d { position: absolute !important; inset: 0; pointer-events: none; }
+.css3d a, .css3d button { pointer-events: auto; }
+
+.journey { position: relative; z-index: 1; height: 1100vh; pointer-events: none; }
+.journey .sentinel { position: absolute; left: 0; width: 1px; height: 1px; }
+.ui-src { position: absolute; left: -99999px; top: 0; }
+html.no-3d .ui-src { position: static; left: auto; padding: 14vh 16px 0; max-width: 820px; margin: 0 auto; pointer-events: auto; }
+html.no-3d .journey { height: auto; }
+html.no-3d body { background: radial-gradient(120% 80% at 50% 100%, #2a0f2a 0%, #0b0d1c 45%, #07070c 100%); min-height: 100vh; }
+
+/* Holo nav */
+.nav {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 5;
+  display: flex; gap: 2px; padding: 4px;
+  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.55);
+  box-shadow: 0 0 18px rgb(0 229 255 / 0.25), inset 0 0 0 1px rgb(0 229 255 / 0.12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.12em;
+}
+.nav::before, .nav::after {
+  content: ''; position: absolute; width: 10px; height: 10px; border: 2px solid var(--cyan);
+}
+.nav::before { left: -3px; top: -3px; border-right: 0; border-bottom: 0; }
+.nav::after { right: -3px; bottom: -3px; border-left: 0; border-top: 0; }
+.nav a { text-decoration: none; font-weight: 600; font-size: 15px; padding: 6px 14px; color: var(--cyan); display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.nav a small { font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; opacity: 0.7; text-transform: uppercase; }
+.audio-toggle { margin-left: 6px; padding: 6px 10px; border: 1px solid var(--cyan); background: transparent; color: var(--cyan); font: inherit; cursor: pointer; border-radius: 999px; }
+.audio-toggle .off, .audio-toggle[aria-pressed='true'] .on { display: none; }
+.audio-toggle[aria-pressed='true'] .off { display: inline; }
+.audio-toggle[aria-pressed='true'] { color: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 10px rgb(242 255 61 / 0.4); }
+.contact.is-revealed a { text-shadow: 0 0 12px var(--magenta); }
+.nav a[aria-current] { color: var(--yellow); box-shadow: inset 0 -2px 0 var(--yellow); }
+.nav a:hover { color: #fff; text-shadow: 0 0 8px var(--cyan); }
+
+/* Hero slab (name is on the 3D billboard) */
+.hero-copy {
+  padding: 34px 40px 36px; background: var(--holo); border: 1px solid rgb(0 229 255 / 0.6);
+  box-shadow: 0 0 30px rgb(0 229 255 / 0.18); position: relative;
+  background-image: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px);
+}
+.hero-copy::before, .hero-copy::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid var(--cyan); }
+.hero-copy::before { left: -4px; top: -4px; border-right: 0; border-bottom: 0; }
+.hero-copy::after { right: -4px; bottom: -4px; border-left: 0; border-top: 0; }
+.hero-copy h1 { margin: 0; font-family: var(--font-display); font-size: 64px; line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; }
+.hero-copy .role { margin: 12px 0 26px; font-family: var(--mono); font-size: 22px; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; }
+.actions { display: flex; gap: 16px; flex-wrap: wrap; }
+.neon-btn {
+  font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 12px 30px; border-radius: 999px; text-decoration: none; position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.neon-btn:hover { transform: translateY(-2px); }
+.neon-btn:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.neon-btn.primary {
+  color: #101008; background: var(--yellow);
+  box-shadow: 0 0 22px rgb(242 255 61 / 0.55);
+  background-image: repeating-linear-gradient(45deg, transparent 0 12px, rgb(0 0 0 / 0.16) 12px 20px);
+  background-size: 200% 200%; background-position: 0 100%;
+}
+.neon-btn.primary::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--yellow); z-index: -1; }
+.neon-btn.outline { color: var(--cyan); border: 2px solid var(--cyan); box-shadow: 0 0 16px rgb(0 229 255 / 0.35), inset 0 0 12px rgb(0 229 255 / 0.12); }
+
+.card-label, .orb-links li, [data-orb] { list-style: none; margin: 0; padding: 0; }
+.contact { position: relative; z-index: 2; display: flex; gap: 16px; justify-content: center; padding: 48px 16px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; }
+.contact a { color: var(--cyan); }
+
+@media (prefers-reduced-motion: reduce) { .neon-btn { transition: none; } }
+
+/* ---------- Content slabs (CSS3D in the scene, bottom sheet on phones, stacked on the flat page) */
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 20; padding: 8px 14px; background: var(--yellow); color: #101008; font-family: var(--font-display); }
+.skip:focus { left: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.slab {
+  width: 760px; padding: 26px 32px 28px; position: relative;
+  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.55);
+  box-shadow: 0 0 30px rgb(0 229 255 / 0.16), inset 0 0 0 1px rgb(0 229 255 / 0.1);
+  background-image: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.028) 0 1px, transparent 1px 3px);
+  color: var(--ink); font-size: 20px; line-height: 1.35;
+}
+.slab::before, .slab::after { content: ''; position: absolute; width: 14px; height: 14px; border: 2px solid var(--cyan); }
+.slab::before { left: -4px; top: -4px; border-right: 0; border-bottom: 0; }
+.slab::after { right: -4px; bottom: -4px; border-left: 0; border-top: 0; }
+.slab header { margin-bottom: 14px; }
+.kicker { font-family: var(--mono); font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--yellow); }
+.slab h2 { margin: 4px 0 6px; font-family: var(--font-display); font-weight: 700; font-size: 38px; line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; }
+.slab .meta { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--mono); font-size: 14px; letter-spacing: 0.06em; color: var(--cyan); text-transform: uppercase; }
+.slab .team { margin: 6px 0 0; font-size: 17px; color: rgb(234 252 255 / 0.75); }
+.slab h3 { margin: 0 0 6px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--magenta); }
+.bullets { margin: 0; padding: 0 0 0 20px; }
+.bullets li { margin: 0 0 8px; }
+.bullets li::marker { color: var(--cyan); }
+.cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; }
+.chips { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { font-family: var(--mono); font-size: 13px; padding: 3px 10px; border: 1px solid rgb(0 229 255 / 0.45); border-radius: 999px; color: var(--ink); }
+.slab .lede { margin: 0 0 20px; font-size: 19px; color: rgb(234 252 255 / 0.85); }
+.slab .actions .neon-btn { font-size: 20px; padding: 10px 24px; }
+.contact-slab { width: 680px; }
+.slab.job { min-height: 430px; display: flex; flex-direction: column; justify-content: center; }
+.slab.job .bullets { margin-top: 2px; }
+
+/* Project cards (Flip-3D stack). Rules are on .card itself: CSS3DRenderer re-parents the cards out of .stack. */
+.card {
+  width: 640px; background: rgb(9 11 22 / 0.94); border: 1px solid rgb(255 43 214 / 0.6);
+  box-shadow: 0 0 36px rgb(255 43 214 / 0.18); position: relative; color: var(--ink);
+  pointer-events: auto; cursor: pointer;
+}
+/* No overflow:hidden / filter on CSS3D elements: they force Chrome to flatten the card into a clip layer and the
+   text loses the 3D transform. The screenshot is dimmed with an overlay instead. */
+.card::before { content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 300px; background: rgb(8 10 20 / 0.16); pointer-events: none; }
+.slab, .card { backface-visibility: hidden; will-change: transform; }
+.card:focus-visible { outline: 3px solid var(--yellow); }
+.card img { display: block; width: 100%; height: 300px; object-fit: cover; object-position: top; border-bottom: 1px solid rgb(255 43 214 / 0.4); background: #0b0d1c; }
+.card-body { padding: 18px 24px 22px; font-size: 17px; line-height: 1.35; }
+.card-body h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 32px; line-height: 1; letter-spacing: 0.03em; text-transform: uppercase; display: flex; align-items: baseline; gap: 12px; }
+.card-body h3 small { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--sodium); border: 1px solid rgb(255 154 61 / 0.6); padding: 2px 8px; border-radius: 999px; }
+.card-body .tagline { margin: 0 0 8px; font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em; color: var(--magenta); }
+.card-body .desc { margin: 0 0 12px; color: rgb(234 252 255 / 0.85); }
+.card-body .links { margin: 12px 0 0; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; display: flex; gap: 18px; }
+.card-body .links a { color: var(--cyan); text-decoration: none; }
+.card-body .links a:hover { text-shadow: 0 0 10px var(--cyan); }
+.card-body .muted { color: rgb(234 252 255 / 0.5); font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; }
+.card.is-front { cursor: default; }
+.stack-nav { display: none; }
+
+/* Reveal: glitch-in when a slab's window opens */
+/* No `transform` and no fill-mode here: CSS3DRenderer owns the inline transform/opacity of these elements. */
+.slab.is-on, .card.is-on { animation: holo-in 0.45s steps(8); }
+@keyframes holo-in {
+  0% { clip-path: inset(40% 0 40% 0); }
+  40% { clip-path: inset(10% 2% 55% 0); }
+  70% { clip-path: inset(0 0 0 2%); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) { .slab.is-on, .card.is-on { animation: none; } }
+
+/* Phones: slabs live in a bottom sheet instead of the 3D scene */
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; max-height: 52vh; overflow: auto;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch;
+  background: linear-gradient(180deg, rgb(7 7 12 / 0) 0, rgb(7 7 12 / 0.92) 22px);
+}
+.sheet .slab, .sheet .card { width: auto; max-width: 720px; margin: 0 auto; font-size: 15px; }
+.sheet .slab h2 { font-size: 26px; }
+.sheet .slab .cols { grid-template-columns: 1fr; gap: 14px; }
+.sheet .stack { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+.sheet .card { flex: 0 0 88%; scroll-snap-align: center; }
+.sheet .card img { height: 150px; }
+.sheet .card-body { padding: 12px 14px 14px; font-size: 14px; }
+.sheet .card-body h3 { font-size: 22px; }
+.sheet .slab .actions .neon-btn { font-size: 16px; padding: 8px 18px; }
+
+/* Flat page (?flat, no WebGL, or the scene failed): everything stacks as a normal document */
+html.no-3d .ui-src { display: grid; gap: 36px; padding-bottom: 40px; }
+html.no-3d .hero-copy { margin-top: 10vh; }
+html.no-3d .slab, html.no-3d .card { width: auto; max-width: 100%; }
+html.no-3d .stack { display: grid; gap: 24px; }
+html.no-3d .card { cursor: default; }
+html.no-3d .stage, html.no-3d .sheet, html.no-3d .audio-toggle { display: none; }
+html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; transform: none; width: max-content; max-width: calc(100% - 32px); flex-wrap: wrap; justify-content: center; }
+html.no-3d .slab.is-on, html.no-3d .card.is-on { animation: none; }
+@media (max-width: 760px) {
+  .nav { top: 8px; padding: 3px; gap: 0; max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; }
+  .nav a { font-size: 13px; padding: 5px 9px; }
+  .nav a small { display: none; }
+  .hero-copy { padding: 22px 22px 24px; }
+  .hero-copy h1 { font-size: 44px; }
+  .hero-copy .role { font-size: 15px; }
+  .neon-btn { font-size: 18px; padding: 10px 20px; }
+  html.no-3d .slab { padding: 18px 16px 20px; font-size: 16px; }
+  html.no-3d .slab h2 { font-size: 26px; }
+  html.no-3d .cols { grid-template-columns: 1fr; }
+}

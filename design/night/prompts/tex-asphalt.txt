@@ -1,0 +1,1 @@
+Seamless tileable texture, top-down orthographic, of dark wet asphalt at night: fine aggregate grain, thin cracks, patched tar seams, faint oil sheen, a few small puddles reflecting a dim blue-magenta sky, no lane paint, no objects, no shadows of objects, uniform flat lighting. Photoreal, 1:1, must tile seamlessly on all edges. No text, no watermark.

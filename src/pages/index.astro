@@ -1,0 +1,140 @@
+---
+import '@fontsource-variable/source-sans-3';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/rajdhani/600.css';
+import '@fontsource/rajdhani/700.css';
+import '../styles/night.css';
+import { profile, education, jobs, projects, WINDOWS } from '../content';
+// Per-carrier slab styles (terminal, poster, led-wall, banner, hologram, flap-board).
+import.meta.glob('../styles/carriers/*.css', { eager: true });
+
+const sections = [
+  { id: 'city', name: 'City', label: '', start: 0 }, { id: 'education', name: 'Campus', label: 'Education', start: 0.1 },
+  { id: 'work', name: 'Downtown', label: 'Work', start: 0.22 }, { id: 'projects', name: 'Market', label: 'Projects', start: 0.68 },
+  { id: 'contact', name: 'Harbor', label: 'Contact', start: 0.92 },
+];
+const win = (k: string) => WINDOWS[k].join(',');
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ivan He · GPU Software Performance Engineer</title>
+    <meta name="description" content={`${profile.name} is a GPU software performance engineer in the ${profile.location}.`} />
+    <meta property="og:title" content="Ivan He · GPU Software Performance Engineer" />
+    <meta property="og:description" content={profile.summary} />
+    <meta property="og:image" content="/og.jpg" />
+    <link rel="icon" href="/logo.ico" />
+  </head>
+  <body>
+    <a class="skip" href="#education">Skip to content</a>
+    <nav class="nav" aria-label="Primary">
+      {sections.map((s) => <a href={`#${s.id}`} data-section={s.id}>{s.name}{s.label && <small>{s.label}</small>}</a>)}
+      <button class="audio-toggle" type="button" aria-pressed="false" aria-label="Unmute ambient sound"><span class="on">♪</span><span class="off">♪̸</span></button>
+    </nav>
+
+    <div id="stage" class="stage" aria-hidden="true"></div>
+
+    <main class="journey">
+      {sections.map((s) => <div class="sentinel" id={s.id} style={`top:${s.start * 100}%`}></div>)}
+
+      <div class="ui-src">
+        <article id="hero-copy" class="hero-copy">
+          <h1>{profile.name}</h1>
+          <p class="role">{profile.title}</p>
+          <div class="actions">
+            <a class="neon-btn primary" href="#education" data-section="education">Enter the city</a>
+            <a class="neon-btn outline" href="/resume">Résumé</a>
+          </div>
+        </article>
+
+        <section class="slab" data-slab="education" data-window={win('education')} aria-labelledby="edu-h">
+          <header>
+            <span class="kicker">Education</span>
+            <h2 id="edu-h">{education.school}</h2>
+            <p class="meta"><span>{education.degree}</span><span>{education.dates}</span></p>
+          </header>
+          <div class="cols">
+            <div>
+              <h3>Certifications</h3>
+              <ul class="bullets">{education.certifications.map((c) => <li>{c}</li>)}</ul>
+            </div>
+            <div>
+              <h3>Toolbox</h3>
+              <ul class="chips">{education.skills.map((s) => <li>{s}</li>)}</ul>
+            </div>
+          </div>
+        </section>
+
+        {jobs.map((j) => (
+          <section class="slab job" data-slab={j.id} data-window={win(j.id)} aria-labelledby={`job-${j.id}`}>
+            <header>
+              <span class="kicker">{j.label}</span>
+              <h2 id={`job-${j.id}`}>{j.role}</h2>
+              <p class="meta"><span>{j.org}</span><span>{j.dates}</span><span>{j.location}</span></p>
+              {j.team && <p class="team">{j.team}</p>}
+            </header>
+            {j.bullets.length > 0 && <ul class="bullets">{j.bullets.map((b) => <li>{b}</li>)}</ul>}
+          </section>
+        ))}
+
+        <section class="stack" data-slab="projects" data-window={win('projects')} aria-label="Projects">
+          <h2 class="visually-hidden">Projects</h2>
+          {projects.map((p, i) => (
+            <article class="card" data-card={p.id} data-index={i} tabindex="0">
+              <img src={p.shot} alt={`${p.name} screenshot`} width="1280" height="800" loading="lazy" />
+              <div class="card-body">
+                <h3>{p.name}{p.status && <small>{p.status}</small>}</h3>
+                <p class="tagline">{p.tagline}</p>
+                <p class="desc">{p.description}</p>
+                <ul class="chips">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                <p class="links">
+                  {p.github && <a href={p.github} target="_blank" rel="noopener">GitHub ↗</a>}
+                  {p.live && <a href={p.live} target="_blank" rel="noopener">Live ↗</a>}
+                  {!p.github && !p.live && <span class="muted">Private repo — showcase only</span>}
+                </p>
+              </div>
+            </article>
+          ))}
+          <div class="stack-nav" aria-hidden="true">{projects.map((p, i) => <button type="button" data-goto={i} title={p.name}></button>)}</div>
+        </section>
+
+        <section class="slab contact-slab" data-slab="contact" data-window={win('contact')} aria-labelledby="contact-h">
+          <header>
+            <span class="kicker">Contact</span>
+            <h2 id="contact-h">Let’s talk shop.</h2>
+            <p class="meta"><span>{profile.location}</span></p>
+          </header>
+          <p class="lede">{profile.summary}</p>
+          <div class="actions">
+            <a class="neon-btn primary" href={profile.links.linkedin} target="_blank" rel="noopener" data-status="Boarding">LinkedIn</a>
+            <a class="neon-btn outline" href={profile.links.github} target="_blank" rel="noopener" data-status="Boarding">GitHub</a>
+            <a class="neon-btn outline" href="/resume" data-status="PDF">Résumé</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <aside class="sheet" hidden aria-live="polite"></aside>
+
+    <footer class="contact">
+      <a href={profile.links.linkedin}>LinkedIn</a>
+      <a href={profile.links.github}>GitHub</a>
+      <a href="/resume">Résumé</a>
+    </footer>
+
+    <script>
+      import { start } from '../scene/night/main';
+      const stage = document.getElementById('stage')!;
+      const flat = new URLSearchParams(location.search).has('flat') || !('WebGLRenderingContext' in window);
+      if (flat) document.documentElement.classList.add('no-3d');
+      else start(stage)
+        .then((info) => console.info('[night]', info))
+        .catch((err) => {
+          console.error('[night] falling back to static page', err);
+          document.documentElement.classList.add('no-3d');
+        });
+    </script>
+  </body>
+</html>

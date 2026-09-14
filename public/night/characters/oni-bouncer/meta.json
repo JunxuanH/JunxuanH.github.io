@@ -1,0 +1,15 @@
+{
+  "name": "oni-bouncer",
+  "generate_type": "LowPoly",
+  "height_meters": 2.00,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09d59-019c-79c2-8686-9080c4f8de88 rig=01a09d61-630d-7b71-a5c0-cf8733aba916",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T00:49:07Z"
+}

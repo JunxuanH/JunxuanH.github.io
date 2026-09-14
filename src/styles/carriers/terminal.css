@@ -1,0 +1,52 @@
+/* Campus street terminal: amber phosphor CRT on near-black; lines type themselves in when the window opens.
+   Never animate or set transform / opacity / filter on `.slab.terminal` itself: CSS3DRenderer writes those
+   inline every frame. Children and pseudo-elements are fine. */
+.slab.terminal {
+  background: #070603;
+  color: #ffb000;
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 6px rgb(255 176 0 / 0.6);
+  border: 1px solid #3a2a08;
+  box-shadow: none;
+}
+.slab.terminal::before { border-color: #ffb000; }
+/* Scanlines + vignette over the whole screen (replaces the bottom-right corner bracket). */
+.slab.terminal::after {
+  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgb(0 0 0 / 0.32) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.55));
+}
+.slab.terminal h2 { font-family: var(--mono); font-size: 28px; letter-spacing: 0; color: #ffd27a; }
+.slab.terminal .kicker, .slab.terminal h3 { color: #7dff9a; text-shadow: 0 0 6px rgb(125 255 154 / 0.5); }
+.slab.terminal .kicker::before { content: '> '; }
+.slab.terminal .meta { color: rgb(255 176 0 / 0.75); }
+.slab.terminal .team { color: rgb(255 176 0 / 0.75); }
+/* Outside markers would be clipped by the typed reveal, so the prompt is an inline glyph instead. */
+.slab.terminal .bullets { list-style: none; padding-left: 0; }
+.slab.terminal .bullets li::before { content: '> '; color: #7dff9a; }
+.slab.terminal .chips li { border: 1px solid #ffb000; border-radius: 0; color: #ffb000; }
+
+/* Typed reveal: every line starts clipped and is uncovered left-to-right in steps, staggered by --i. */
+.slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { clip-path: inset(0 100% 0 0); }
+.slab.terminal.is-on :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) {
+  animation: type-in 0.5s steps(18) forwards;
+  animation-delay: calc(var(--i, 0) * 110ms);
+}
+@keyframes type-in { to { clip-path: inset(0); } }
+.slab.terminal.is-on h2::after { content: '▮'; margin-left: 0.15em; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+/* CRT switch-on instead of the holo glitch (clip-path only). */
+.slab.terminal.is-on { animation: crt-on 0.25s steps(6); }
+@keyframes crt-on { from { clip-path: inset(49% 0 49% 0); } to { clip-path: inset(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slab.terminal.is-on,
+  .slab.terminal.is-on h2::after,
+  .slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { animation: none; }
+  .slab.terminal :is(.kicker, h2, .meta > span, h3, .bullets li, .chips li) { clip-path: inset(0); }
+}

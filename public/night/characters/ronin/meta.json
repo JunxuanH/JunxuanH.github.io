@@ -1,0 +1,15 @@
+{
+  "name": "ronin",
+  "generate_type": "LowPoly",
+  "height_meters": 1.78,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09d58-8885-7e43-a258-318dffe646d6 rig=01a09d5f-4f24-73c3-b64c-3204c9c82a80",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T00:46:58Z"
+}

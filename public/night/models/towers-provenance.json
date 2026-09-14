@@ -1,0 +1,690 @@
+{
+  "schema": "playweave.engine-site-models/v2",
+  "generatedAt": "2026-09-12T16:25:13.923Z",
+  "authorisation": [
+    "owner-approved fal.ai spend, 2026-09-11 ($5.00, hero models; those props no longer ship)",
+    "owner-approved fal.ai spend, 2026-09-11 ($15.00 then $10.00 and $5.00 caps, dusk-city world and morph shapes)"
+  ],
+  "models": [
+    {
+      "file": "/models/train-car.glb",
+      "kind": "model3d",
+      "assetId": "dusk-train-car-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a092c0-449b-7743-9723-60ac08d8c7d2",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "42116af827391bacd658c6cb5a2c9bce55260ad81f3f918ff23e87bcb36df3bb",
+      "sha256": "1b9317aaec2d4ce6496c7df1d3c5089240884e34473ee00f9e888a2f684eccec",
+      "byteLength": 920064,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-train-car-v1.receipt.json"
+    },
+    {
+      "file": "/models/water-tank.glb",
+      "kind": "model3d",
+      "assetId": "dusk-water-tank-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a092c2-0987-73c2-9f84-927f72f4c812",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "c2f0dda9f2c6248c20e67be55beb8d8293f5a5dfe0ef30b4df850a407db957ce",
+      "sha256": "66687b085225778234204ffdb59cc848a51bcdccd6ae7b4f2095a579b0fa6a32",
+      "byteLength": 815712,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-water-tank-v1.receipt.json"
+    },
+    {
+      "file": "/models/blimp.glb",
+      "kind": "model3d",
+      "assetId": "dusk-blimp-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a092fd-96ef-75b3-8c8d-13e05d9493a5",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "e114aefbfe61ba8403ecd7dd3d13998ec2cd801478d49685d8febfc5e1bc82d4",
+      "sha256": "79ea8ef950605cdd4e0f29e13d13328556f04920c6de277162e901a4b0f34f7a",
+      "byteLength": 807168,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-blimp-v1.receipt.json"
+    },
+    {
+      "file": "/backdrop/sky.jpg",
+      "kind": "world",
+      "assetId": "dusk-world-high-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan_world/image-to-world",
+        "requestId": "01a092f4-b3dd-7c90-b9fd-d5abfffb7907",
+        "seed": null
+      },
+      "from": {
+        "assetId": "dusk-pano-high-image-v1",
+        "sha256": "07aad0193710597dab5901dd9d8bcaf5e29ba748d6b9a484891810118360208d"
+      },
+      "member": "sky_image.png",
+      "sourceSha256": "9a9822e09849b61a8d783bfba4c0992e6a303d52301881eafb5fbcc9d1e3732c",
+      "sha256": "d2105589aef192dc327eeeaa8a5a70d6925db581564d5bbcd053e21366dcea56",
+      "byteLength": 36005,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-world-high-v1.receipt.json"
+    },
+    {
+      "file": "/backdrop/skyline.png",
+      "kind": "image",
+      "assetId": "dusk-skyline-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/nano-banana-pro",
+        "requestId": "01a092b4-3ec1-7693-a7ee-eb430abf9c50",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "33b7dcf571cb894f9f9d6d765e12f86cde86f802d4d49e3ed5446c6545e6503e",
+      "sha256": "d541e469f309ce536d4e59335c415236984e9f83ef5fd459520e63cb13a4a0bd",
+      "byteLength": 512364,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-skyline-v1.receipt.json"
+    },
+    {
+      "file": "/backdrop/skyline-back.png",
+      "kind": "image",
+      "assetId": "dusk-skyline-back-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/nano-banana-pro",
+        "requestId": "01a092f3-4656-7130-8462-146b3c170ce2",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "56fbddd1737c236848cca4c406989d6a1c1fc40155eb2f452d8aebe7bb338e0c",
+      "sha256": "322ff77a0d324619c6630e9d38bd914fb0d1b2a6ed819db17e0609dc1d790927",
+      "byteLength": 663074,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-skyline-back-v1.receipt.json"
+    },
+    {
+      "file": "/backdrop/hills.png",
+      "kind": "image",
+      "assetId": "dusk-hills-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/nano-banana-pro",
+        "requestId": "01a092f3-ab19-7981-a135-c3c21def0c16",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "7586bf6d2c98a778f1b5c85b75ffcf0b93a7d2500b533adc91ad2cd1ca56ba16",
+      "sha256": "c7e092e8daff3772f9860d5f2f86fa21b187ec4e3e3be4b679b0ecd7dd838687",
+      "byteLength": 435164,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-hills-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/wrench.png",
+      "kind": "shape",
+      "assetId": "shape-wrench-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09318-7a8a-7d02-8426-dfe857a7b53e",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "c3d7c7b5e2454bd16491f0efe04a73be424d8fe4976f94b96d7ee06f165e47f5",
+      "sha256": "b2766801b5d570b40ea5e6fab09f8a0628abc78218ea1f98b4e06ffa3c564284",
+      "byteLength": 96525,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-wrench-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-wrench.glb",
+      "kind": "shape",
+      "assetId": "shape-wrench-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09318-7a8a-7d02-8426-dfe857a7b53e",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "c3d7c7b5e2454bd16491f0efe04a73be424d8fe4976f94b96d7ee06f165e47f5",
+      "sha256": "ef279df46a7ee6a279ad3ca3fe5e3ac1f191619ac2b267ff724569317724bcd4",
+      "byteLength": 242660,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-wrench-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/cartridge.png",
+      "kind": "shape",
+      "assetId": "shape-cartridge-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09570-c955-7e20-b245-69345b005e78",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "6f3526850ff879180c43bb6b4efdae224d695d57c4b6fe9199cfda654daf6b0f",
+      "sha256": "a6b173375599600d158d9f107da8c5321d348baab07a8bb409aa06542d506382",
+      "byteLength": 164960,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-cartridge-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-cartridge.glb",
+      "kind": "shape",
+      "assetId": "shape-cartridge-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09570-c955-7e20-b245-69345b005e78",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "6f3526850ff879180c43bb6b4efdae224d695d57c4b6fe9199cfda654daf6b0f",
+      "sha256": "371f9c3973bc51b1539dc4f92434b870c695d9a5c53636ba9cb27591b1c5be89",
+      "byteLength": 299232,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-cartridge-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-gamepad.glb",
+      "kind": "shape",
+      "assetId": "shape-gamepad-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09316-8547-71f2-bce9-d582c52d8b1a",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "8132b23b83535f3654acff30242aeba443f64e87c77bca8cc2bd9bfebf1698e0",
+      "sha256": "8de16d9e80d982656488e1544b0ca36f2054d521c94608758c57fa84b21d3b96",
+      "byteLength": 283596,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-gamepad-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/gamepad.png",
+      "kind": "shape",
+      "assetId": "shape-gamepad-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a09316-8547-71f2-bce9-d582c52d8b1a",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "8132b23b83535f3654acff30242aeba443f64e87c77bca8cc2bd9bfebf1698e0",
+      "sha256": "fdc2da0711ea78e500f96b5c9c9c2f7e54b3a235dbf2706e69f7aa08bcf7ef8f",
+      "byteLength": 162231,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-gamepad-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/rocket.png",
+      "kind": "shape",
+      "assetId": "shape-rocket-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931a-063b-78f0-abda-d7e04ef35d15",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "37cf26132aaf6aadd54e85638ebd213cf0cc2bf7fc85bad62910fb093d18bff9",
+      "sha256": "3af1942db6e3dd651fe26ab8d1368e4b0597a43b8e08b6988eeefec55539bb8f",
+      "byteLength": 191715,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-rocket-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-rocket.glb",
+      "kind": "shape",
+      "assetId": "shape-rocket-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931a-063b-78f0-abda-d7e04ef35d15",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "37cf26132aaf6aadd54e85638ebd213cf0cc2bf7fc85bad62910fb093d18bff9",
+      "sha256": "d0a810c867ea0b8ccdf7648ec1c3f2ca16fba47e35636783991cee5b15f8d783",
+      "byteLength": 288976,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-rocket-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/knight.png",
+      "kind": "shape",
+      "assetId": "shape-knight-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931b-ecce-78d2-ace6-ec22ac554778",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "f0da725439866d8a1ade9a888cb4d9d5ff1c05fa591dab601834845d4afde74a",
+      "sha256": "9e50a1a73261650fa696b89910e4f16932e437cf411f3685cac47d672d4d7c65",
+      "byteLength": 156099,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-knight-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-knight.glb",
+      "kind": "shape",
+      "assetId": "shape-knight-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931b-ecce-78d2-ace6-ec22ac554778",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "f0da725439866d8a1ade9a888cb4d9d5ff1c05fa591dab601834845d4afde74a",
+      "sha256": "1d176ef349ac2f895572c5f1a64f2b2db3054382967519d3792cb6b1b2ee6bad",
+      "byteLength": 268732,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-knight-v1.receipt.json"
+    },
+    {
+      "file": "/shapes/padlock.png",
+      "kind": "shape",
+      "assetId": "shape-padlock-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931f-2445-7af0-8425-d0ce834b99f2",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "a7455b67990c7507b5852e3126c8569d18a93d5e6849d9571ed2d81f9b04a39c",
+      "sha256": "22a3b289f55dd517d0e7e45d915e175db5d6f7e1ccd4a1e321afc5158d238974",
+      "byteLength": 109464,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-padlock-v1.receipt.json"
+    },
+    {
+      "file": "/models/shape-padlock.glb",
+      "kind": "shape",
+      "assetId": "shape-padlock-v1",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hunyuan3d-v3/text-to-3d",
+        "requestId": "01a0931f-2445-7af0-8425-d0ce834b99f2",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "a7455b67990c7507b5852e3126c8569d18a93d5e6849d9571ed2d81f9b04a39c",
+      "sha256": "cd510e23c5f9fef023f24246f7ff29d7c672938773630fdeddc06e52c6e5be5d",
+      "byteLength": 253804,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/shape-padlock-v1.receipt.json"
+    },
+    {
+      "file": "/models/tower-01.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-01-v2-rodin",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093b6-09ac-72f1-b0be-a7566e099a1e",
+        "seed": 6635
+      },
+      "from": {
+        "assetId": "dusk-tower-01-paint-v1",
+        "sha256": "06afa70b4b100489db29c049c1704aea4a14c409e498941e0604a179b543784a"
+      },
+      "member": null,
+      "sourceSha256": "81c00a14221b4cc4228604632acd7ca8a7686af039bf16f7cec2d50d6e30e94c",
+      "sha256": "fced3865bd06267d9011fefa604a69b06cacc0e265fa508dbdc283f06089d2c7",
+      "byteLength": 196760,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-01-v2-rodin.receipt.json"
+    },
+    {
+      "file": "/models/tower-02.glb",
+      "kind": "img3d-trellis",
+      "assetId": "dusk-tower-02-v2-trellis",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/trellis",
+        "requestId": "01a093d4-d1bb-7ad2-a95d-bba7e6734e43",
+        "seed": null
+      },
+      "from": {
+        "assetId": "dusk-tower-02-paint-v1",
+        "sha256": "9ff5908d89654a87290e7b2e83c03d73168d88f4b99c8bc0985f04d8f48e8f1c"
+      },
+      "member": null,
+      "sourceSha256": "62ba0d62311c1707b6e29482a380790525d152d0da8f65c3eb91dab6e25e2793",
+      "sha256": "6c7c61c3ea399a242a8663441fa516144888f5249446b410ef7c19c93cfc66f3",
+      "byteLength": 182264,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-02-v2-trellis.receipt.json"
+    },
+    {
+      "file": "/models/tower-03.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-03-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093c0-722d-7c42-8391-428b4fe37721",
+        "seed": 35863
+      },
+      "from": {
+        "assetId": "dusk-tower-03-paint-v1",
+        "sha256": "109327307418db53089ce9f39ad10a6931efaf33e96498e4499b73770cd3fbc3"
+      },
+      "member": null,
+      "sourceSha256": "8c24fc7f7ce35f7eb6d27a70520d96da98c770d30e0de9fb404eaa92d6feb381",
+      "sha256": "a687806bfbd0d065dfe689efecf91f77e2da9aecad78f534fae343d689abca1b",
+      "byteLength": 215228,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-03-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-04.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-04-v3-rodin",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093ec-b81a-7403-b77b-5ab51c45bc5f",
+        "seed": 40493
+      },
+      "from": {
+        "assetId": "dusk-tower-04-paint-v2",
+        "sha256": "8c41af18ba7c6ad5a6b671efa32b1f864c966c76e2ee52f9489e9ddbb0e4ba17"
+      },
+      "member": null,
+      "sourceSha256": "94826e7d91793ba6197d6df4735afb87ba2d836208442c354225f69d8a9d7311",
+      "sha256": "63bd7454144ba5a5fa771a6f106535f8b1f5c06d1ad0d5e75cebdb7903b22382",
+      "byteLength": 188736,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-04-v3-rodin.receipt.json"
+    },
+    {
+      "file": "/models/tower-05.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-05-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093c4-542e-72f3-b6d3-21f49a2a3009",
+        "seed": 31499
+      },
+      "from": {
+        "assetId": "dusk-tower-05-paint-v1",
+        "sha256": "99391242419b4677123774b324216d96d007078a7de70608a7eb42385f738066"
+      },
+      "member": null,
+      "sourceSha256": "51d1e74b804119ecba15e37c5dcd92aa14eafccfbddd3efdcb93a2f03543c2d4",
+      "sha256": "260822beb5ea095de9df8cabff32f6bda7951af3b2249637f6ae95fe09b04d2e",
+      "byteLength": 206728,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-05-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-06.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-06-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093c6-14a5-7921-b8aa-51fe513dca32",
+        "seed": 25564
+      },
+      "from": {
+        "assetId": "dusk-tower-06-paint-v1",
+        "sha256": "25b60056191bf157e4698a77c77135e60e9f5c0cc4a5f2713b0ed2f465c295bd"
+      },
+      "member": null,
+      "sourceSha256": "4daefdc755a2625cf86167b69bc30f70227b8ff2a808081973cf861438640f51",
+      "sha256": "01ccb0ec353fe9a87ca7f975d922acc0940ecb44b51ea9bfe5501219c8ab48cc",
+      "byteLength": 209216,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-06-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-07.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-07-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093c7-bd93-7a52-ba2f-3516b3602abf",
+        "seed": 52542
+      },
+      "from": {
+        "assetId": "dusk-tower-07-paint-v1",
+        "sha256": "06e21d4f22a6cd91e5e69e71b4dccceae0bc76b879c61803ecb0fed7afe5a8ab"
+      },
+      "member": null,
+      "sourceSha256": "d56dcfd073f558616feef2affd8dabd9d8ee554b101885a772a278b170e31a16",
+      "sha256": "2a7f562f7e41b88de218b8ee9fefe5dd58891f4f25efd40e535f708fb07237b6",
+      "byteLength": 208840,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-07-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-08.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-08-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093ca-5acb-7163-9dff-c6deb4203a76",
+        "seed": 2014
+      },
+      "from": {
+        "assetId": "dusk-tower-08-paint-v1",
+        "sha256": "f30f85f840578df994a5307c5cedb253aafc309ea0a9fd0790bab781f068e023"
+      },
+      "member": null,
+      "sourceSha256": "85c5f3cb611f4b6db9160f053f743c4ed12a901860a18b61b0026118bc93cffc",
+      "sha256": "b01a8fae8b34813fbd96a5c5270fc38af970e1b3d620fe0fb87308f4e4dfb176",
+      "byteLength": 177920,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-08-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-09.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-09-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093cc-92d8-7f00-9d8e-19c5b65f0ba6",
+        "seed": 20361
+      },
+      "from": {
+        "assetId": "dusk-tower-09-paint-v1",
+        "sha256": "a1ad2dc8073949234450d77cbd988592af4e740f50d45ee5dbb2ecdae79e6c6d"
+      },
+      "member": null,
+      "sourceSha256": "95996b7cdd9ef54ae2e6a1044c753335e3f95c177b492bad784065ff914aeec3",
+      "sha256": "b5929796b384f22fad4987f99d565e0c3bd87a282d451ba2b0099829bfab8595",
+      "byteLength": 181408,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-09-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-10.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-10-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093ce-4ef7-7df2-a804-5ca2b0e63aaf",
+        "seed": 61529
+      },
+      "from": {
+        "assetId": "dusk-tower-10-paint-v1",
+        "sha256": "8ff202b93b2ade9b525b09c0f912a889130d9c8d79b816d3d0af493ba26aceda"
+      },
+      "member": null,
+      "sourceSha256": "5d06c86f3ff0993eed948294294760ca462f065827ba31e4296e3d5c5c354d39",
+      "sha256": "fdd5f697431ac2ff38a01b84d9d167100567117fc7ae22c6da7bd2eb5a9cca4e",
+      "byteLength": 188304,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-10-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-11.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-11-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093cf-f3c8-7203-89b6-9575373daa79",
+        "seed": 18873
+      },
+      "from": {
+        "assetId": "dusk-tower-11-paint-v1",
+        "sha256": "fb97370442f23822d75dc33a3cb9f60f0f1ef6399ff8c6e7135a2f82c926fb35"
+      },
+      "member": null,
+      "sourceSha256": "c9257401ff2e9dced74ae8ced500f5b3f6a8909a9c6097b52718cf1848638d13",
+      "sha256": "a21837369fb088f55be852b7a2e1203d6d475b506491de6d3c051369b1aa3fc8",
+      "byteLength": 183436,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-11-v2.receipt.json"
+    },
+    {
+      "file": "/models/tower-12.glb",
+      "kind": "img3d-rodin",
+      "assetId": "dusk-tower-12-v2",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/hyper3d/rodin",
+        "requestId": "01a093d2-1475-76d0-8247-aa3e0e4ddbed",
+        "seed": 47152
+      },
+      "from": {
+        "assetId": "dusk-tower-12-paint-v1",
+        "sha256": "ee6189bcb958e773b21077b6ea6f12c8453746ac3ce040c878bb794a2694daa8"
+      },
+      "member": null,
+      "sourceSha256": "1394ba250bb2101d1c4e1ae4399a513bfc14eb006fa7b4b5aa4bb24f511e0076",
+      "sha256": "419ec8c39cac270b48cb6639d62899681b9885d2bd96059240f4936e9b6f101b",
+      "byteLength": 248084,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/dusk-tower-12-v2.receipt.json"
+    },
+    {
+      "file": "/frames/lantern-hollow-2d.jpg",
+      "kind": "image",
+      "assetId": "example-2d-v1a",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/nano-banana-pro",
+        "requestId": "01a09616-b0b2-70d0-b115-7d8ee994cfef",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "c0ec9ad9811c1e73361a4beeaa7cb9994b7f04a6153aef6010ad42c0333759b1",
+      "sha256": "2c73fd4328ba744fe8d480e1b0b4c10140c38f2fea048f7f51b4455733a48061",
+      "byteLength": 196858,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-2d-v1a.receipt.json"
+    },
+    {
+      "file": "/frames/skyharbor-3d.jpg",
+      "kind": "image",
+      "assetId": "example-3d-v1b",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/nano-banana-pro",
+        "requestId": "01a09618-83f7-76b1-bd4b-6df34acae3f5",
+        "seed": null
+      },
+      "from": null,
+      "member": null,
+      "sourceSha256": "8c04131291cd51c991af7661f9777c338a4926ffcec166a439f6835843f69982",
+      "sha256": "81a2eb64e3b3f2ba96127357df9f73ff75ac2ede5642ff6683f18845f24fef96",
+      "byteLength": 159818,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-3d-v1b.receipt.json"
+    },
+    {
+      "file": "/frames/lantern-hollow-2d-clip.mp4",
+      "kind": "video",
+      "assetId": "example-2d-clip-v1c",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+        "requestId": "01a0966d-9b64-7962-a9cf-eca0f3d92bf5",
+        "seed": null
+      },
+      "from": {
+        "assetId": "example-2d-v1a",
+        "sha256": "c0ec9ad9811c1e73361a4beeaa7cb9994b7f04a6153aef6010ad42c0333759b1"
+      },
+      "member": null,
+      "sourceSha256": "586a5b4e2533d4110ce68a77fe7461bc35d4f90e667c8dc67211ea41b6a38d49",
+      "sha256": "761c719ef8ed5a8d85fdc0a9218ab0bc820f136b9a7a0bd1b2525dd1a3e1dc34",
+      "byteLength": 423404,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-2d-clip-v1c.receipt.json"
+    },
+    {
+      "file": "/frames/lantern-hollow-2d-clip.webm",
+      "kind": "video",
+      "assetId": "example-2d-clip-v1c",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+        "requestId": "01a0966d-9b64-7962-a9cf-eca0f3d92bf5",
+        "seed": null
+      },
+      "from": {
+        "assetId": "example-2d-v1a",
+        "sha256": "c0ec9ad9811c1e73361a4beeaa7cb9994b7f04a6153aef6010ad42c0333759b1"
+      },
+      "member": null,
+      "sourceSha256": "586a5b4e2533d4110ce68a77fe7461bc35d4f90e667c8dc67211ea41b6a38d49",
+      "sha256": "30fafac1318483826ee3e4b966bade781b27dab617be54ff6ab22a71a1a592b2",
+      "byteLength": 419443,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-2d-clip-v1c.receipt.json"
+    },
+    {
+      "file": "/frames/skyharbor-3d-clip.mp4",
+      "kind": "video",
+      "assetId": "example-3d-clip-v1b",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+        "requestId": "01a0966a-78e9-7f63-8e78-55aefe10ae82",
+        "seed": null
+      },
+      "from": {
+        "assetId": "example-3d-v1b",
+        "sha256": "8c04131291cd51c991af7661f9777c338a4926ffcec166a439f6835843f69982"
+      },
+      "member": null,
+      "sourceSha256": "ed3235fee24c836d4b62585394e2bdf7221861486254f4af252a2e9f1c4492d1",
+      "sha256": "07e6209ad19f35270c996cf13d6c971e5aa305bcc0ac3450bb581fa5fb4abf86",
+      "byteLength": 272198,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-3d-clip-v1b.receipt.json"
+    },
+    {
+      "file": "/frames/skyharbor-3d-clip.webm",
+      "kind": "video",
+      "assetId": "example-3d-clip-v1b",
+      "generator": {
+        "provider": "fal",
+        "model": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+        "requestId": "01a0966a-78e9-7f63-8e78-55aefe10ae82",
+        "seed": null
+      },
+      "from": {
+        "assetId": "example-3d-v1b",
+        "sha256": "8c04131291cd51c991af7661f9777c338a4926ffcec166a439f6835843f69982"
+      },
+      "member": null,
+      "sourceSha256": "ed3235fee24c836d4b62585394e2bdf7221861486254f4af252a2e9f1c4492d1",
+      "sha256": "49a46198169bfb9f50c05b9217b7ded3f929632cbf65656c84ef34f5046a2f4e",
+      "byteLength": 309987,
+      "receipt": "playweave: apps/web/design-assets/engine-hero/example-3d-clip-v1b.receipt.json"
+    }
+  ]
+}

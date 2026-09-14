@@ -1,0 +1,43 @@
+/* Harbor departures board: amber mono on black, the contact links restyled as split-flap rows whose top
+   tiles flip when the window opens. No transform / opacity / filter on `.slab.flap-board` itself
+   (CSS3D owns them); the flip lives on the row's ::before. index.astro carries data-status on the links. */
+.slab.flap-board {
+  background: #08090d;
+  color: #ffb000;
+  font-family: var(--mono);
+  padding: 18px 22px 20px;
+  border: 1px solid #3a2a08;
+  box-shadow: none;
+}
+.slab.flap-board::before, .slab.flap-board::after { border-color: #ffb000; }
+.slab.flap-board header::before { content: 'DEPARTURES · PIER 9'; display: block; font-size: 15px; letter-spacing: 0.3em; color: #ffd27a; opacity: 0.8; }
+.slab.flap-board .kicker { display: none; }
+.slab.flap-board h2 { font-family: var(--mono); font-size: 30px; letter-spacing: 0.02em; color: #fff3d0; }
+.slab.flap-board .meta { font-size: 15px; color: rgb(255 176 0 / 0.75); }
+.slab.flap-board .lede { font-size: 14px; color: rgb(255 176 0 / 0.7); margin-bottom: 0; }
+
+/* Rows: label left, status right (from data-status), dark tile background. */
+.slab.flap-board .actions { display: grid; gap: 8px; margin-top: 14px; }
+.slab.flap-board .actions a {
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  padding: 8px 14px; border: 0; border-radius: 0; box-shadow: none;
+  background: #111319; color: #ffb000;
+  font: 500 28px/1.1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase;
+  position: relative; perspective: 500px; transform: none; transition: none;
+}
+.slab.flap-board .actions a::after {
+  content: attr(data-status); position: static; inset: auto; z-index: auto; border-radius: 0;
+  background: none; font-size: 22px; color: #7dff9a;
+}
+/* Split-flap: the top half-tile flips down about the row's centre line; hidden once past 90°. */
+.slab.flap-board .actions a::before {
+  content: ''; position: absolute; inset: 0 0 50% 0; background: #111319;
+  transform-origin: 50% 100%; transform: rotateX(-180deg); backface-visibility: hidden;
+}
+.slab.flap-board.is-on .actions a::before { animation: flap 0.12s linear 6 both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes flap { from { transform: rotateX(0); } to { transform: rotateX(-180deg); } }
+.slab.flap-board.is-on { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slab.flap-board.is-on .actions a::before { animation: none; }
+}

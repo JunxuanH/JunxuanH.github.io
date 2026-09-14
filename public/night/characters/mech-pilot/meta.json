@@ -1,0 +1,15 @@
+{
+  "name": "mech-pilot",
+  "generate_type": "LowPoly",
+  "height_meters": 1.90,
+  "concept": "concept-1.png",
+  "fal_requests": "rig=01a09d58-84ea-7fa2-ba69-25f1fa1dda03",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T00:39:51Z"
+}
