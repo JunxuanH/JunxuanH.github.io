@@ -88,12 +88,12 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
 
   // Banner frames on both flanks (one merged draw). +x carries the DOM slab; −x the canvas billboard.
   const frames = new THREE.Mesh(mergeGeometries([
-    new THREE.BoxGeometry(0.2, 6.9, 16.6).translate(4.25, 0, 0),
-    new THREE.BoxGeometry(0.2, 6.9, 16.6).translate(-4.25, 0, 0),
-  ], false)!, frameMaterial(3.45, 8.3));
+    new THREE.BoxGeometry(0.2, 10.7, 16.6).translate(4.25, 0, 0),
+    new THREE.BoxGeometry(0.2, 10.7, 16.6).translate(-4.25, 0, 0),
+  ], false)!, frameMaterial(5.35, 8.3));
   root.add(frames);
   // rotation.y = −π/2 turns the billboard's +z normal to local −x (sin −π/2, 0, cos −π/2).
-  const billboard = createBillboard('AMD', 'DATA CENTER GPU PERF', 16, 6.3);
+  const billboard = createBillboard('AMD', 'DATA CENTER GPU PERF', 16, 10.1);
   billboard.position.x = -4.37;
   billboard.rotation.y = -Math.PI / 2;
   root.add(billboard);

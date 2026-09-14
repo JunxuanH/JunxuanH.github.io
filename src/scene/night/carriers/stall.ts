@@ -97,7 +97,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const actions: DockActions = { left: () => flip(-1), right: () => flip(1), confirm: open };
 
   return {
-    group, mount, width: 8, px: 640, style: '',
+    group, mount, width: 10, px: 640, style: '',
     range: [0.55, 0.95],
     lights: [[72, 3.5, -226, T.secondary, 500, 16]],
     rise,

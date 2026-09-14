@@ -48,7 +48,7 @@ const WALK_DEFAULT: [number, number] = [6, 14];
 
 /** Card slots in the stack's local frame (0 = front). */
 const SLOT = (k: number) => ({ x: k * 1.5, y: k * 0.45, z: -k * 2.0, ry: -k * 0.1 });
-const CARD_W = 8, CARD_PX = 640;
+const CARD_W = 10, CARD_PX = 640;
 
 /** Where a slab goes if its carrier module is missing (the pre-carrier placements). */
 const SIGN_YAW = (x: number) => (x < 0 ? Math.PI / 2 - 0.35 : -Math.PI / 2 + 0.35);
