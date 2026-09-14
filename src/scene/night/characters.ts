@@ -360,7 +360,11 @@ export function createCrowd(opts: CrowdOptions) {
   const tmp = new THREE.Vector3(), tan = new THREE.Vector3(), target = new THREE.Quaternion(), m = new THREE.Matrix4();
   const wp = new THREE.Vector3();
   const okAssets = opts.assets.filter((a) => rigMeta(a.name, a).ok);
-  const assets = okAssets.length ? okAssets : opts.assets;
+  // Shuffle the roster per path (own rng: speeds/phases stay as before) so a tier whose count is smaller than the
+  // roster still mixes rigs from every batch instead of always taking the first `count` names in paths.ts.
+  const assets = (okAssets.length ? okAssets : opts.assets).slice();
+  const mix = rng(((opts.seed ?? 1) * 2654435761) ^ [...opts.path.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7));
+  for (let i = assets.length - 1; i > 0; i--) { const j = Math.floor(mix() * (i + 1)); [assets[i], assets[j]] = [assets[j], assets[i]]; }
 
   for (let i = 0; i < opts.count; i++) {
     const asset = assets[i % assets.length];

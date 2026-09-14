@@ -1,0 +1,17 @@
+{
+  "name": "exo-courier",
+  "generate_type": "LowPoly",
+  "height_meters": 1.78,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a147-11f6-7012-97de-773919363ded rig=01a0a14c-bf1c-7260-b4fa-90b0d9b798a7",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T19:05:13Z"
+}

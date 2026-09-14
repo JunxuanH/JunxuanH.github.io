@@ -1,0 +1,17 @@
+{
+  "name": "tech-shaman",
+  "generate_type": "LowPoly",
+  "height_meters": 1.65,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a122-1ff3-7c30-8ad6-b47bbf6b81c1 rig=01a0a129-03ea-7322-a4c1-2ede798aeea9",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:27:34Z"
+}

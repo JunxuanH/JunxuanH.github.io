@@ -109,8 +109,11 @@ export async function start(root: HTMLElement) {
   } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
   const PROTAGONIST = 'soldier'; // the player's rig (rigs.ts row: height 1.85, cyan rim); agent + netrunner stay on disk / in the crowd
-  const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;
-  const RIGS_LITE = [PROTAGONIST, 'netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const;
+  const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot',
+    'delivery-rider', 'tech-shaman', 'tagger', 'dock-worker', 'bouncer-android', 'yakuza-boss', 'nurse', 'exo-courier'] as const; // 'tourist' dropped (rigs.ts note)
+  // Phones: 11 varied crowd rigs (the smallest downloads, ≈ 4.5 MB) + the player + the patrol robot (≈ 5.6 MB in all), plus the
+  // kiosk / bus-stop NPC rigs the carriers load anyway. Every district roster in paths.ts keeps ≥ 4 of these.
+  const RIGS_LITE = [PROTAGONIST, 'sec-bot', 'schoolgirl-hacker', 'oni-bouncer', 'corpo', 'bouncer-android', 'nurse', 'dj', 'ronin', 'yakuza-boss', 'cat-courier', 'medic', 'exo-courier', 'delivery-rider', 'dock-worker'] as const;
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();

@@ -1,0 +1,17 @@
+{
+  "name": "dock-worker",
+  "generate_type": "LowPoly",
+  "height_meters": 1.95,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a12c-b015-79a2-8329-b7be22f8fc36 rig=01a0a134-fbe7-7fb1-b715-7b723ef31482",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:39:53Z"
+}

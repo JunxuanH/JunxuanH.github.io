@@ -1,0 +1,17 @@
+{
+  "name": "tagger",
+  "generate_type": "LowPoly",
+  "height_meters": 1.58,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a12a-fe4b-7c70-affc-fb08bc115fdc rig=01a0a134-28c2-7e41-8731-395747a1097f",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:40:05Z"
+}

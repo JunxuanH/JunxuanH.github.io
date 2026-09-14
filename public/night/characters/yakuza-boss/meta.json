@@ -1,0 +1,17 @@
+{
+  "name": "yakuza-boss",
+  "generate_type": "LowPoly",
+  "height_meters": 1.8,
+  "concept": "concept-v2-1.png",
+  "fal_requests": "3d=01a0a122-ced2-74d3-8617-d90628df6b2c rig=01a0a127-6289-7110-8cef-03b5638bea52",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:25:35Z"
+}

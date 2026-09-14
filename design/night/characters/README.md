@@ -31,7 +31,7 @@ Raw fal downloads + responses stay here (`design/night/characters/<name>/`), shi
   `loadCharacter` drops the constant translation/scale tracks (188 of 288 per rig). The skin material cache
   is untouched (no new shader programs).
 
-## Roster (22 rigs, 2026-09-14 audit)
+## Roster (32 rigs, 2026-09-14 audits)
 
 Facing: every Meshy rig faces +z (yaw 0, none mirrored). Old runtime assumed stride 1.2 / 3.4 for all rigs;
 measured walk 1.25–1.72, run 3.6–6.4 u/s → every walker's feet slid ~20 %. Ground: the planted foot dips
@@ -40,7 +40,8 @@ localised faults → re-rig $0.32 → regenerate $1.07 → drop):
 
 | name | role in the city | h (u) | walk / run stride | audit → decision | 2026-09-14 spend |
 |---|---|---|---|---|---|
-| **agent** | **protagonist** (player.ts, cyan rim) | 1.80 | 1.42 / 5.03 | new: 3 concepts, concept-2 picked (clean A-pose, coat hem above the knee, nothing cropped); clean rig | $1.37 |
+| **soldier** | **protagonist** since 2026-09-14 (player.ts, cyan rim, walk 2.4 / run 5.0) | 1.85 | 1.54 / 4.60 | concept-1 of 3 (widest margins, arms clear of the torso, face half visible); Hunyuan **Normal**+PBR 39.6 k tris; Meshy multi-animation on one skeleton: idle 0, run 14, lookaround 338 (one-shot after 8 s idle), gesture 2, combat 89 (crouched guard, extra), strut 106 (0.71 u/s, extra), walk = Meshy basic walking; clean | $1.90 |
+| agent | former protagonist (on disk, not in a roster) | 1.80 | 1.42 / 5.03 | 3 concepts, concept-2 picked (clean A-pose, coat hem above the knee); clean rig | $1.37 |
 | netrunner | Education plaza + avenue walker (ex-protagonist) | 1.75 | 1.44 / 5.25 | clean → data fix | – |
 | corpo | Work walkway, avenue | 1.75 | 1.36 / 4.98 | clean (OBJ-zip quirk at generation) → data fix | – |
 | vendor | Projects market stall (wave) + talker | 1.75 | 1.30 / 4.54 | accepted: stretch 2.8 = raised-arm idle pulling the apron; re-rigged by the clips call → `talk` (313) `wave` (28) | $0.56 |
@@ -62,9 +63,26 @@ localised faults → re-rig $0.32 → regenerate $1.07 → drop):
 | nomad | pier | 1.78 | 1.45 / 5.25 | clean → data fix | – |
 | noodle-cook | market | 1.68 | 1.25 / 4.42 | clean; sinking 3.1 cm → offset | – |
 | patrol-bot | Work walkway, avenue | 1.90 | 1.54 / 5.65 | clean (v2 concept); idle floats 3.3 cm → per-clip offset | – |
+| delivery-rider | market loop, campus street, avenue | 1.68 | 1.37 / 4.87 | batch 3: bubble-helmet food rider; clean | $1.07 |
+| tech-shaman | Education plaza, campus street | 1.65 | 1.31 / 4.64 | batch 3: elderly cable-dreadlock shaman; accepted: robe hem shears a little (leg maxDisp 0.29/0.35) | $1.07 |
+| tagger | avenue walks | 1.58 | 1.23 / 4.30 | batch 3: teen graffiti tagger; clean, sinks 4.8 cm → offset | $1.07 |
+| dock-worker | pier | 1.95 | 1.60 / 5.67 | batch 3: heavy augmented dock worker; clean, sinks 4.1 cm → offset | $1.07 |
+| bouncer-android | Work walkway, avenue | 2.00 | 1.65 / 6.00 | batch 3: club bouncer android, red visor; clean | $1.07 |
+| yakuza-boss | Work walkways, avenue | 1.80 | 1.50 / 5.30 | batch 3 (concept re-rolled once: arms down + feet cropped); clean, sinks 3.7 cm → offset | $1.22 |
+| nurse | Education plaza, campus street | 1.70 | 1.33 / 4.80 | batch 3: bioluminescent-tattoo nurse; clean | $1.07 |
+| exo-courier | Work walkway, avenue, market, pier | 1.78 | 1.42 / 4.99 | batch 3: slim exo-frame courier; clean, sinks 3.3 cm → offset | $1.07 |
+| tourist | — (**dropped**, `ok: false`, not loaded) | 1.72 | – | batch 3: the clear poncho + chest camera became leg-weighted geometry (stray 15 %, run maxDisp 0.90, stretch 26: a black smear mid-run); no budget left to re-rig | $1.07 (3D retried once, free) |
 | drone-police | avenue figure-8, Contact pad | – | – | prop (procedural flight), not rigged | – |
 
-No rig was dropped (`ok: false`): nothing failed beyond repair once the chef was regenerated. The exact
+One rig is dropped (`ok: false`): the batch-3 tourist. Contact sheets for batch 3: `sheet-walk-batch3.png`
+(side) and `sheet-walk-batch3-front.png`.
+
+**Phones (`RIGS_LITE`, main.ts):** soldier + sec-bot + 11 crowd rigs picked for small downloads and variety
+(corpo, bouncer-android, nurse, dj, ronin, yakuza-boss, cat-courier, medic, exo-courier, delivery-rider,
+dock-worker) ≈ 5.6 MB, plus the kiosk/bus-stop NPC rigs the carriers fetch anyway (0.9 MB); measured 6.9 MB of
+rig GLBs in all on a 393×852 phone. Every district roster lists ≥ 4 lite rigs. `createCrowd` shuffles each roster
+per path (seeded), so a tier whose walker count is below the roster length still mixes every batch — before,
+walkers took the first `count` names, which is why only the first batch ever showed up at med/low tiers. The exact
 numbers (per-clip offsets, headY, stepLen) live in `rigs.ts`; the raw measurements in `audit.json`
 (before) and `audit-fixed.json` (after: ground 0.000 for every rig, no sinking/floating flags).
 
@@ -75,8 +93,8 @@ numbers (per-clip offsets, headY, stepLen) live in `rigs.ts`; the raw measuremen
   stripped), `applySkin(root, {rim, tint, glow})` (PBR maps kept; neon rim; bright saturated albedo →
   emissive so LED trims bloom; one cached material per source material × options), `instantiate(asset,
   {height, rim, skin})` → `{ root (pivot), model, meta, mixer, actions, play(), height, headY, headBone, blob }`,
-  `strideOf(inst, 'walk'|'run')`, `createCrowd({ path, assets, count })` → walkers with per-rig height and
-  stride, spacing, stalls (a `talk`/`wave` stall waits 20 s for a walker whose rig owns the clip, then anyone
+  `strideOf(inst, 'walk'|'run')`, `createCrowd({ path, assets, count })` → walkers (roster shuffled per path) with
+  per-rig height and stride, `hold(face)` / `release()` / `nearest(pos, r)` for dialogue, spacing, stalls (a `talk`/`wave` stall waits 20 s for a walker whose rig owns the clip, then anyone
   idles there), 90 u cull.
 - `rigaudit.ts` / `rigview.ts` — see above (lab only; not imported by the site bundle).
 - `paths.ts` — district loops/stalls (`EDUCATION_PLAZA`, `WORK_WALK_LEFT/RIGHT`, `PROJECTS_MARKET`,
@@ -93,6 +111,10 @@ numbers (per-clip offsets, headY, stepLen) live in `rigs.ts`; the raw measuremen
   (15 rigs): concepts $2.40 · 3D $9.00 · rigs $4.80 (ledger lines `night/char/<name>/{3d,rig}`).
 - 2026-09-14 rig pass (this audit): agent $1.37 (3 concepts $0.45 + 3D $0.60 + rig $0.32) · chef regeneration
   $1.07 · stall clips 4 × $0.56 (multi-animation, idle + talk + wave) = $2.24 → **$4.68** (ceiling $7.10).
+- 2026-09-14 soldier protagonist: 3 concepts $0.45 + Hunyuan Normal+PBR $0.525 + 6-clip multi-animation $0.92 =
+  **$1.90** (one Normal attempt failed with `downstream_service_unavailable`, not billed).
+- 2026-09-14 batch 3: 10 concepts $1.50 (9 + a yakuza re-roll) + 9 × (3D $0.60 + rig $0.32) $8.28 = **$9.78**
+  (ceiling $10.00; the tourist's first 3D attempt failed unbilled).
   Ledger `design/fal-spend.log` (TSV) is the single source of truth.
 
 ## Quirks found
@@ -120,5 +142,9 @@ numbers (per-clip offsets, headY, stepLen) live in `rigs.ts`; the raw measuremen
   scoped, so DOM created at runtime needs `is:global`.
 - `sec-bot` was rigged at 2.1 m while its meta.json said 1.75 (fixed); the runtime uses `bboxHeight` anyway.
 
-**Perf (headless Chrome, `?q=med&p=0.31`, 1600×900 DPR 1):** median 16.7 ms (vsync), p95 18.1, CPU 7.9 ms,
-244 draws — unchanged by the pivot/table (no new programs: 159 fragment / 263 vertex at boot).
+**Perf (headless Chrome, `?q=med&p=0.31`, 1600×900 DPR 1):** median 16.7 ms (vsync), p95 18.2, 242 draws after
+batch 3. Programs at boot (`?q=med`): 159 fragment (unchanged — the skin material cache shares them) / 277 vertex
+(was 263). Rigs cost vertex programs, not fragment ones: three r0.186's skinning node names its bone-matrix
+buffer by node id (`NodeBuffer_<id>`), so every rig type compiles its own skinned vertex program per pass
+(59 skinned vertex programs for ~30 rig types; `?nopeople` boots with 158 vertex / 118 fragment). Lever if boot
+time matters: patch the skinning buffer name to a constant, which would collapse them to one family.

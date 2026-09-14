@@ -1,0 +1,17 @@
+{
+  "name": "nurse",
+  "generate_type": "LowPoly",
+  "height_meters": 1.7,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a13e-a626-73f3-bc2b-0d9cc84de332 rig=01a0a142-92b0-72b0-8af2-d771236261a6",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:54:00Z"
+}

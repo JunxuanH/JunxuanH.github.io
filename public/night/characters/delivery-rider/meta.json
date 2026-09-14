@@ -1,0 +1,17 @@
+{
+  "name": "delivery-rider",
+  "generate_type": "LowPoly",
+  "height_meters": 1.68,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a122-1f96-7591-a4a4-37a53a9732d7 rig=01a0a127-d475-7f40-9f09-0e2ecb553d1c",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-14T18:25:43Z"
+}
