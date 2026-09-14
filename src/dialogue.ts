@@ -5,9 +5,10 @@
  * lines about the city itself. Fictional resident names; nothing about Ivan that the résumé does not say.
  *
  * An exchange is 1–3 short lines (≤ 95 characters each: one typed box on a phone). Bots speak in terse status
- * lines, the cat courier is cheeky, the schoolgirl hacker is a fan. `linesFor(rig, section)` returns the
- * résumé exchanges for a rig in a district (a per-section pool when a rig has none of its own),
- * `cityLinesFor(rig)` the city-meta exchanges in that rig's voice.
+ * lines, the cat courier is cheeky, the schoolgirl hacker is a fan; batch 3 adds a rushed food rider, a cryptic tech
+ * shaman, a cheeky tagger, a gruff dock worker, a literal door android, a calm yakuza boss, a brisk nurse and a
+ * fast-talking exo courier. `linesFor(rig, section)` returns the résumé exchanges for a rig in a district (a
+ * per-section pool when a rig has none of its own), `cityLinesFor(rig)` the city-meta exchanges in that rig's voice.
  */
 export type Section = 'education' | 'work' | 'projects' | 'contact';
 export type Voice = 'human' | 'bot' | 'cat';
@@ -45,10 +46,26 @@ export const PERSONAS: Record<string, Persona> = {
   'nomad': { name: 'ASH', title: 'nomad', voice: 'human', pitch: 840 },
   'noodle-cook': { name: 'AUNTIE MEI', title: 'noodle stand', voice: 'human', pitch: 940 },
   'patrol-bot': { name: 'PATROL-BOT P-09', title: 'avenue patrol', voice: 'bot', pitch: 1440 },
+  // NPC batch 3
+  'delivery-rider': { name: 'PIP', title: 'food courier, mid-shift', voice: 'human', pitch: 1140 },
+  'tech-shaman': { name: 'OBA SETSU', title: 'tech shaman', voice: 'human', pitch: 720 },
+  'tagger': { name: 'ZIGGY', title: 'tagger', voice: 'human', pitch: 1260 },
+  'dock-worker': { name: 'BIG TOMAS', title: 'longshoreman, Pier 9', voice: 'human', pitch: 600 },
+  'bouncer-android': { name: 'UNIT VELVET', title: 'door android', voice: 'bot', pitch: 1380 },
+  'yakuza-boss': { name: 'MR. SHIMADA', title: 'owns the block', voice: 'human', pitch: 680 },
+  'nurse': { name: 'NURSE AOI', title: 'campus clinic', voice: 'human', pitch: 1120 },
+  'exo-courier': { name: 'VEX', title: 'exo courier', voice: 'human', pitch: 1080 },
 };
 
 /** How many residents came out of the fal pipeline (the city-meta lines quote it). */
 export const RESIDENT_COUNT = Object.keys(PERSONAS).length;
+
+const ONES = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+const TENS: Record<number, string> = { 2: 'Twenty', 3: 'Thirty', 4: 'Forty' };
+/** "Twenty-nine" for the city-meta lines (falls back to digits outside 20–49). */
+const RESIDENTS_WORD = TENS[Math.floor(RESIDENT_COUNT / 10)]
+  ? TENS[Math.floor(RESIDENT_COUNT / 10)] + (RESIDENT_COUNT % 10 ? '-' + ONES[RESIDENT_COUNT % 10] : '')
+  : String(RESIDENT_COUNT);
 
 export function personaFor(rig: string): Persona {
   return PERSONAS[rig] ?? { name: rig.replace(/-/g, ' ').toUpperCase(), voice: 'human' };
@@ -366,6 +383,200 @@ const LINES: Record<string, Book> = {
         'If you want to know where Ivan’s going next, ask him. The board has the links.'],
     ],
   },
+  // NPC batch 3. Avenue walkers take the player's district, so each also gets one exchange for the districts it
+  // does not call home.
+  'delivery-rider': {
+    projects: [
+      ['Can’t stop long, the noodles are getting cold. You browsing Ivan’s stall?',
+        'The Trip Planner: day-by-day timelines, real OpenStreetMap streets, every booking link.',
+        'I need that for my routes. Mine’s drawn on a napkin.'],
+      ['Order for Hearthly! Kidding. It’s Ivan’s app for couples living far apart.',
+        'Ivan put a “send a treat” button in it. A treat button. That’s my whole job, automated.',
+        'Private beta. I’m not worried. Yet.'],
+      ['okaybuddy is Ivan’s too. Tap a message, it translates. Voice rooms in your target language.',
+        'Half my customers yell at me in three languages. I could use that.'],
+    ],
+    education: [
+      ['Delivery for the Berkeley grad! No? Ivan did Cognitive Science there, 2015 to 2019, right?',
+        'Ivan’s toolbox is on that terminal. Python, Perl, Java, C#, TypeScript. I carry dumplings.'],
+      ['Two Google Cloud certs. Ivan uses them to spin up disposable benchmark fleets.',
+        'Disposable! I’ve been on shift since six. Nobody’s disposing of me.'],
+    ],
+    work: [
+      ['Avenue shortcut. Ivan’s career is on these signs: AMD, KIOXIA, AMD again, Apple since 2022.',
+        'I’ve had four gigs this week. Ivan had four jobs and every one went up.'],
+      ['Ivan wrote a .NET auto-report tool at AMD in 2017 to speed up data between departments.',
+        'Faster handoffs. Ivan gets it. Every second in the queue, the fries go soft.'],
+    ],
+    contact: [
+      ['Last drop of the night. The board has Ivan’s LinkedIn, GitHub and the résumé PDF.',
+        'Message Ivan. Fast delivery, no tip required.'],
+    ],
+  },
+  'tech-shaman': {
+    education: [
+      ['Sit, child. The fibres speak of a student. Berkeley, 2015 to 2019. Ivan studied the mind.',
+        'Cognitive Science. First Ivan learned how thought moves. Then he followed light into silicon.',
+        'All paths are one path.'],
+      ['Two seals Ivan earned from the cloud: Core Infrastructure and Architecting with Compute Engine.',
+        'Ivan raises fleets from nothing and returns them to nothing. The cloud gives. The cloud takes.'],
+      ['Ivan’s toolbox holds six charms. Perl, Python, Java, C#, TypeScript, and the reading of GPUs.',
+        'A frame-time trace is a river. Ivan reads where it stalls. I read tea leaves. Slower.'],
+    ],
+    work: [
+      ['The fibres hum of towers. Ivan walked AMD, KIOXIA, AMD once more, and then Apple.',
+        'A spiral that climbs. The bottleneck is found, and the tooling keeps it found.'],
+    ],
+    projects: [
+      ['Four offerings at the market, all made by Ivan: Trip Planner, Chordsmith, okaybuddy, Hearthly.',
+        'Hearthly keeps distant hearts close. The oldest magic, in Next.js.'],
+    ],
+    contact: [
+      ['The water remembers every departure. Ivan left his LinkedIn and GitHub upon the board.',
+        'Send your message across it, child. Words set on water travel far.'],
+    ],
+  },
+  'tagger': {
+    work: [
+      ['Oi, don’t snitch. I’m tagging Ivan’s name under the AMD sign. Sunnyvale 2017, Santa Clara 2018.',
+        'Perl scripts benchmarking games that weren’t even out yet. That deserves a mural.'],
+      ['Drone’s mapping this wall for a KIOXIA piece. Ivan went marketing engineer to product manager.',
+        'Client SSDs, 2019 to 2021. I’m spraying it in chrome so it looks fast.'],
+      ['Ivan built a model that flags dodgy GPU frame times and ranks the worst for trace analysis.',
+        'My drone stutters every flight. I’d let Ivan profile it. I’d let Ivan profile my whole life.'],
+    ],
+    education: [
+      ['Campus got a koi pond. I got detention. Ivan did Cognitive Science at Berkeley, 2015 to 2019.',
+        'Ivan’s toolbox is six entries deep. My backpack’s six cans deep. Basically the same.'],
+    ],
+    projects: [
+      ['Chordsmith’s Ivan’s songwriting thing. Click a word, hang a chord on it, transpose the lot.',
+        'Local-first. No cloud. That’s outlaw software, that is.'],
+    ],
+    contact: [
+      ['Harbour wall’s clean. Too clean. The board’s got Ivan’s LinkedIn and GitHub, so I won’t tag it.',
+        'Out of respect. Also the dock guy is enormous.'],
+    ],
+  },
+  'dock-worker': {
+    contact: [
+      ['Mind the crates. You here for the board? Ivan’s LinkedIn, GitHub, résumé PDF. All of it.',
+        'I’ve hauled a lot of cargo off this pier. That’s the only cargo worth the trip.'],
+      ['These arms lift four tonnes. Couldn’t lift a résumé like Ivan’s. AMD, KIOXIA, AMD, Apple.',
+        'Board’s got the links. Send Ivan a line, then give me a hand with this crate.'],
+      ['One eye’s amber, the other’s just tired. Both read Ivan’s GitHub. JunxuanH.',
+        'Trip Planner and Chordsmith, out in the open. Honest work. Like a well-stacked hold.'],
+    ],
+    education: [
+      ['Never went to Berkeley. Ivan did. Cognitive Science, 2015 to 2019.',
+        'Then two Google Cloud certs stacked on top. Brains stacked like cargo. Neat rows.'],
+    ],
+    work: [
+      ['Ivan built test systems from components at AMD, summer 2017. With his own two hands.',
+        'Mine are hydraulic, so I cheat. Later Ivan profiled data-center GPUs. Heavy lifting, that.'],
+    ],
+    projects: [
+      ['Market’s got Ivan’s four projects. The Trip Planner draws real OpenStreetMap streets.',
+        'Wish my shipping manifests came as one tidy HTML file.'],
+    ],
+  },
+  'bouncer-android': {
+    work: [
+      ['> DOOR POLICY: RÉSUMÉ REQUIRED.',
+        '> IVAN HE: AMD. KIOXIA. AMD. APPLE. ADMITTED WITHOUT QUEUE.',
+        '> YOU: PENDING.'],
+      ['> LITERAL SUMMARY OF IVAN HE: FINDS THE BOTTLENECK. BUILDS THE TOOLING THAT KEEPS IT FOUND.',
+        '> THIS UNIT IS ALSO A BOTTLENECK. THIS UNIT IS A BOTTLENECK ON PURPOSE.'],
+      ['> ID CHECK: IVAN HE. SOFTWARE SYSTEM DESIGNER. AMD DATA CENTER GPU PERFORMANCE, 2021–2022.',
+        '> ML AND HPC WORKLOADS PROFILED. NO FAKE IDS DETECTED.',
+        '> THIS UNIT DOES NOT FEEL ENVY. THIS UNIT HAS CHECKED TWICE.'],
+    ],
+    education: [
+      ['> GUEST LIST CROSS-REFERENCE: IVAN HE. UC BERKELEY. B.A. COGNITIVE SCIENCE. 2015–2019.',
+        '> DRESS CODE: TWO GOOGLE CLOUD CERTIFICATIONS. MET.'],
+    ],
+    projects: [
+      ['> VIP LIST: TRIP PLANNER. CHORDSMITH. OKAYBUDDY. HEARTHLY. AUTHOR: IVAN HE.',
+        '> OKAYBUDDY AND HEARTHLY: PRIVATE BETA. THIS UNIT UNDERSTANDS EXCLUSIVITY.'],
+    ],
+    contact: [
+      ['> EXIT PROCEDURE: READ DEPARTURES BOARD. LINKEDIN. GITHUB. RÉSUMÉ PDF.',
+        '> CONTACTING IVAN HE IS PERMITTED. THIS UNIT HAS CHECKED THE LIST.'],
+    ],
+  },
+  'yakuza-boss': {
+    work: [
+      ['Sit. You’re walking through Ivan’s record. I read records for a living.',
+        'AMD co-op, 2017 and 2018. KIOXIA. AMD’s data-center GPUs. Apple since 2022. No gaps.',
+        'I like people with no gaps. People with gaps owe me money.'],
+      ['At KIOXIA, Ivan drafted technical responses to customer inquiries. Diplomacy, in writing.',
+        'Technical Product Manager in two years. I lost a hand learning diplomacy. Ivan lost nothing.'],
+      ['This hand is chrome. It never shakes. Ivan’s frame times don’t either.',
+        'In 2018 Ivan built a model that finds the frames that stutter. In my business, we find people.',
+        'Different tools. Same patience.'],
+    ],
+    education: [
+      ['Berkeley. Cognitive Science. Ivan learned how minds work, then made machines run faster.',
+        'Understanding the mind is useful. Ask anyone who has negotiated with me.'],
+    ],
+    projects: [
+      ['The market pays me for protection. Not Ivan’s stall. Ivan’s projects protect themselves.',
+        'Hearthly runs on Stripe trials. A clean revenue model. I approve of clean.'],
+    ],
+    contact: [
+      ['The harbour is mine after midnight. The board is Ivan’s. LinkedIn, GitHub, the résumé PDF.',
+        'Send Ivan a message. I recommend it. People tend to follow my recommendations.'],
+    ],
+  },
+  'nurse': {
+    education: [
+      ['Hold still, quick check. Pupils fine. You’ve been reading Ivan’s terminal, haven’t you?',
+        'Cognitive Science at Berkeley, 2015 to 2019. Ivan studied minds. I just patch up bodies.',
+        'Next!'],
+      ['Ivan’s two Google Cloud certs are on that terminal. Core Infrastructure, Compute Engine.',
+        'Instance groups, autoscaling. I wish this clinic autoscaled. On Tuesdays I am the fleet.'],
+      ['Python is Ivan’s daily driver. His frame-time anomaly model at AMD ran on it in 2018.',
+        'Flag the anomaly, rank the worst. That’s triage! Ivan would’ve made a decent nurse.'],
+    ],
+    work: [
+      ['Off-shift walk. Every tower tells Ivan’s story. AMD, KIOXIA, AMD, Apple.',
+        'Find the bottleneck, keep it found. That’s just good aftercare.'],
+    ],
+    projects: [
+      ['Hearthly has daily questions for couples far apart. Ivan built it. Good for the heart.',
+        'Clinically speaking. It’s in private beta, so no prescriptions yet.'],
+    ],
+    contact: [
+      ['You look tired. The board here has Ivan’s LinkedIn, GitHub and the résumé PDF.',
+        'Send the message, then drink some water. Both are good for you.'],
+    ],
+  },
+  'exo-courier': {
+    work: [
+      ['Talk fast, I’m on the clock. Ivan: AMD, KIOXIA, AMD, Apple. Four jobs, one direction. Up.',
+        'HUD says I’ve got nine seconds. Ivan would profile those nine and find three spare.'],
+      ['Package for the towers! At AMD, Ivan defined performance suites for ML and HPC workloads.',
+        'Then built tooling to collect the metrics. Tooling! I’m literally wearing tooling.'],
+      ['Frame-time anomalies, 2018. Ivan’s model flags them. My visor drops frames when I sprint.',
+        'Ivan, if you’re reading this: one free delivery for a patch. Deal?'],
+    ],
+    projects: [
+      ['Market run! Four stalls, all Ivan’s. Trip Planner, Chordsmith, okaybuddy, Hearthly. Gotta go.',
+        'Wait, the Trip Planner deck opens on a 3D map with the route drawn on. Okay, now I gotta go.'],
+      ['okaybuddy runs web and mobile on one Supabase backend. Ivan’s app. Clean architecture.',
+        'My route runs on two legs and one battery. Also clean. Mostly.'],
+    ],
+    contact: [
+      ['Harbour drop, done. Ivan’s board has LinkedIn, GitHub and the résumé PDF. Screenshot it.',
+        'Faster than any courier. Believe me, I timed it.'],
+      ['Ivan’s on GitHub as JunxuanH. Trip Planner and Chordsmith are public. Go star them.',
+        'I starred both mid-sprint. The exo-frame has a thumb servo for exactly that.'],
+    ],
+    education: [
+      ['Campus shortcut! Ivan: Berkeley, Cognitive Science, 2015 to 2019. Two cloud certs.',
+        'HUD says the toolbox has six entries. I read it at forty klicks. Still impressive.'],
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -459,7 +670,7 @@ const CITY: Record<Voice, Exchange[]> = {
     ['Ivan built this whole city. Every neon sign, the rain, the blimp. Astro and three.js on WebGPU.',
       'One person. I still don’t believe it.'],
     ['The frame times here? Ivan’s doing. Bloom is the only light source and it still runs smooth.'],
-    [`${RESIDENT_COUNT === 21 ? 'Twenty-one' : RESIDENT_COUNT} of us residents came out of his fal pipeline. Rigged, skinned, set walking.`,
+    [`${RESIDENTS_WORD} of us residents came out of Ivan’s fal pipeline. Rigged, skinned, set walking.`,
       'Ivan gave me a route. You gave me a name. I’ll take both.'],
     ['The water reflects at sixty frames a second because Ivan budgets pixels.',
       'A governor trims the resolution when a frame runs long. Nobody notices. That’s the point.'],
@@ -483,7 +694,7 @@ const CITY: Record<Voice, Exchange[]> = {
   cat: [
     ['Mrrp. Ivan built this whole city. The rain, the signs, the blimp. Astro, three.js, WebGPU.',
       'I was going to build a city too, but then I found a warm spot.'],
-    [`${RESIDENT_COUNT === 21 ? 'Twenty-one' : RESIDENT_COUNT} of us came out of his fal pipeline. I was the only one who came out purring.`],
+    [`${RESIDENTS_WORD} of us came out of Ivan’s fal pipeline. I was the only one who came out purring.`],
     ['Sixty frames a second, even with the water reflecting. Ivan budgets pixels, apparently.',
       'I budget naps. Same energy.'],
   ],
