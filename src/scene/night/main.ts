@@ -69,7 +69,9 @@ export async function start(root: HTMLElement) {
   }
 
   const scene = new THREE.Scene();
-  const panoUrl = params.get('pano') ? (params.get('pano') === '1' ? '/night/pano/pano-1.jpg' : params.get('pano')!) : null; // preview flag
+  // The 360° river-city backdrop (scripts/pano-build.sh; lite tiers get /night-lite via the URL rewrite). `?oldsky` brings
+  // back the plum gradient sky and the single skyline plate; `?pano=<url>` tries another panorama.
+  const panoUrl = params.has('oldsky') ? null : params.get('pano') || '/night/backdrop/pano.webp';
   scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032, !!panoUrl);
   const camera = new THREE.PerspectiveCamera(narrow ? 62 : 50, innerWidth / innerHeight, 0.5, 2600);
   scene.add(camera);
@@ -89,7 +91,6 @@ export async function start(root: HTMLElement) {
   // ---------- world
   scene.environment = createEnvironment(renderer); // wet-surface reflections for puddles, glass, metal
   scene.environmentIntensity = 0.55;
-  scene.add(createSky(tier, panoUrl ? { url: panoUrl, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15 } : undefined));
   // Phones / WebGL2 get a lighter city: half-res textures + 512 px signature towers from /night-lite,
   // fewer rigs, no far crowd, no ad videos. The URL modifier covers every three loader (default manager).
   const lite = tier === 'low' || narrow;
@@ -100,6 +101,11 @@ export async function start(root: HTMLElement) {
       return url;
     });
   }
+  // The sky loads after the URL rewrite, so phones fetch the half-size panorama.
+  scene.add(createSky(tier, panoUrl ? {
+    url: panoUrl, depth: params.get('pano') ? undefined : '/night/backdrop/pano-depth.png',
+    depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
+  } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
   const PROTAGONIST = 'agent'; // the player's rig (rigs.ts row: height 1.80, cyan rim); netrunner stays a crowd rig
   const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;

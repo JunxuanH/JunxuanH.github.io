@@ -155,3 +155,5 @@
 2026-09-14T17:08:52Z	fal-ai/meshy/rigging/multi-animation	0.92	night/char/soldier/clips
 2026-09-14T17:14:04Z	fal-ai/nano-banana-pro	0.30	design/night/pano/seed
 2026-09-14T17:18:53Z	fal-ai/hunyuan_world	0.15	night/pano/hunyuan-world-1
+2026-09-14T17:54:58Z	fal-ai/esrgan	0.10	night/pano/esrgan-x4
+2026-09-14T17:55:04Z	fal-ai/image-preprocessors/depth-anything/v2	0.02	night/pano/depth
