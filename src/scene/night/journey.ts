@@ -233,7 +233,7 @@ export const rig = {
     camera.position.set(pos.x + par.x[0] * PARALLAX.x * g, pos.y + Math.sin(t * 0.6) * 0.1 - par.y[0] * PARALLAX.y * g, pos.z);
     camera.lookAt(look);
     // Phones (parallaxScale > 1): the view also turns with the tilt, so the whole vista moves, not only its depth layers.
-    if (this.parallaxScale > 1) { camera.rotateY(-par.x[0] * 0.035 * par.gain[0]); camera.rotateX(-par.y[0] * 0.025 * par.gain[0]); }
+    if (this.parallaxScale > 1) { camera.rotateY(-par.x[0] * 0.07 * par.gain[0]); camera.rotateX(-par.y[0] * 0.045 * par.gain[0]); }
 
     // Banking: lateral world velocity (along camera right) → roll, soft-clamped to ±1.5°, smoothed.
     let target = 0;
