@@ -1,15 +1,19 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, float, mix, step, hash, floor, time, color, uniform } from './tsl';
+import { texture, uv, float, mix, step, hash, floor, time, color, uniform, sin } from './tsl';
 import { loadSRGB } from './palette';
 
-/** Neon sign material: buzzing brightness (fast hash gated by a slow one), alpha from the cutout. */
-export function signMat(tex: THREE.Texture, id: number, tint = 0xffffff, gain = 3.2) {
+/**
+ * Neon sign material: buzzing brightness (fast hash gated by a slow one), alpha from the cutout.
+ * `pulse` (0..1) blends in a slow 0.75–1.0 sine breath (the landing pad); at 0 it is exactly ×1.
+ */
+export function signMat(tex: THREE.Texture, id: number, tint = 0xffffff, gain = 3.2, pulse = 0) {
   const m = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
   const t = texture(tex, uv());
-  const uid = uniform(id), uTint = uniform(new THREE.Color(tint)), uGain = uniform(gain); // uniforms: one shared program for every sign
+  const uid = uniform(id), uTint = uniform(new THREE.Color(tint)), uGain = uniform(gain), uPulse = uniform(pulse); // uniforms: one shared program for every sign
   const slow = hash(uid.add(floor(time.mul(0.5))));
   const buzz = mix(float(1), hash(uid.add(floor(time.mul(30)))), step(0.88, slow));
-  m.colorNode = t.rgb.mul(uTint).mul(uGain).mul(buzz.mul(0.6).add(0.4));
+  const breath = mix(float(1), sin(time.mul(2.0)).mul(0.25).add(0.75), uPulse);
+  m.colorNode = t.rgb.mul(uTint).mul(uGain).mul(buzz.mul(0.6).add(0.4)).mul(breath);
   m.opacityNode = t.a;
   return m;
 }

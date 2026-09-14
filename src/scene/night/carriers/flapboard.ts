@@ -5,10 +5,12 @@
  * as the car lands. ~5 draws.
  */
 import * as THREE from 'three/webgpu';
-import { color } from '../tsl';
+import { glowMaterial } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { neonText } from '../signs';
+import { sfx } from '../audio';
+import { keyToAction, setSel, hint, clearHint, retrigger, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const DECK_Y = 2.9;        // pier deck (districts/pier.ts)
@@ -22,8 +24,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const T = THEMES.contact;
   const group = new THREE.Group();
   const dark = new THREE.MeshStandardNodeMaterial({ color: 0x0b0c12, roughness: 0.5, metalness: 0.6 });
-  const yellow = new THREE.MeshBasicNodeMaterial();
-  yellow.colorNode = color(T.secondary).mul(1.2);
+  const yellow = glowMaterial(T.secondary, 1.2);
 
   // Two legs from the deck to the board bottom, merged.
   group.add(new THREE.Mesh(mergeGeometries([
@@ -58,6 +59,22 @@ export function create(ctx: CarrierCtx): Carrier {
   let shuffleRows: HTMLElement[] = [], shuffleTicks = 0, shuffleAcc = 0;
   const restore = (rows: HTMLElement[]) => rows.forEach((a) => { if (a.dataset.label !== undefined) a.textContent = a.dataset.label; });
 
+  // ---- dock: the three links are departure rows; ↑/↓ move the cursor, Enter flaps the row's status to BOARDED
+  // (clacks) and opens the link in a new tab half a second later. Statuses go back to normal on undock.
+  let rows: HTMLAnchorElement[] = [], sel = 0, docked = false;
+  const timers: number[] = [];
+  const move = (d: number) => { if (!rows.length) return; sel = (sel + d + rows.length) % rows.length; setSel(rows, sel); sfx.select(); };
+  const board = () => {
+    const row = rows[sel];
+    if (!row) return;
+    row.dataset.statusHome ??= row.dataset.status ?? '';
+    row.dataset.status = 'BOARDED';
+    retrigger(row, 'is-flip');
+    sfx.clack(6);
+    timers.push(window.setTimeout(() => { if (docked) window.open(row.href, '_blank', 'noopener'); }, 500));
+  };
+  const actions: DockActions = { up: () => move(-1), down: () => move(1), confirm: board };
+
   return {
     group, mount, width: 10, px: 680, style: 'flap-board', range: [0.8, 1.01],
     lights: [[140, 6.5, 30.5, 0xffb000, 350, 14]],
@@ -83,6 +100,26 @@ export function create(ctx: CarrierCtx): Carrier {
         ctx.onFlap?.();
         shuffleRows = rows; shuffleTicks = 8; shuffleAcc = 0.07; // first tick this frame
       },
+    },
+    interact: {
+      onEnter(el) {
+        docked = true;
+        rows = [...el.querySelectorAll<HTMLAnchorElement>('.actions a')];
+        sel = 0; setSel(rows, sel);
+        hint(el, '<kbd>↑</kbd><kbd>↓</kbd> select · <kbd>Enter</kbd> board');
+      },
+      onExit(el) {
+        docked = false;
+        timers.splice(0).forEach(clearTimeout);
+        for (const a of rows) {
+          a.classList.remove('is-flip');
+          if (a.dataset.statusHome !== undefined) { a.dataset.status = a.dataset.statusHome; delete a.dataset.statusHome; }
+        }
+        setSel(rows, -1); rows = [];
+        clearHint(el);
+      },
+      onKey: (e) => keyToAction(e, actions),
+      actions,
     },
   };
 }

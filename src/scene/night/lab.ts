@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 /*
- * Night City lab scene. Everything here is a candidate module for src/scene/night/*:
+ * Neon Harbor lab scene. Everything here is a candidate module for src/scene/night/*:
  *   backdrop (2.5D depth-displaced plate), towers (procedural window grids + reused GLBs),
  *   signs (keyed cutouts + canvas text), ads (hovering holo panels), traffic (Kenney cars as
  *   hover cars with light trails), pedestrians (Kenney animated characters), rain, wet ground, bloom.

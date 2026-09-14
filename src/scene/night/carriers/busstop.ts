@@ -5,12 +5,14 @@
  * waiting outside the south end. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
-import { color } from '../tsl';
+import { color, glowMaterial as glow } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { CURB_H } from '../streets';
 import { neonText } from '../signs';
 import { loadCharacter, instantiate } from '../characters';
+import { sfx } from '../audio';
+import { keyToAction, hint, clearHint, retrigger, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const CX = -17.0, CZ = -94.9;  // shelter centre; footprint x −17.9…−16.1, z −98.9…−90.9
@@ -19,12 +21,6 @@ const ROOF_Y = 3.05;
 const POST_H = 2.9;
 const GLASS_H = 2.7;
 const PANEL = { x: -17.6, y: 2.0, z: -94.6, h: 2.6 };
-
-function glow(tint: number, gain: number) {
-  const m = new THREE.MeshBasicNodeMaterial();
-  m.colorNode = color(tint).mul(gain);
-  return m;
-}
 
 export async function create(ctx: CarrierCtx): Promise<Carrier> {
   const T = THEMES.work;
@@ -102,6 +98,19 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     } catch (e) { console.warn('[busstop] NPC unavailable', e); }
   }
 
+  // ---- dock: the poster has two pages (index.astro `.pages`, one per summer); ←/→ or E flip them with a print wipe.
+  let pages: HTMLElement[] = [], dots: HTMLElement[] = [], cur = 0, hintEl: HTMLElement | null = null;
+  const show = (i: number, wipe: boolean) => {
+    if (!pages.length) return;
+    cur = ((i % pages.length) + pages.length) % pages.length;
+    pages.forEach((pg, k) => { pg.classList.toggle('is-cur', k === cur); pg.classList.remove('is-in'); });
+    dots.forEach((d, k) => d.classList.toggle('is-cur', k === cur));
+    if (wipe) retrigger(pages[cur], 'is-in');
+    if (hintEl) hintEl.innerHTML = `<kbd>◀</kbd><kbd>▶</kbd> flip the poster · <b>${cur + 1} / ${pages.length}</b>`;
+  };
+  const flip = (d: number) => { if (pages.length < 2) return; show(cur + d, true); sfx.select(); };
+  const actions: DockActions = { left: () => flip(-1), right: () => flip(1), confirm: () => flip(1) };
+
   return {
     group, mount, width: 4.4, px: 720, style: 'poster', range: [0.2, 0.42],
     lights: [[-16.8, 2.8, -94.6, 0xdfe8ff, 220, 12]],
@@ -118,6 +127,21 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
         posts.scale.y = (POST_H + lift) / POST_H;
         glass.scale.y = (GLASS_H + lift) / GLASS_H;
       }
+    },
+    interact: {
+      onEnter(el) {
+        pages = [...el.querySelectorAll<HTMLElement>('.page')];
+        dots = [...el.querySelectorAll<HTMLElement>('.page-dots li')];
+        hintEl = hint(el, '');
+        show(0, false);
+      },
+      onExit(el) {
+        show(0, false);
+        clearHint(el);
+        hintEl = null; pages = []; dots = [];
+      },
+      onKey: (e) => keyToAction(e, actions),
+      actions,
     },
   };
 }

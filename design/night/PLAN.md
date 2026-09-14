@@ -1,4 +1,4 @@
-# Night City — district plan, assets and lab results
+# Neon Harbor — district plan, assets and lab results
 
 Branch `redesign`. Companion to the approved plan (`~/.claude/plans/pure-petting-adleman.md`, Part C). Ivan's
 direction: mockup **variant 1** (`design/concepts/nightcity-hero-1.png`), **no employers in the first frame**,

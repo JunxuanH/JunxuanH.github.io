@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 
-/** Night City palette: blue-black ground, cyan holo UI, magenta signage, acid-yellow CTA, sodium haze. */
+/** Neon Harbor palette: blue-black ground, cyan holo UI, magenta signage, acid-yellow CTA, sodium haze. */
 export const PAL = {
   cyan: 0x00e5ff,
   magenta: 0xff2bd6,

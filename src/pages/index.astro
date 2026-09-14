@@ -5,6 +5,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/rajdhani/600.css';
 import '@fontsource/rajdhani/700.css';
 import '../styles/night.css';
+import '../styles/hud.css';
 import { profile, education, jobs, projects, WINDOWS } from '../content';
 // Per-carrier slab styles (terminal, poster, led-wall, banner, hologram, flap-board).
 import.meta.glob('../styles/carriers/*.css', { eager: true });
@@ -19,7 +20,7 @@ const win = (k: string) => WINDOWS[k].join(',');
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Ivan He · GPU Software Performance Engineer</title>
     <meta name="description" content={`${profile.name} is a GPU software performance engineer in the ${profile.location}.`} />
     <meta property="og:title" content="Ivan He · GPU Software Performance Engineer" />
@@ -31,7 +32,7 @@ const win = (k: string) => WINDOWS[k].join(',');
     <a class="skip" href="#education">Skip to content</a>
     <div id="boot" class="boot" role="status" aria-live="polite" aria-busy="true">
       <div class="boot-inner">
-        <p class="boot-kicker">Night City · boot sequence</p>
+        <p class="boot-kicker">Neon Harbor · boot sequence</p>
         <p class="boot-wordmark" data-text="IVAN HE">IVAN HE</p>
         <div class="boot-bar" aria-hidden="true"><i></i></div>
         <p class="boot-pct" aria-hidden="true">00%</p>
@@ -61,9 +62,8 @@ const win = (k: string) => WINDOWS[k].join(',');
 
     <div id="stage" class="stage" aria-hidden="true"></div>
 
-    <main class="journey">
-      {sections.map((s) => <div class="sentinel" id={s.id} style={`top:${s.start * 100}%`}></div>)}
-
+    <!-- No scrolling: the nav pans the camera (scene/night/nav.ts). The ids below only serve the flat page's anchors. -->
+    <main class="journey" id="city">
       <div class="ui-src">
         <article id="hero-copy" class="hero-copy">
           <h1>{profile.name}</h1>
@@ -74,7 +74,7 @@ const win = (k: string) => WINDOWS[k].join(',');
           </div>
         </article>
 
-        <section class="slab" data-slab="education" data-window={win('education')} aria-labelledby="edu-h">
+        <section class="slab" id="education" data-slab="education" data-window={win('education')} aria-labelledby="edu-h">
           <header>
             <span class="kicker">Education</span>
             <h2 id="edu-h">{education.school}</h2>
@@ -83,32 +83,60 @@ const win = (k: string) => WINDOWS[k].join(',');
           <div class="cols">
             <div>
               <h3>Certifications</h3>
-              <ul class="bullets">{education.certifications.map((c) => <li>{c}</li>)}</ul>
+              <ul class="bullets">{education.certifications.map((c) => <li data-detail={education.details[c]}>{c}</li>)}</ul>
             </div>
             <div>
               <h3>Toolbox</h3>
-              <ul class="chips">{education.skills.map((s) => <li>{s}</li>)}</ul>
+              <ul class="chips">{education.skills.map((s) => <li data-detail={education.details[s]}>{s}</li>)}</ul>
             </div>
           </div>
         </section>
 
-        {jobs.map((j) => (
-          <section class="slab job" data-slab={j.id} data-window={win(j.id)} aria-labelledby={`job-${j.id}`}>
+        {jobs.map((j, i) => (
+          <section class="slab job" id={i === 0 ? 'work' : undefined} data-slab={j.id} data-window={win(j.id)} aria-labelledby={`job-${j.id}`}>
             <header>
               <span class="kicker">{j.label}</span>
               <h2 id={`job-${j.id}`}>{j.role}</h2>
               <p class="meta"><span>{j.org}</span><span>{j.dates}</span><span>{j.location}</span></p>
               {j.team && <p class="team">{j.team}</p>}
             </header>
-            {j.bullets.length > 0 && <ul class="bullets">{j.bullets.map((b) => <li>{b}</li>)}</ul>}
+            {j.pages ? (
+              <!-- Poster pages (bus-stop dock: ←/→ flip; the flat page stacks them). -->
+              <div class="pages">
+                {j.pages.map((pg, k) => (
+                  <div class={k === 0 ? 'page is-cur' : 'page'} data-page={k}>
+                    <h3>{pg.title}</h3>
+                    <ul class="bullets">{pg.bullets.map((b) => <li>{b}</li>)}</ul>
+                  </div>
+                ))}
+                <ol class="page-dots" aria-hidden="true">{j.pages.map((_, k) => <li class={k === 0 ? 'is-cur' : undefined} data-dot={k}></li>)}</ol>
+              </div>
+            ) : j.bullets.length > 0 && <ul class="bullets">{j.bullets.map((b) => <li>{b}</li>)}</ul>}
+            {j.id === 'kioxia' && (
+              <!-- LED-wall channels (megascreen dock: ←/→). Ch1 is the job above; these stay hidden unless data-ch selects them. -->
+              <div class="ch ch-ad" data-ch="2" aria-hidden="true">
+                <span class="ad-brand">NEO-CHROMA</span>
+                <span class="ad-line">DRINK THE GLOW · NOW AT PIER 9</span>
+              </div>
+              <div class="ch ch-sys" data-ch="3" aria-hidden="true">
+                <span class="sys-title">SYSTEM · LIVE</span>
+                <dl class="sys">
+                  <div><dt>Frames / s</dt><dd data-sys="fps">—</dd></div>
+                  <div><dt>Draw calls</dt><dd data-sys="draws">—</dd></div>
+                  <div><dt>Triangles</dt><dd data-sys="tris">—</dd></div>
+                  <div><dt>Pixel ratio</dt><dd data-sys="dpr">—</dd></div>
+                </dl>
+                <p class="sys-note">The wall profiles itself — GPU performance engineering, live.</p>
+              </div>
+            )}
           </section>
         ))}
 
-        <section class="stack" data-slab="projects" data-window={win('projects')} aria-label="Projects">
+        <section class="stack" id="projects" data-slab="projects" data-window={win('projects')} aria-label="Projects">
           <h2 class="visually-hidden">Projects</h2>
           {projects.map((p, i) => (
             <article class="card" data-card={p.id} data-index={i} tabindex="0">
-              <img src={p.shot} alt={`${p.name} screenshot`} width="1280" height="800" loading="lazy" />
+              <img src={p.shot} alt={`${p.name} screenshot`} width="1280" height="800" loading="eager" decoding="async" />
               <div class="card-body">
                 <h3>{p.name}{p.status && <small>{p.status}</small>}</h3>
                 <p class="tagline">{p.tagline}</p>
@@ -125,7 +153,7 @@ const win = (k: string) => WINDOWS[k].join(',');
           <div class="stack-nav" aria-hidden="true">{projects.map((p, i) => <button type="button" data-goto={i} title={p.name}></button>)}</div>
         </section>
 
-        <section class="slab contact-slab" data-slab="contact" data-window={win('contact')} aria-labelledby="contact-h">
+        <section class="slab contact-slab" id="contact" data-slab="contact" data-window={win('contact')} aria-labelledby="contact-h">
           <header>
             <span class="kicker">Contact</span>
             <h2 id="contact-h">Let’s talk shop.</h2>
@@ -142,6 +170,38 @@ const win = (k: string) => WINDOWS[k].join(',');
     </main>
 
     <aside class="sheet" hidden aria-live="polite"></aside>
+
+    <!-- Walk-mode HUD (scene/night/hud.ts, styles/hud.css). data-mode: ride | walk | dock. -->
+    <div id="hud" class="hud" data-mode="ride">
+      <div class="hud-toast" hidden aria-live="polite"><span class="hud-toast-name"></span><small class="hud-toast-sub"></small></div>
+      <div class="hud-prompt" hidden aria-live="polite"><kbd>E</kbd><span class="hud-prompt-label"></span></div>
+      <div class="hud-hint" hidden>
+        <p class="hud-hint-title">Controls</p>
+        <ul>
+          <li class="keys-only"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>move</span></li>
+          <li class="keys-only"><kbd>Shift</kbd><span>run</span></li>
+          <li class="keys-only"><kbd>E</kbd><span>interact</span></li>
+          <li class="keys-only"><kbd>Esc</kbd><span>back</span></li>
+          <li class="keys-only">drag<span>look around</span></li>
+          <li class="touch-only">left side<span>joystick</span></li>
+          <li class="touch-only">right side<span>look around</span></li>
+          <li class="touch-only"><kbd>E</kbd><span>interact</span></li>
+        </ul>
+      </div>
+      <button class="hud-back" type="button" hidden>← Back</button>
+      <div class="hud-touch" aria-hidden="true">
+        <div class="stick-zone"><div class="stick"><i class="stick-knob"></i></div></div>
+        <div class="hud-btns"><span class="hud-elabel"></span><button class="hud-btn" data-act="run" type="button" tabindex="-1">⇧</button><button class="hud-btn hud-btn-e" data-act="interact" type="button" tabindex="-1">E</button></div>
+      </div>
+      <!-- Phone chip bar (dock mode, coarse pointers): the docked carrier's named actions; hud.ts shows only the ones it defines. -->
+      <div class="hud-chips" hidden aria-hidden="true">
+        <button class="hud-chip" data-chip="up" type="button" tabindex="-1">▲</button>
+        <button class="hud-chip" data-chip="down" type="button" tabindex="-1">▼</button>
+        <button class="hud-chip" data-chip="left" type="button" tabindex="-1">◀</button>
+        <button class="hud-chip" data-chip="right" type="button" tabindex="-1">▶</button>
+        <button class="hud-chip hud-chip-ok" data-chip="confirm" type="button" tabindex="-1">✓</button>
+      </div>
+    </div>
 
     <footer class="contact">
       <a href={profile.links.linkedin}>LinkedIn</a>

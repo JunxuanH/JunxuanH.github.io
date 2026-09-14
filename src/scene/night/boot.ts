@@ -23,7 +23,7 @@ function paint() {
   if (!bar || !pct) return;
   // Creep toward the next milestone using the loader's item count so the bar never sits still.
   const within = total > 0 ? loaded / total : 0;
-  const goal = finished ? 1 : Math.min(target + 0.06 + within * 0.04, 0.985);
+  const goal = finished ? 1 : Math.min(target + 0.03 + within * 0.1, 0.985); // the loader ratio carries the bar through network waits
   shown = Math.max(shown, Math.min(goal, shown + (goal - shown) * (reduced ? 1 : 0.06)));
   bar.style.width = `${(shown * 100).toFixed(1)}%`;
   pct.textContent = `${Math.round(shown * 100).toString().padStart(2, '0')}%`;

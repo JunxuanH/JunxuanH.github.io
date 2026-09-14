@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { sin, time, color, uv, float, smoothstep, mix, positionLocal, hash, floor, fract, step } from '../tsl';
+import { time, color, uv, smoothstep, mix, positionLocal, hash, floor, fract, step, glowMaterial, beamMaterial } from '../tsl';
 import { PAL, rng } from '../palette';
 import { ANCHORS } from '../journey';
 import { neonText, signMat, createKeyedSigns } from '../signs';
@@ -42,13 +42,11 @@ function lighthouse(tint: number) {
   const stripeMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.7 });
   stripeMat.colorNode = mix(color(0x8a1a1a), color(0xdcdcdc), step(0.5, fract(positionLocal.y.mul(0.5))));
   const stripes = new THREE.Mesh(new THREE.CylinderGeometry(1.86, 2.46, 14, 14, 1, true).translate(0, 7, 0), stripeMat);
-  const lampRoom = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 2.2, 12).translate(0, 15.1, 0), new THREE.MeshBasicNodeMaterial({ color: 0xfff2c0 }));
+  const lampRoom = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 2.2, 12).translate(0, 15.1, 0), glowMaterial(0xfff2c0, 1));
   const cap = new THREE.Mesh(new THREE.ConeGeometry(1.9, 1.6, 12).translate(0, 17, 0), new THREE.MeshStandardNodeMaterial({ color: 0x14161c }));
-  // Rotating beam: an additive cone that sweeps.
-  const beamMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-  beamMat.colorNode = color(tint).mul(0.9);
-  beamMat.opacityNode = float(1).sub(uv().y).mul(0.35).mul(smoothstep(0.0, 0.15, uv().y));
-  const beam = new THREE.Mesh(new THREE.ConeGeometry(6, 70, 16, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -35), beamMat);
+  // Rotating beam: an additive cone that sweeps. Narrow, faint and fading along its length: a wide bright
+  // wedge read as a solid white shape from the pier.
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(3.2, 90, 16, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -45), beamMaterial(tint, 0.14, 0.25, 0.9));
   beam.position.y = 15.1;
   const pivot = new THREE.Group();
   pivot.add(beam);
@@ -109,23 +107,18 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
   posts.forEach((m, i) => posim.setMatrixAt(i, m));
   group.add(posim, new THREE.Mesh(mergeGeometries(ropeGeos, false)!, ropeMat));
   // Rail lamps every 8 u (warm bulbs), instanced
-  const bulbMat = new THREE.MeshBasicNodeMaterial();
-  bulbMat.colorNode = color(T.warm).mul(2.6);
   const bulbs: THREE.Matrix4[] = [];
   for (let z = zStart + 4; z < zEnd; z += 8) for (const dx of [-5.6, 5.6]) bulbs.push(new THREE.Matrix4().makeTranslation(x0 + dx, DECK_Y + 1.4, z));
-  const bim = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 8, 6), bulbMat, bulbs.length);
+  const bim = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 8, 6), glowMaterial(T.warm, 2.6), bulbs.length);
   bulbs.forEach((m, i) => bim.setMatrixAt(i, m));
   group.add(bim);
 
-  // Landing pad: ring torus (pulsed by interact) + "H"
-  const ringMat = new THREE.MeshBasicNodeMaterial();
-  ringMat.colorNode = color(T.secondary).mul(1.8);
-  const padRing = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.16, 6, 48), ringMat);
+  // Landing pad: ring torus (interact scales it in a pulse; the shared material is never touched) + "H"
+  const padRing = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.16, 6, 48), glowMaterial(T.secondary, 1.8));
   padRing.rotation.x = Math.PI / 2;
   padRing.position.set(p.x, DECK_Y + 0.06, p.z);
   group.add(padRing);
-  const hm = signMat(padTexture(), 900, 0xffffff, 1.2);
-  hm.colorNode = (hm.colorNode as any).mul(sin(time.mul(2.0)).mul(0.25).add(0.75));
+  const hm = signMat(padTexture(), 900, 0xffffff, 1.2, 1); // breathing "H": the sign program with its pulse uniform on
   const hMesh = new THREE.Mesh(new THREE.PlaneGeometry(9, 9), hm);
   hMesh.rotation.x = -Math.PI / 2;
   hMesh.position.set(p.x, DECK_Y + 0.03, p.z);
@@ -143,8 +136,7 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
   // Boats + buoys drifting on the bay
   const boats: { m: THREE.Object3D; base: THREE.Vector3; ph: number }[] = [];
   const boatMat = new THREE.MeshStandardNodeMaterial({ color: 0x0c0e14, roughness: 0.8 });
-  const boatLight = new THREE.MeshBasicNodeMaterial();
-  boatLight.colorNode = color(0xffd8a0).mul(2.4);
+  const boatLight = glowMaterial(0xffd8a0, 2.4);
   const boatGeo = mergeGeometries([new THREE.BoxGeometry(6, 1.2, 2.2), new THREE.BoxGeometry(2, 1.4, 1.8).translate(-0.8, 1.3, 0)], false)!;
   for (let i = 0; i < 6; i++) {
     const b = new THREE.Group();

@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, vec3, color, mix, step, fract, smoothstep, luminance, positionLocal, float, pow, time, uniform } from './tsl';
+import { texture, uv, vec3, color, mix, step, fract, smoothstep, luminance, positionLocal, float, pow, time, uniform, glowMaterial } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, params, rng, type Tier } from './palette';
@@ -32,11 +32,16 @@ function bakeModel(root: THREE.Object3D, bucket: (o: THREE.Mesh) => string, mate
   return out;
 }
 
-/** Night repaint for the Kenney cars: dark bodies, keep wheels, warm/cool light strips from the palette. */
+/** Night repaint for the Kenney cars: dark bodies, keep wheels (one material for every car's wheels), warm/cool light strips from the palette. */
+let wheelMat: THREE.MeshStandardNodeMaterial | null = null;
 function nightCar(scene: THREE.Object3D, tint: number) {
   return bakeModel(scene, (o) => (/wheel|tire/i.test(o.name) ? 'wheel' : 'body'), (key) => {
+    if (key === 'wheel') {
+      if (!wheelMat) { wheelMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.35, metalness: 0.6 }); wheelMat.colorNode = color(0x0a0a0d); }
+      return wheelMat;
+    }
     const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.35, metalness: 0.6 });
-    m.colorNode = key === 'wheel' ? color(0x0a0a0d) : mix(color(0x141826), uniform(new THREE.Color(tint)), 0.35);
+    m.colorNode = mix(color(0x141826), uniform(new THREE.Color(tint)), 0.35);
     return m;
   });
 }
@@ -108,7 +113,7 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
     m.opacityNode = float(1).sub(smoothstep(0.15, 0.5, dd)).mul(0.6);
     return m;
   });
-  const tailMat = new THREE.MeshBasicNodeMaterial({ color: 0xff2040 }), headMat = new THREE.MeshBasicNodeMaterial({ color: 0xffffff });
+  const tailMat = glowMaterial(0xff2040, 1), headMat = glowMaterial(0xffffff, 1);
   const poolGeo = new THREE.PlaneGeometry(5, 9), glowGeo = new THREE.PlaneGeometry(4.5, 2.6), tailGeo = new THREE.PlaneGeometry(1.6, 0.22), headGeo = new THREE.PlaneGeometry(1.6, 0.18);
   lanes.forEach((lane, li) => {
     const models = lane.ground ? ground : hover;
@@ -144,7 +149,7 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
       const tube = new THREE.TubeGeometry(curve, 200, 0.12, 6);
       const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
       const s = uv().x;
-      const pulse = pow(fract(s.mul(28).sub(time.mul(0.9 * dir)).add(uniform(i * 0.3))), 6.0);
+      const pulse = pow(fract(s.mul(28).sub(time.mul(uniform(0.9 * dir))).add(uniform(i * 0.3))), 6.0); // direction as a uniform: one program for both trails
       m.colorNode = uniform(new THREE.Color(tint)).mul(pulse).mul(3.0);
       m.opacityNode = pulse.mul(0.9);
       const mesh = new THREE.Mesh(tube, m);

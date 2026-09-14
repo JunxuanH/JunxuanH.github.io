@@ -151,7 +151,7 @@ export function createParticles(spec: ParticleSpec, tier: Tier, opts: ParticleOp
   if (spec.kind === 'sakura') {
     const box = spec.box ?? { center: [0, 8, 0], size: [40, 16, 40] };
     const center = uniform(new THREE.Vector3(...box.center));
-    const size = new THREE.Vector3(...box.size);
+    const size = uniform(new THREE.Vector3(...box.size)); // uniforms: every petal box shares the program
     const geo = instancedQuads(count, spec.size ?? 0.22, spec.size ?? 0.22, 101);
     const { tex, sheet } = lazyTexture('/night/particles/sakura.webp', discFallback('rgba(255,154,213,1)'), 64);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
@@ -163,7 +163,7 @@ export function createParticles(spec: ParticleSpec, tier: Tier, opts: ParticleOp
     const sway = sin(t.mul(0.8).add(phase)).mul(1.2).add(sin(t.mul(0.3).add(seed.x.mul(6.0))).mul(wind).mul(2.0));
     const xFrac = fract(seed.x.add(t.mul(wind.mul(0.015).add(0.004))));
     const px = center.x.add(xFrac.sub(0.5).mul(size.x)).add(sway);
-    const py = center.y.sub(size.y * 0.5).add(yFrac.mul(size.y));
+    const py = center.y.sub(size.y.mul(0.5)).add(yFrac.mul(size.y));
     const pz = center.z.add(seed.z.sub(0.5).mul(size.z)).add(cos(t.mul(0.6).add(phase)).mul(0.8));
     const spin = t.mul(seed.z.mul(2.0).add(1.5)).add(phase);
     const tumble = abs(cos(t.mul(1.7).add(phase))).mul(0.6).add(0.4); // fake 3D tumbling by squashing
@@ -251,7 +251,7 @@ function createKoi(spec: ParticleSpec, count: number, t: any, active: any, gateF
   for (let i = 0; i < count; i++) {
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
     mat.fog = false;
-    const frame = fract(floor(t.mul(6.0).add(i * 1.3)).mul(0.25));
+    const frame = fract(floor(t.mul(6.0).add(uniform(i * 1.3))).mul(0.25)); // phase as a uniform: one program for every koi
     const s = texture(tex, mix(uv(), vec2(uv().x.mul(0.25).add(frame), uv().y), sheet));
     mat.colorNode = s.rgb.mul(2.2);
     mat.opacityNode = s.a.mul(0.85).mul(active);

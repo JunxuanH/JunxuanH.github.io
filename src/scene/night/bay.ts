@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   add, sub, div, vec2, vec3, float, time, texture, normalize, cameraPosition, positionWorld, positionLocal,
   transformNormalToView, sin, cos, max, dot, pow, length, mix, reflector, color, uv, step, fract, floor, hash,
-  smoothstep, abs, reflect,
+  smoothstep, abs, reflect, glowMaterial,
 } from './tsl';
 import { PAL, loader } from './palette';
 import { groundMaterial } from './streets';
@@ -74,9 +74,7 @@ export function createQuay(quayZ: number, ground?: { planks: THREE.Texture | nul
   const wall = new THREE.Mesh(new THREE.BoxGeometry(780, 3.2, 2.4), wallMat);
   wall.position.set(0, 1.4, quayZ - 1.2);
   group.add(wall);
-  const edgeMat = new THREE.MeshBasicNodeMaterial();
-  edgeMat.colorNode = color(PAL.cyan).mul(1.5);
-  const edge = new THREE.Mesh(new THREE.BoxGeometry(780, 0.12, 0.12), edgeMat);
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(780, 0.12, 0.12), glowMaterial(PAL.cyan, 1.5));
   edge.position.set(0, 3.05, quayZ - 2.35);
   group.add(edge);
   // Bollard lights every 8 u along the quay edge.
@@ -118,14 +116,16 @@ export function createBridge() {
   const group = new THREE.Group();
   const Z = BRIDGE_Z;
   const deckMat = new THREE.MeshStandardNodeMaterial({ color: 0x101420, roughness: 0.6, metalness: 0.3 });
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(360, 1.6, 8), deckMat);
+  // The deck runs the full width of the bay (it used to stop mid-water, visible from the pier).
+  const SPAN = 1400;
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(SPAN, 1.6, 8), deckMat);
   deck.position.set(0, 12, Z);
   group.add(deck);
   const pylonGeo = new THREE.BoxGeometry(1.8, 46, 1.8);
   const pylonMat = new THREE.MeshStandardNodeMaterial({ color: 0x0e1018, roughness: 0.7 });
-  const pylonEdge = new THREE.MeshBasicNodeMaterial();
-  pylonEdge.colorNode = color(PAL.cyan).mul(1.8);
-  for (const px of [-62, 62]) {
+  const pylonEdge = glowMaterial(PAL.cyan, 1.8);
+  // Main cable-stayed span at ±62; plain support pylons carry the approaches out to the shores.
+  for (const px of [-62, 62, -300, 300, -540, 540]) {
     for (const dz of [-4, 4]) {
       const p = new THREE.Mesh(pylonGeo, pylonMat);
       p.position.set(px, 23, Z + dz);
@@ -140,8 +140,7 @@ export function createBridge() {
   }
   // Cables: instanced thin cylinders from pylon tops to deck points (dim, so they read as structure).
   const cableGeo = new THREE.CylinderGeometry(0.06, 0.06, 1, 4).translate(0, 0.5, 0);
-  const cableMat = new THREE.MeshBasicNodeMaterial();
-  cableMat.colorNode = color(PAL.cyan).mul(0.7);
+  const cableMat = glowMaterial(PAL.cyan, 0.7);
   const cables: THREE.Matrix4[] = [];
   const from = new THREE.Vector3(), to = new THREE.Vector3(), dir = new THREE.Vector3(), q = new THREE.Quaternion(), upv = new THREE.Vector3(0, 1, 0);
   for (const px of [-62, 62]) for (const dz of [-4, 4]) for (let i = 0; i < 8; i++) {
@@ -163,7 +162,7 @@ export function createBridge() {
   const lightMat = new THREE.MeshBasicNodeMaterial();
   lightMat.colorNode = mix(color(PAL.magenta), color(PAL.cyan), step(0.5, fract(float(0).add(hash(floor(positionWorld.x.mul(1 / 6))))))).mul(3.0);
   const lights: THREE.Matrix4[] = [];
-  for (let x = -180; x <= 180; x += 6) for (const dz of [-4.3, 4.3]) {
+  for (let x = -SPAN / 2; x <= SPAN / 2; x += 6) for (const dz of [-4.3, 4.3]) {
     lights.push(new THREE.Matrix4().makeTranslation(x, 13.1, Z + dz));
   }
   const lim = new THREE.InstancedMesh(lightGeo, lightMat, lights.length);
@@ -208,9 +207,7 @@ export function createBillboard(name: string, subtitle: string, w = 36, h = 18) 
   mat.colorNode = vec3(r, gg, bb).mul(dots).mul(scan).mul(3.0);
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
   // Glowing frame
-  const frameMat = new THREE.MeshBasicNodeMaterial();
-  frameMat.colorNode = color(PAL.cyan).mul(2.0);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.8, h + 0.8, 0.3), frameMat);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.8, h + 0.8, 0.3), glowMaterial(PAL.cyan, 2.0));
   frame.position.z = -0.2;
   const group = new THREE.Group();
   group.add(frame, mesh);

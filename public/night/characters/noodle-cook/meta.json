@@ -1,0 +1,14 @@
+{
+  "name": "noodle-cook",
+  "generate_type": "LowPoly",
+  "height_meters": 1.68,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09e3b-a3d7-7853-a69d-e4a38fc91d1d rig=01a09e42-8821-76e2-b45b-76697a8f4c5f",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T04:56:34Z"
+}

@@ -1,9 +1,12 @@
 import * as THREE from 'three/webgpu';
-import { color, fract, mix, positionLocal, smoothstep, step, time, uv, abs, atan, max } from '../tsl';
+import { color, fract, mix, positionLocal, smoothstep, step, time, uv, abs, atan, max, glowMaterial } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createBillboard } from '../bay';
 import { THEMES } from '../theme';
 import { PAL } from '../palette';
+import { sfx } from '../audio';
+import { keyToAction, hint, clearHint, type DockActions } from './dock';
+import { dockPose as dwellPose } from '../nav';
 import type { Carrier, CarrierCtx } from './index';
 
 /*
@@ -53,9 +56,7 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   ], false)!, dark));
 
   // Gondola window strip (pokes 0.05 u out of both sides).
-  const winMat = new THREE.MeshBasicNodeMaterial();
-  winMat.colorNode = color(THEMES.work.warm).mul(2.2);
-  const win = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.3, 5), winMat);
+  const win = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.3, 5), glowMaterial(THEMES.work.warm, 2.2));
   win.position.set(0, -4.5, 0);
   root.add(win);
 
@@ -128,6 +129,27 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   rotors.setMatrixAt(0, rm.makeTranslation(ROTOR_AT[0].x, ROTOR_AT[0].y, ROTOR_AT[0].z));
   rotors.setMatrixAt(1, rm.makeTranslation(ROTOR_AT[1].x, ROTOR_AT[1].y, ROTOR_AT[1].z));
 
+  // ---- dock camera (Carrier.dockPose): the dwell pose (nav.DOCK_P) is a formation slot beside the banner at HOME.
+  // Expressed once in the HOME frame and re-applied every frame with the current curve point + heading, it stays on the
+  // port (+x, DOM slab) side as the blimp turns; a translation-only offset would end up reading the banner through the
+  // hull on the far leg of the loop. Uses `pos` (pre-bob) so the camera stays level while the hull bobs.
+  // The dwell sits close enough that the 16 u banner overflows a 16:9 frame (fine for a fly-by, not for reading), so
+  // the dock slot backs off along the line of sight by DOCK_BACKOFF: the banner then spans ≈ 70 % of the width.
+  const DOCK_BACKOFF = 1.25;
+  const q0inv = q.clone().invert();
+  const camLocal = new THREE.Vector3(), lookLocal = new THREE.Vector3();
+  let formationReady = false;
+  const dockPoseFn = (outPos: THREE.Vector3, outLook: THREE.Vector3) => {
+    if (!formationReady) {
+      const d = dwellPose('amd-dc');
+      lookLocal.copy(d.look).sub(HOME).applyQuaternion(q0inv);
+      camLocal.copy(d.pos).sub(HOME).applyQuaternion(q0inv).sub(lookLocal).multiplyScalar(DOCK_BACKOFF).add(lookLocal);
+      formationReady = true;
+    }
+    outPos.copy(camLocal).applyQuaternion(root.quaternion).add(pos);
+    outLook.copy(lookLocal).applyQuaternion(root.quaternion).add(pos);
+  };
+
   let u = 0, speedScale = 1, spin = 0;
   const update = (t: number, dt: number) => {
     u = (u + (CRUISE * speedScale * dt) / length) % 1;
@@ -145,6 +167,15 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
     rotors.instanceMatrix.needsUpdate = true;
   };
 
+  // ---- dock: the camera already rides in formation (nav dockOffset); E toggles the banner's light sweep between the
+  // slow cruise and a fast ticker (interact.css reads --sweep as the animation duration).
+  let fast = false, slab: HTMLElement | null = null, hintEl: HTMLElement | null = null;
+  const setTicker = (el: HTMLElement) => {
+    el.style.setProperty('--sweep', fast ? '1.1s' : '6s');
+    if (hintEl) hintEl.innerHTML = `<kbd>E</kbd> ticker · <b>${fast ? 'FAST' : 'SLOW'}</b>`;
+  };
+  const actions: DockActions = { confirm: () => { if (!slab) return; fast = !fast; setTicker(slab); sfx.select(); } };
+
   return {
     group,
     mount,
@@ -154,6 +185,13 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
     range: [0.22, 0.78],
     update: ctx.reducedMotion ? undefined : update,
     displacement: (out) => (ctx.reducedMotion ? out.set(0, 0, 0) : out.copy(disp)),
+    dockPose: dockPoseFn,
     setSpeedScale: (s) => { speedScale = s; },
+    interact: {
+      onEnter(el) { slab = el; fast = false; hintEl = hint(el, ''); setTicker(el); },
+      onExit(el) { el.style.removeProperty('--sweep'); clearHint(el); hintEl = null; slab = null; fast = false; },
+      onKey: (e) => keyToAction(e, actions),
+      actions,
+    },
   };
 }

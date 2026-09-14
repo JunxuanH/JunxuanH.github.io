@@ -1,0 +1,14 @@
+{
+  "name": "skater",
+  "generate_type": "LowPoly",
+  "height_meters": 1.65,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09e41-5abf-78c3-9ad5-58f0defcc606 rig=01a09e47-97b1-7bb2-b8cd-d1a824a4e93f",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T05:02:44Z"
+}

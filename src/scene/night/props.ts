@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { attribute, vec3, color, uniform } from './tsl';
+import { attribute, vec3, color, uniform, uv, float, smoothstep, glowMaterial } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, rng } from './palette';
@@ -109,10 +109,12 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
   await Promise.all(kinds.map(async (k) => { try { geos[k] = await loadKind(k); } catch (e) { console.warn('[night] prop load failed', k, e); } }));
 
   const place: Partial<Record<PropKind, THREE.Matrix4[]>> = {};
+  const placed: PropPlacement[] = []; // every final placement (world x/z, yaw, scale) for the collision system
   const add = (k: PropKind, x: number, z: number, yaw = 0, s = 1, y = CURB_H) => {
     (place[k] ??= []).push(new THREE.Matrix4().compose(
       new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw), new THREE.Vector3(s, s, s),
     ));
+    placed.push({ kind: k, x, z, yaw, s, y });
   };
   const density = { high: 1, med: 0.7, low: 0.4 }[tier];
   // Catenary cables (thin dark tubes) — between power poles and across the avenue.
@@ -163,14 +165,11 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
     }
   }
   if (lampHeads.length) {
-    const bulbMat = new THREE.MeshBasicNodeMaterial();
-    bulbMat.colorNode = color(0xffc887).mul(3.5);
-    const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.28, 8, 6), bulbMat, lampHeads.length);
+    const bulbs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.28, 8, 6), glowMaterial(0xffc887, 3.5), lampHeads.length);
     lampHeads.forEach((m, i) => bulbs.setMatrixAt(i, m));
     bulbs.frustumCulled = false;
     group.add(bulbs);
     const poolMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
-    const { uv, float, smoothstep } = await import('three/tsl');
     const d = uv().sub(0.5).length();
     poolMat.colorNode = color(0xffb870).mul(0.9);
     poolMat.opacityNode = float(1).sub(smoothstep(0.08, 0.5, d)).mul(0.5);
@@ -198,5 +197,9 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
   }
   // One draw for every cable in the city (same material, static).
   if (cableGeos.length) { const m = new THREE.Mesh(mergeGeometries(cableGeos, false)!, cableMat); m.frustumCulled = false; group.add(m); }
-  return { group, count: total };
+  // Placements of the props that actually loaded (walkable.ts turns them into obstacles), plus the final
+  // world matrices per kind (the props group sits at the origin, so these are world transforms).
+  const placements = placed.filter((p) => !!geos[p.kind]);
+  const matrices = Object.fromEntries(kinds.map((k) => [k, geos[k] ? place[k] ?? [] : []])) as Record<PropKind, THREE.Matrix4[]>;
+  return { group, count: total, placements, matrices };
 }

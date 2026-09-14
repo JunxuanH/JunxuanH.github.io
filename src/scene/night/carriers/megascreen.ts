@@ -1,9 +1,11 @@
 import * as THREE from 'three/webgpu';
-import { color, float, fract, floor, hash, length, smoothstep, step, time, uv, vec2, abs } from '../tsl';
+import { color, float, fract, floor, hash, length, smoothstep, step, time, uv, vec2, abs, glowMaterial } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { facadeBlock } from '../districts/shared';
 import { THEMES } from '../theme';
 import { PAL } from '../palette';
+import { sfx } from '../audio';
+import { keyToAction, hint, clearHint, retrigger, glitch, clearGlitch, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 /*
@@ -46,9 +48,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const backing = new THREE.Mesh(new THREE.PlaneGeometry(BACK_W, BACK_H), ledBackingMaterial());
   backing.position.set(FACE_X - 0.15, wallY, TOWER.z);
   backing.rotation.y = -Math.PI / 2;
-  const frameMat = new THREE.MeshBasicNodeMaterial();
-  frameMat.colorNode = color(PAL.cyan).mul(2.0);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.4, FRAME_H, FRAME_W), frameMat);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.4, FRAME_H, FRAME_W), glowMaterial(PAL.cyan, 2.0));
   frame.position.set(FACE_X + 0.1, wallY, TOWER.z);
   group.add(backing, frame);
 
@@ -76,6 +76,36 @@ export function create(ctx: CarrierCtx): Carrier {
   mount.rotation.y = -Math.PI / 2;
   group.add(mount);
 
+  // ---- dock: three channels — Ch1 the job (the slab as is), Ch2 a mock ad (index.astro `.ch-ad`), Ch3 SYSTEM: the live
+  // fps / draw calls / triangles / pixel ratio read from window.__perf (main.ts) four times a second.
+  interface PerfHook { frames: number; dpr: number; renderer?: { info?: { render?: { drawCalls?: number; calls?: number; triangles?: number } } } }
+  let ch = 1, slab: HTMLElement | null = null, badge: HTMLElement | null = null, timer = 0, lastFrames = 0, lastT = 0;
+  const fmt = (n: number | undefined) => n === undefined ? '—' : n >= 1e6 ? `${(n / 1e6).toFixed(2)}M` : n >= 1e4 ? `${(n / 1e3).toFixed(1)}K` : String(n);
+  const readout = () => {
+    if (!slab) return;
+    const set = (k: string, v: string) => { const dd = slab!.querySelector<HTMLElement>(`[data-sys="${k}"]`); if (dd) dd.textContent = v; };
+    const perf = (window as any).__perf as PerfHook | undefined;
+    if (!perf) { for (const k of ['fps', 'draws', 'tris', 'dpr']) set(k, '—'); return; }
+    const now = performance.now();
+    if (lastT) set('fps', String(Math.round(((perf.frames - lastFrames) * 1000) / Math.max(1, now - lastT))));
+    lastFrames = perf.frames; lastT = now;
+    const r = perf.renderer?.info?.render;
+    set('draws', fmt(r?.drawCalls ?? r?.calls));
+    set('tris', fmt(r?.triangles));
+    set('dpr', perf.dpr.toFixed(2));
+  };
+  const tune = (d: number) => {
+    if (!slab) return;
+    ch = ((ch - 1 + d + 3) % 3) + 1;
+    slab.dataset.ch = String(ch);
+    if (badge) { badge.textContent = `CH ${ch}`; retrigger(badge, 'is-new'); }
+    glitch(slab);
+    sfx.static();
+    clearInterval(timer); timer = 0;
+    if (ch === 3) { lastT = 0; readout(); timer = window.setInterval(readout, 250); }
+  };
+  const actions: DockActions = { left: () => tune(-1), right: () => tune(1) };
+
   return {
     group,
     mount,
@@ -90,6 +120,28 @@ export function create(ctx: CarrierCtx): Carrier {
       backing.scale.y = (h + 1.0) / BACK_H;
       frame.scale.y = (h + 1.6) / FRAME_H;
       backing.position.y = frame.position.y = mount.position.y = cy;
+    },
+    interact: {
+      onEnter(el) {
+        slab = el; ch = 1;
+        // Ch2 / Ch3 take the job's content height so the backing (fit to Ch1) keeps wrapping the slab.
+        const cs = getComputedStyle(el);
+        el.style.setProperty('--ch-h', `${el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`);
+        el.dataset.ch = '1';
+        badge = document.createElement('span');
+        badge.className = 'ch-badge'; badge.textContent = 'CH 1'; badge.setAttribute('aria-hidden', 'true');
+        el.appendChild(badge);
+        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> channel · <b>1</b> job · <b>2</b> ad · <b>3</b> system');
+      },
+      onExit(el) {
+        clearInterval(timer); timer = 0;
+        delete el.dataset.ch; el.style.removeProperty('--ch-h');
+        badge?.remove(); badge = null;
+        clearGlitch(el); clearHint(el);
+        slab = null; ch = 1;
+      },
+      onKey: (e) => keyToAction(e, actions),
+      actions,
     },
   };
 }

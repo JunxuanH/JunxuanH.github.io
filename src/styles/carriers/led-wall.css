@@ -1,24 +1,32 @@
-/* LED wall (megascreen carrier): huge type on near-black with a dot-matrix + scanline overlay.
+/* LED wall (megascreen carrier): huge type on near-black. The dot-matrix lives on the title only (h2::after);
+   the body copy is solid white so it stays legible at the craned camera's distance (≈0.66 css px per screen px).
    Overrides `.slab` / `.slab.job` from night.css (loaded before this via the carriers glob).
    Never set transform / opacity / filter on the slab itself — CSS3DRenderer writes those inline. */
 .slab.led-wall {
-  background: #04050a; background-image: none; color: #eafcff;
-  font-size: 30px; line-height: 1.25; padding: 34px 40px;
+  background: #04050a; background-image: none; color: #fff;
+  font-size: 34px; line-height: 1.22; padding: 32px 36px 36px;
   min-height: 0; border: 0; box-shadow: none;
 }
 .slab.job.led-wall { min-height: 0; } /* wins over `.slab.job` regardless of stylesheet order */
-.slab.led-wall h2 { font-size: 64px; color: #fff; text-shadow: 0 0 18px rgb(0 229 255 / 0.6); }
-.slab.led-wall .kicker { font-size: 22px; color: var(--yellow); }
-.slab.led-wall .meta { font-size: 22px; color: var(--cyan); }
-.slab.led-wall .team { font-size: 24px; }
-.slab.led-wall .bullets { font-size: 30px; }
-.slab.led-wall .bullets li { margin-bottom: 10px; }
-
-/* No corner brackets; ::after becomes the full-bleed LED overlay (6 px pixel grid + 1 px row gaps). */
-.slab.led-wall::before { display: none; }
-.slab.led-wall::after {
-  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
+.slab.led-wall header { margin-bottom: 20px; }
+.slab.led-wall h2 { position: relative; font-size: 60px; line-height: 1; color: #fff; text-shadow: 0 0 18px rgb(0 229 255 / 0.6); }
+/* LED pixel grid over the title only (6 px pitch + 1 px row gaps). */
+.slab.led-wall h2::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
     radial-gradient(circle, transparent 0 1.9px, rgb(0 0 0 / 0.62) 2.4px) 0 0 / 6px 6px,
     repeating-linear-gradient(0deg, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 6px);
+}
+.slab.led-wall .kicker { font-size: 22px; color: var(--yellow); }
+.slab.led-wall .meta { font-size: 21px; color: var(--cyan); }
+.slab.led-wall .team { font-size: 24px; color: rgb(255 255 255 / 0.85); }
+.slab.led-wall .bullets { font-size: 36px; line-height: 1.22; font-weight: 500; color: #fff; padding-left: 26px; }
+.slab.led-wall .bullets li { margin-bottom: 12px; }
+.slab.led-wall .bullets li::marker { color: var(--cyan); }
+
+/* No corner brackets; ::after is only a very faint 6 px row texture so the panel still reads as a screen. */
+.slab.led-wall::before { display: none; }
+.slab.led-wall::after {
+  content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgb(0 0 0 / 0.10) 0 1px, transparent 1px 6px);
 }

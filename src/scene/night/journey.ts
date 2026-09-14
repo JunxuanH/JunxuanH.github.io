@@ -33,6 +33,21 @@ export const ANCHORS = {
 };
 
 const S = ANCHORS.workSigns;
+/** The pose the original piecewise-smoothstep interpolation framed at p between two keys (kept bit-exact as a key). */
+function pinned(p: number, pos0: number[], look0: number[], pos1: number[], look1: number[], p0: number, p1: number) {
+  const t = (p - p0) / (p1 - p0), s = t * t * (3 - 2 * t);
+  const mix = (a: number[], b: number[]) => a.map((v, i) => v + (b[i] - v) * s) as [number, number, number];
+  return { pos: mix(pos0, pos1), look: mix(look0, look1) };
+}
+/**
+ * Exit key for a close-up dwell: dolly straight back along the dwell's heading with the aim pushed out to `aim` units,
+ * so the turn that follows happens at distance (an aim 3.5 u from the camera made leaving the kiosk a 11°-per-step whip).
+ */
+function backOut(pos: [number, number, number], look: [number, number, number], back: number, aim: number) {
+  const d = new THREE.Vector3().fromArray(look).sub(new THREE.Vector3().fromArray(pos)).normalize();
+  const q = new THREE.Vector3().fromArray(pos).addScaledVector(d, -back);
+  return { pos: q.toArray() as [number, number, number], look: q.clone().addScaledVector(d, aim).toArray() as [number, number, number] };
+}
 const signCam = (s: THREE.Vector3): [number, number, number] => [-Math.sign(s.x) * 2, 7, s.z + 10];
 const v = (a: THREE.Vector3, dy = 0): [number, number, number] => [a.x, a.y + dy, a.z];
 
@@ -46,11 +61,21 @@ export const KEYS: Key[] = [
   { p: 0.19, pos: [-66, 4.2, -82], look: [-80, 2.4, -100] },
   { p: 0.22, pos: [-80, 2.25, -96.6], look: [-80, 2.05, -100.1] },
   { p: 0.235, pos: [-80, 2.25, -96.6], look: [-80, 2.05, -100.1] },
+  // Exit arc: dolly back with the aim pushed out, then swing the aim through SE at 12–20 u so the 100° turn to the street is
+  // uniform instead of a whip around a subject 3.5 u away.
+  { p: 0.238, ...backOut([-80, 2.25, -96.6], [-80, 2.05, -100.1], 1.5, 10) },
+  { p: 0.245, pos: [-79, 2.7, -88], look: [-68.3, 2.5, -97] },   // yaw 50°, 14 u
+  { p: 0.25, pos: [-77, 3.0, -80], look: [-57.2, 3.2, -82.8] },  // yaw 82°, 20 u (0.255 is 100°)
   { p: 0.255, pos: [-74, 3.4, -70], look: [-30, 4, -62] },          // back out under the torii
   // Downtown: bus shelter (eye level), LED wall (crane up), blimp (formation), hologram (forecourt).
   { p: 0.275, pos: [-20, 2.2, -66], look: [-17.6, 2.0, -94.6] },
   { p: 0.31, pos: [-12.2, 1.9, -92.6], look: [-17.6, 2.0, -94.6] },
   { p: 0.345, pos: [-12.2, 1.9, -92.6], look: [-17.6, 2.0, -94.6] },
+  // Exit arc: back into the avenue, then swing the aim through S at 14–18 u (the straight aim path to the LED wall would
+  // pass through the camera itself: a 180° flip).
+  { p: 0.348, ...backOut([-12.2, 1.9, -92.6], [-17.6, 2.0, -94.6], 1.2, 10) },
+  { p: 0.356, pos: [-9.2, 2.1, -96.8], look: [-14, 1.8, -110] },  // yaw −20°, 14 u
+  { p: 0.364, pos: [-7, 2.3, -99.8], look: [2, 3, -115.4] },      // yaw 30°, 18 u (0.375 is 66°)
   { p: 0.375, pos: [-4, 2.5, -104], look: [27, 12, -118] },
   { p: 0.42, pos: [-10, 12, -108], look: [27, 22, -118] },
   { p: 0.465, pos: [-10, 12, -108], look: [27, 22, -118] },
@@ -67,6 +92,7 @@ export const KEYS: Key[] = [
   { p: 0.88, pos: [56, 38, -226], look: [90, 30, -160] },
   { p: 0.90, pos: [96, 78, -150], look: [136, 20, -10] },
   { p: 0.94, pos: [128, 16, -48], look: [140, 6, 16] },
+  { p: 0.99, ...pinned(0.99, [128, 16, -48], [140, 6, 16], [134.6, 5.0, 14.5], [140, 8.2, 32.1], 0.94, 1.0) }, // the board shot (NAV_TARGET.contact)
   { p: 1.00, pos: [134.6, 5.0, 14.5], look: [140, 8.2, 32.1] },
 ];
 
@@ -77,22 +103,209 @@ export function followWeight(p: number) {
   return sm((p - (FOLLOW.from - FOLLOW.feather)) / FOLLOW.feather) * (1 - sm((p - FOLLOW.to) / FOLLOW.feather));
 }
 
-const smooth = (t: number) => t * t * (3 - 2 * t);
-const a = new THREE.Vector3(), b = new THREE.Vector3();
+// ---------- camera path
+// Each coordinate stream of KEYS (positions, look targets) is a centripetal Catmull-Rom spline through its *distinct*
+// points, so direction is continuous through every pass-through key instead of kinking at chord boundaries. A key
+// repeated in a stream is a hold: that stream sits perfectly still on the point for the whole window (the résumé
+// carriers are placed for those poses). Progress along each spline is a monotone cubic in p (Fritsch–Butland slopes)
+// whose rate is continuous through pass-through keys and zero at every hold edge and at both ends of the journey, so
+// speed never jumps and arrivals settle instead of stopping dead. Every key is still hit exactly at its p.
+const hermite01 = (t: number, a: number, b: number) => a * (t * t * t - 2 * t * t + t) + (3 * t * t - 2 * t * t * t) + b * (t * t * t - t * t);
 
-/** Camera pose at progress p: piecewise smoothstep between keys (repeated keys = dwell). */
+class Track {
+  private readonly curve: THREE.CatmullRomCurve3;
+  private readonly pts: THREE.Vector3[] = [];
+  private readonly from: number[] = []; // p at which point j is reached
+  private readonly to: number[] = [];   // p at which the stream leaves point j (== from[j] for a pass-through key)
+  private readonly a: number[] = [];    // Hermite slopes of the local weight over segment j (start / end)
+  private readonly b: number[] = [];
+
+  constructor(keys: Key[], pick: (k: Key) => [number, number, number]) {
+    for (const k of keys) {
+      const v = new THREE.Vector3().fromArray(pick(k));
+      const last = this.pts[this.pts.length - 1];
+      if (last && last.distanceToSquared(v) < 1e-8) { this.to[this.to.length - 1] = k.p; continue; }
+      this.pts.push(v); this.from.push(k.p); this.to.push(k.p);
+    }
+    this.curve = new THREE.CatmullRomCurve3(this.pts, false, 'centripetal');
+    const n = this.pts.length;
+    // Segment j runs from to[j] to from[j+1]. Its length in the spline's own (centripetal) parameter is √chord, the
+    // same dt the curve uses internally, so matching ds/dp across a knot makes the world-space speed continuous.
+    const h: number[] = [], sig: number[] = [];
+    for (let j = 0; j < n - 1; j++) {
+      h[j] = this.from[j + 1] - this.to[j];
+      sig[j] = Math.sqrt(this.pts[j].distanceTo(this.pts[j + 1])) / h[j];
+    }
+    const m: number[] = []; // ds/dp at each knot
+    for (let j = 0; j < n; j++) {
+      if (j === 0 || j === n - 1 || this.to[j] > this.from[j]) m[j] = 0; // journey ends and holds: ease to rest
+      else m[j] = (3 * (h[j - 1] + h[j])) / ((2 * h[j] + h[j - 1]) / sig[j - 1] + (h[j] + 2 * h[j - 1]) / sig[j]); // ≤ 3·min(σ): monotone
+    }
+    for (let j = 0; j < n - 1; j++) { this.a[j] = m[j] / sig[j]; this.b[j] = m[j + 1] / sig[j]; }
+  }
+
+  at(p: number, out: THREE.Vector3) {
+    const n = this.pts.length;
+    let j = 0;
+    while (j < n - 1 && this.from[j + 1] <= p) j++;
+    if (j === n - 1 || p <= this.to[j]) return out.copy(this.pts[j]); // on a knot or inside a hold: exact
+    const w = hermite01((p - this.to[j]) / (this.from[j + 1] - this.to[j]), this.a[j], this.b[j]);
+    return this.curve.getPoint((j + w) / (n - 1), out);
+  }
+}
+
+const POS = new Track(KEYS, (k) => k.pos);
+const LOOK = new Track(KEYS, (k) => k.look);
+
+/** Camera pose at progress p (see Track). Exact at every key; still inside dwell windows. */
 export function poseAt(p: number, pos: THREE.Vector3, look: THREE.Vector3) {
   const q = THREE.MathUtils.clamp(p, 0, 1);
-  let i = 0;
-  while (i < KEYS.length - 2 && KEYS[i + 1].p <= q) i++;
-  const k0 = KEYS[i], k1 = KEYS[i + 1];
-  const t = k1.p > k0.p ? smooth((q - k0.p) / (k1.p - k0.p)) : 0;
-  pos.copy(a.fromArray(k0.pos)).lerp(b.fromArray(k1.pos), t);
-  look.copy(a.fromArray(k0.look)).lerp(b.fromArray(k1.look), t);
+  POS.at(q, pos);
+  LOOK.at(q, look);
 }
+
+const va = new THREE.Vector3(), vb = new THREE.Vector3(), vl = new THREE.Vector3();
+/** dPos/dp of the path (world units per unit progress); zero inside dwells. Central difference, one-sided at the ends. */
+export function pathVelocity(p: number, out: THREE.Vector3) {
+  const h = 5e-4;
+  const p0 = Math.max(0, p - h), p1 = Math.min(1, p + h);
+  if (p1 <= p0) return out.set(0, 0, 0);
+  POS.at(p0, va); POS.at(p1, vb);
+  return out.subVectors(vb, va).divideScalar(p1 - p0);
+}
+
+// ---------- camera feel (main.ts's animation loop calls rig.update after the path pose and the blimp offset)
+/** One critically damped spring step (settles without overshoot). `s` holds [x, v]. */
+function spring(s: [number, number], target: number, omega: number, dt: number) {
+  const e = Math.exp(-omega * dt), dx = s[0] - target, k = (s[1] + omega * dx) * dt;
+  s[0] = target + (dx + k) * e;
+  s[1] = (s[1] - k * omega) * e;
+  return s[0];
+}
+
+const LEAD = { max: 2.6, frac: 0.06, v0: 60 };    // look-ahead: ≤ 2.6 u or ≤ ~3.4° of heading, saturating with world speed (u/s)
+const BANK = { max: THREE.MathUtils.degToRad(1.5), v0: 150 }; // banking roll vs lateral world speed (u/s)
+const PARALLAX = { x: 1.2, y: 0.5 };                // pointer parallax amplitude (world units), as before
+const dir = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+const par = { x: [0, 0] as [number, number], y: [0, 0] as [number, number], gain: [1, 0] as [number, number] };
+const bank: [number, number] = [0, 0];
+let prevP: number | null = null, pRate = 0;
+
+export const rig = {
+  /** True while a nav pan is in flight: the pointer parallax fades out so the shot reads as one camera move. */
+  navFlight: false,
+  /** Forget motion history (call when entering ride mode after a walk or a teleport, so no stale dp/dt leaks into the bank/lead). */
+  reset() {
+    prevP = null; pRate = 0;
+    bank[0] = bank[1] = 0;
+    par.x[1] = par.y[1] = 0;
+    par.gain[0] = this.navFlight ? 0 : 1; par.gain[1] = 0;
+  },
+  /**
+   * Finish the camera from the path pose: look slightly ahead along travel during transits, critically damped pointer
+   * parallax (suppressed during nav pans), the subtle bob, and a tiny banking roll from lateral velocity.
+   * `pos`/`look` already include the blimp's follow offset; the bob keeps the CSS3D slabs' scale steady.
+   */
+  update(camera: THREE.Camera, p: number, pos: THREE.Vector3, look: THREE.Vector3, pointer: THREE.Vector2, t: number, dt: number, reduced = false) {
+    dt = Math.max(dt, 1e-4);
+    // Path direction and world speed (path velocity × dp/dt): the look-ahead and the bank only exist while the camera
+    // is actually moving, so a camera at rest on a pass-through key (0.99, the board) frames exactly what the key says.
+    const dp = prevP === null ? 0 : p - prevP;
+    prevP = p;
+    const rate = Math.abs(dp) > 0.05 ? 0 : dp / dt; // a jump (refresh, ?p=) is not a scroll or a pan
+    pRate += (rate - pRate) * (1 - Math.exp(-dt / 0.12));
+    pathVelocity(p, dir);
+    const vp = dir.length(), speed = vp * Math.abs(pRate);
+    if (vp > 1e-6) {
+      dir.divideScalar(vp);
+      if (pRate < 0) dir.negate(); // travelling backwards along the path: look ahead that way
+      const x = speed / LEAD.v0, sat = x / Math.sqrt(1 + x * x);
+      look.addScaledVector(dir, Math.min(LEAD.max, LEAD.frac * vl.subVectors(look, pos).length()) * sat);
+    }
+
+    // Pointer parallax with a critically damped feel; gain → 0 while a nav pan flies, back to 1 afterwards.
+    spring(par.gain, this.navFlight ? 0 : 1, 5, dt);
+    spring(par.x, pointer.x, 7, dt);
+    spring(par.y, pointer.y, 7, dt);
+    const g = par.gain[0];
+    camera.position.set(pos.x + par.x[0] * PARALLAX.x * g, pos.y + Math.sin(t * 0.6) * 0.1 - par.y[0] * PARALLAX.y * g, pos.z);
+    camera.lookAt(look);
+
+    // Banking: lateral world velocity (along camera right) → roll, soft-clamped to ±1.5°, smoothed.
+    let target = 0;
+    if (!reduced && vp > 1e-6) {
+      right.crossVectors(vl.subVectors(look, pos).normalize(), up).normalize();
+      const lateral = dir.dot(right) * speed;
+      target = BANK.max * Math.tanh(lateral / BANK.v0);
+    }
+    camera.rotation.z += spring(bank, target, 6, dt);
+  },
+};
 
 export function sectionAt(p: number): SectionId {
   return (SECTIONS.find((s) => p < s.end) ?? SECTIONS[SECTIONS.length - 1]).id;
 }
 
 export const sectionStart = (id: SectionId) => SECTIONS.find((s) => s.id === id)!.start;
+/** Where the nav (and the hero button) lands: the dwell of each section, not its boundary. */
+export const NAV_TARGET: Record<SectionId, number> = { city: 0, education: 0.228, work: 0.31, projects: 0.82, contact: 0.99 };
+
+/** Nav pan choreography: tween `journey.p` from → to with GSAP using `easeName` over `panDuration(from, to)` seconds. */
+export const easeName = 'power3.inOut';
+/** 0.9 s next door, up to 2.6 s across the whole city (proportional to the distance in p). */
+export const panDuration = (fromP: number, toP: number) => THREE.MathUtils.clamp(0.9 + Math.abs(toP - fromP) * 2.2, 0.9, 2.6);
+export const isAdjacent = (a: SectionId, b: SectionId) => Math.abs(SECTIONS.findIndex((s) => s.id === a) - SECTIONS.findIndex((s) => s.id === b)) === 1;
+
+// ---------- fly-overs (non-adjacent nav jumps): climb, cruise above the skyline, settle exactly on the target pose
+/** floor: above tower-a (84) and the tallest kitbash variant (82). climb: cruise height over the higher end pose. far: aim rays. */
+const FLYOVER = { floor: 95, climb: 40, far: 30, sweepY: 14 };
+const smoother = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // quintic: zero velocity and acceleration at both ends
+/**
+ * Camera flight from poseAt(fromP) to poseAt(toP) over the city. `pose(t)` for t ∈ [0,1] — tween t linearly (ease 'none'),
+ * the flight carries its own easing — starts and ends bit-exact on the two path poses. Position: centripetal Catmull-Rom
+ * through the departure pose, two cruise points at height H (20 % / 80 % of the way), and the arrival pose, walked at
+ * constant arc-length speed. Aim: the departure ray pushed far, a sweep point low over the city mid-way, the arrival ray
+ * pushed far, then the arrival look — so the heading never whips near a close-up subject.
+ */
+export function flyover(fromP: number, toP: number) {
+  const P0 = new THREE.Vector3(), L0 = new THREE.Vector3(), P1 = new THREE.Vector3(), L1 = new THREE.Vector3();
+  poseAt(fromP, P0, L0); poseAt(toP, P1, L1);
+  const duration = THREE.MathUtils.clamp(1.6 + Math.abs(toP - fromP) * 1.6, 1.6, 3.2);
+  if (P0.distanceTo(P1) < 1e-3) return { duration, pose(t: number, pos: THREE.Vector3, look: THREE.Vector3) { pos.copy(t < 1 ? P0 : P1); look.copy(t < 1 ? L0 : L1); } };
+  const H = Math.max(FLYOVER.floor, Math.max(P0.y, P1.y) + FLYOVER.climb);
+  const lift = (k: number) => new THREE.Vector3().lerpVectors(P0, P1, k).setY(H);
+  const ray = (p: THREE.Vector3, l: THREE.Vector3) => { const d = new THREE.Vector3().subVectors(l, p); const n = d.length(); return n < 1e-6 ? p.clone().add(new THREE.Vector3(0, 0, -FLYOVER.far)) : p.clone().addScaledVector(d, Math.max(FLYOVER.far, n) / n); };
+  const F0 = ray(P0, L0), F1 = ray(P1, L1);
+  const posCurve = new THREE.CatmullRomCurve3([P0.clone(), lift(0.2), lift(0.8), P1.clone()], false, 'centripetal');
+  const lookCurve = new THREE.CatmullRomCurve3([L0.clone(), F0, new THREE.Vector3().lerpVectors(F0, F1, 0.5).setY(FLYOVER.sweepY), F1, L1.clone()], false, 'centripetal');
+  posCurve.arcLengthDivisions = lookCurve.arcLengthDivisions = 600;
+  return {
+    duration,
+    pose(t: number, pos: THREE.Vector3, look: THREE.Vector3) {
+      if (t <= 0) { pos.copy(P0); look.copy(L0); return; }
+      if (t >= 1) { pos.copy(P1); look.copy(L1); return; }
+      const u = smoother(t);
+      posCurve.getPointAt(u, pos);
+      lookCurve.getPointAt(u, look);
+    },
+  };
+}
+
+const ta = new THREE.Vector3(), tb = new THREE.Vector3(), tf = new THREE.Vector3(), tg = new THREE.Vector3();
+/**
+ * Total heading rotation (degrees) the camera makes along the path between two progress values. The path zigzags
+ * through the districts (leaving the kiosk alone turns ~120°), so a pan that crosses several keys should be given
+ * time for its turn as well as its distance, e.g. `Math.max(panDuration(a, b), pathTurn(a, b) / 150)` for ≤ 150°/s.
+ */
+export function pathTurn(fromP: number, toP: number, steps = 400) {
+  const p0 = Math.min(fromP, toP), p1 = Math.max(fromP, toP);
+  let deg = 0;
+  poseAt(p0, ta, tb); tf.subVectors(tb, ta).normalize();
+  for (let i = 1; i <= steps; i++) {
+    poseAt(p0 + ((p1 - p0) * i) / steps, ta, tb);
+    tg.subVectors(tb, ta).normalize();
+    deg += THREE.MathUtils.radToDeg(tf.angleTo(tg));
+    tf.copy(tg);
+  }
+  return deg;
+}

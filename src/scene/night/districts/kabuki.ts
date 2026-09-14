@@ -15,15 +15,27 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
  * the Flip-3D holo stack at the end. Steam and sparks come from particles.ts.
  */
 
+// Overhang strips of one tint share a material (the buzz has no per-strip seed, so they already flickered
+// in step); the lantern material is one instance for every string.
+const stripCache = new Map<number, THREE.MeshBasicNodeMaterial>();
+function overhangStrip(tint: number) {
+  let stripMat = stripCache.get(tint);
+  if (!stripMat) {
+    stripMat = new THREE.MeshBasicNodeMaterial();
+    const buzz = mix(float(1), hash(floor(time.mul(20))), step(0.9, hash(floor(time.mul(0.4)))));
+    stripMat.colorNode = uniform(new THREE.Color(tint)).mul(1.8).mul(buzz.mul(0.4).add(0.6));
+    stripCache.set(tint, stripMat);
+  }
+  return stripMat;
+}
+let lanternMat: THREE.MeshStandardNodeMaterial | null = null;
+
 /** Corrugated overhang with an emissive strip underneath (procedural, one per façade row). */
 function overhang(w: number, tint: number) {
   const group = new THREE.Group();
   const roof = new THREE.Mesh(new THREE.BoxGeometry(w, 0.25, 3.4), new THREE.MeshStandardNodeMaterial({ color: 0x1a1a22, roughness: 0.6, metalness: 0.5 }));
   roof.position.set(0, 0, 1.7);
-  const stripMat = new THREE.MeshBasicNodeMaterial();
-  const buzz = mix(float(1), hash(floor(time.mul(20))), step(0.9, hash(floor(time.mul(0.4)))));
-  stripMat.colorNode = uniform(new THREE.Color(tint)).mul(1.8).mul(buzz.mul(0.4).add(0.6));
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 0.1, 0.1), stripMat);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 0.1, 0.1), overhangStrip(tint));
   strip.position.set(0, -0.18, 3.2);
   const brace = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.08), new THREE.MeshStandardNodeMaterial({ color: 0x0c0d14 }));
   brace.position.set(0, -0.6, 2.6);
@@ -34,9 +46,12 @@ function overhang(w: number, tint: number) {
 /** Instanced red paper lanterns along a catenary: sphere + inner glow tint, slight sway in update(). */
 function lanternString(from: THREE.Vector3, to: THREE.Vector3, n: number, sag: number) {
   const group = new THREE.Group();
-  const mat = new THREE.MeshStandardNodeMaterial({ roughness: 0.8 });
-  mat.colorNode = color(0x6a1010);
-  mat.emissiveNode = mix(color(0xff3a2a), color(0xffa040), smoothstep(-0.2, 0.2, positionLocal.y)).mul(0.8);
+  if (!lanternMat) {
+    lanternMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.8 });
+    lanternMat.colorNode = color(0x6a1010);
+    lanternMat.emissiveNode = mix(color(0xff3a2a), color(0xffa040), smoothstep(-0.2, 0.2, positionLocal.y)).mul(0.8);
+  }
+  const mat = lanternMat;
   const mats: THREE.Matrix4[] = [];
   for (let i = 0; i <= n; i++) {
     const t = i / n;

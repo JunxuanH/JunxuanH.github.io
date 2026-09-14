@@ -4,11 +4,13 @@
  * itself in, and an amber scanline plane glows through as the DOM fades. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
-import { color, step, fract, uv, time } from '../tsl';
+import { color, step, fract, uv, time, glowMaterial as glow } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { CURB_H } from '../streets';
 import { loadCharacter, instantiate } from '../characters';
+import { sfx } from '../audio';
+import { keyToAction, setSel, hint, clearHint, retrigger, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const TILT = -0.17;      // housing leans back: top away from the viewer, screen normal tilts up toward the camera
@@ -16,12 +18,6 @@ const SCREEN_Y = 2.05;   // slab centre (the close camera looks here)
 const FACE_Z = 0.05;     // housing centre z; its front face is 0.15 further along the tilted normal
 const HOUSING_H = 2.3;
 const KEY_Y = 1.25;
-
-function glow(tint: number, gain: number) {
-  const m = new THREE.MeshBasicNodeMaterial();
-  m.colorNode = color(tint).mul(gain);
-  return m;
-}
 
 /** z of the tilted housing face at world-ish (group) height y, for parking the keypad tray against it. */
 function faceZ(y: number) {
@@ -109,6 +105,35 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     } catch (e) { console.warn('[kiosk] NPC unavailable', e); }
   }
 
+  // ---- dock: the slab is a menu (certification + toolbox rows, `data-detail` from content.ts); ↑/↓ move the cursor,
+  // Enter types the row's detail into an output line under the columns (one row open at a time).
+  let rows: HTMLElement[] = [], sel = 0, open = -1, out: HTMLElement | null = null;
+  const closeRow = () => {
+    if (open < 0) return;
+    rows[open]?.classList.remove('is-open');
+    open = -1;
+    if (out) { out.classList.remove('is-typing'); out.textContent = ''; }
+  };
+  const move = (d: number) => {
+    if (!rows.length) return;
+    closeRow();
+    sel = (sel + d + rows.length) % rows.length;
+    setSel(rows, sel);
+    sfx.select();
+  };
+  const toggle = () => {
+    const row = rows[sel];
+    if (!row || !out) return;
+    if (open === sel) { closeRow(); sfx.select(); return; }
+    closeRow();
+    open = sel;
+    row.classList.add('is-open');
+    out.textContent = `> ${row.dataset.detail || row.textContent?.trim() || ''}`;
+    retrigger(out, 'is-typing');
+    sfx.confirm();
+  };
+  const actions: DockActions = { up: () => move(-1), down: () => move(1), confirm: toggle };
+
   return {
     group, mount, width: 3.0, px: 720, style: 'terminal', range: [0.08, 0.34],
     lights: [[-80, 2.8, -98.4, 0xffb000, 350, 12]],
@@ -127,6 +152,32 @@ export async function create(ctx: CarrierCtx): Promise<Carrier> {
     prepare(el) {
       el.querySelectorAll<HTMLElement>('.kicker, h2, .meta > span, h3, .bullets li, .chips li')
         .forEach((n, i) => n.style.setProperty('--i', String(i)));
+    },
+    interact: {
+      onEnter(el) {
+        rows = [...el.querySelectorAll<HTMLElement>('.bullets li, .chips li')];
+        sel = 0; open = -1;
+        setSel(rows, sel);
+        out = document.createElement('p');
+        out.className = 'term-out';
+        out.textContent = '> SELECT AN ENTRY';
+        el.appendChild(out);
+        retrigger(out, 'is-typing');
+        hint(el, '<kbd>↑</kbd><kbd>↓</kbd> select · <kbd>Enter</kbd> details · <kbd>Esc</kbd> back');
+      },
+      onExit(el) {
+        closeRow();
+        setSel(rows, -1);
+        rows = [];
+        out?.remove(); out = null;
+        clearHint(el);
+      },
+      onKey(e) {
+        // Esc collapses an open row first (only reached if the nav lets Escape through); otherwise the usual keys.
+        if (e.key === 'Escape') { if (open < 0) return false; closeRow(); sfx.select(); return true; }
+        return keyToAction(e, actions);
+      },
+      actions,
     },
   };
 }

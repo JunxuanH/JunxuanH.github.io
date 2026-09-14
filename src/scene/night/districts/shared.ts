@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs, uniform } from '../tsl';
+import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs, uniform, glowMaterial } from '../tsl';
 import { PAL, rng } from '../palette';
 import { neonText } from '../signs';
 import type { PropPlacement } from '../props';
@@ -29,15 +29,16 @@ export interface DistrictCtx { content: DistrictContent; tex: DistrictTextures; 
 /**
  * Mid-rise block textured with the façade atlas on its walls (albedo lifted, windows emissive) and an
  * optional storefront strip on one face. Used for campus buildings and alley backdrops.
+ * Size and atlas cell go in as uniforms so every block (eight across the city) shares two programs.
  */
 export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextures, seed: number, front: 'pz' | 'nz' | 'px' | 'nx' | null, stripTint?: number) {
   const group = new THREE.Group();
   const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.7, metalness: 0.15 });
   const cell = seed % 4;
-  const cellUV = vec2(cell % 2 * 0.5, Math.floor(cell / 2) * 0.5);
+  const cellUV = uniform(new THREE.Vector2(cell % 2 * 0.5, Math.floor(cell / 2) * 0.5));
   const wall = float(1).sub(smoothstep(0.4, 0.6, abs(normalLocal.y)));
   if (tex.facade) {
-    const rep = vec2(uv().x.mul(w / 9), uv().y.mul(h / 9));
+    const rep = uv().mul(uniform(new THREE.Vector2(w / 9, h / 9)));
     const s = texture(tex.facade, fract(rep).mul(0.5).add(cellUV));
     m.colorNode = mix(color(0x1a1c26), s.rgb.mul(1.4).add(0.2), wall);
     m.emissiveNode = s.rgb.mul(smoothstep(0.35, 0.65, luminance(s.rgb))).mul(2.2).mul(wall);
@@ -47,8 +48,7 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
   const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), m);
   group.add(box);
   // Roof-edge strip
-  const stripMat = new THREE.MeshBasicNodeMaterial();
-  stripMat.colorNode = color(stripTint ?? (seed % 2 ? PAL.cyan : PAL.magenta)).mul(1.8);
+  const stripMat = glowMaterial(stripTint ?? (seed % 2 ? PAL.cyan : PAL.magenta), 1.8);
   for (const [sx, sz, lw, ld] of [[0, d / 2, w, 0.18], [0, -d / 2, w, 0.18], [w / 2, 0, 0.18, d], [-w / 2, 0, 0.18, d]] as const) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(lw + 0.18, 0.18, ld + 0.18), stripMat);
     s.position.set(sx, h, sz);
@@ -57,7 +57,8 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
   if (front && tex.storefronts) {
     const fm = new THREE.MeshStandardNodeMaterial({ roughness: 0.6, side: THREE.DoubleSide });
     const fcell = (seed * 7) % 4;
-    const fuv = vec2(fract(uv().x.mul(w / 14)).mul(0.5).add(fcell % 2 * 0.5), uv().y.mul(0.5).add(Math.floor(fcell / 2) * 0.5));
+    const fcellUV = uniform(new THREE.Vector2(fcell % 2 * 0.5, Math.floor(fcell / 2) * 0.5));
+    const fuv = vec2(fract(uv().x.mul(uniform(w / 14))).mul(0.5), uv().y.mul(0.5)).add(fcellUV);
     const s = texture(tex.storefronts, fuv);
     fm.colorNode = s.rgb.mul(1.0);
     fm.emissiveNode = s.rgb.mul(smoothstep(0.45, 0.7, luminance(s.rgb))).mul(2.0);
@@ -78,9 +79,7 @@ export function createFlameSign(label: string, rows: number, seed: number, tint:
   const group = new THREE.Group();
   const backing = new THREE.Mesh(new THREE.BoxGeometry(w + 1.0, h + 1.0, 0.3), new THREE.MeshStandardNodeMaterial({ color: 0x05060c, roughness: 0.6 }));
   group.add(backing);
-  const frameMat = new THREE.MeshBasicNodeMaterial();
-  frameMat.colorNode = uniform(new THREE.Color(frameTint)).mul(1.6);
-  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 1.2, h + 1.2, 0.2), frameMat);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 1.2, h + 1.2, 0.2), glowMaterial(frameTint, 1.6));
   frame.position.z = -0.1;
   group.add(frame);
   const r = rng(seed);
@@ -145,9 +144,7 @@ export function stringLights(from: THREE.Vector3, to: THREE.Vector3, n: number, 
     const t = i / n;
     mats.push(new THREE.Matrix4().makeTranslation(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * sag, from.z + (to.z - from.z) * t));
   }
-  const mat = new THREE.MeshBasicNodeMaterial();
-  mat.colorNode = uniform(new THREE.Color(tint)).mul(uniform(gain));
-  const im = new THREE.InstancedMesh(new THREE.SphereGeometry(radius, 6, 4), mat, mats.length);
+  const im = new THREE.InstancedMesh(new THREE.SphereGeometry(radius, 6, 4), glowMaterial(tint, gain), mats.length);
   mats.forEach((m, k) => im.setMatrixAt(k, m));
   return im;
 }

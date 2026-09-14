@@ -8,6 +8,7 @@ import * as THREE from 'three/webgpu';
 import type { Tier } from '../palette';
 import type { DistrictTextures, LightSpec } from '../districts/shared';
 import type { PropPlacement } from '../props';
+import type { SectionId } from '../journey';
 
 export interface CarrierCtx {
   scene: THREE.Scene;
@@ -44,11 +45,35 @@ export interface Carrier {
   cue?: { p: number; run(el: HTMLElement): void };
   /** Moving carriers: world position minus the home pose (camera follow). */
   displacement?(out: THREE.Vector3): THREE.Vector3;
+  /**
+   * Full camera pose (world) while docked, evaluated every frame. When present it replaces nav.ts's default of the
+   * dwell pose (nav.DOCK_P / dockPose(id)) plus `displacement`, so a carrier that turns can rotate its formation
+   * offset with its heading instead of only translating it.
+   */
+  dockPose?(pos: THREE.Vector3, look: THREE.Vector3): void;
   /** Extra behaviour hooks used by content.ts (e.g. stall.rise). */
   rise?(open: boolean): void;
+  /**
+   * Dock-mode mini-interaction (walk mode: the player presses E next to the carrier, the camera parks on the dwell
+   * pose and content.ts routes keys here). `label` overrides the HUD prompt ("Read the terminal").
+   */
+  interact?: {
+    label?: string;
+    onEnter?(el: HTMLElement): void;
+    onExit?(el: HTMLElement): void;
+    /** Return true when the key was handled. Escape arrives here first; when unhandled it undocks. */
+    onKey?(e: KeyboardEvent, el: HTMLElement): boolean | void;
+    /** The same handlers as named actions, for the phone sheet's chip bar (▲▼ / ◀▶ / ✓). Valid while docked. */
+    actions?: { up?(): void; down?(): void; left?(): void; right?(): void; confirm?(): void };
+  };
 }
 
 export type CarrierId = 'education' | 'amd-intern' | 'kioxia' | 'amd-dc' | 'apple' | 'projects' | 'contact';
+
+/** The journey section each carrier belongs to (walk / dock visibility). */
+export const CARRIER_SECTION: Record<CarrierId, SectionId> = {
+  education: 'education', 'amd-intern': 'work', kioxia: 'work', 'amd-dc': 'work', apple: 'work', projects: 'projects', contact: 'contact',
+};
 
 /** Module per carrier id. Resolved through a glob so a missing module is skipped instead of breaking the build. */
 const MODULE_OF: Record<CarrierId, string> = {
@@ -82,10 +107,11 @@ export async function createCarriers(ctx: CarrierCtx) {
       console.warn(`[night] carrier ${id} failed`, e);
     }
   }));
-  const update = (t: number, dt: number, p: number) => {
+  /** `section` (walk / dock mode) keeps every carrier of that section drawn whatever p says; the rest follow their windows. */
+  const update = (t: number, dt: number, p: number, section?: SectionId) => {
     for (const id in byId) {
       const c = byId[id as CarrierId];
-      c.group.visible = p >= c.range[0] && p <= c.range[1];
+      c.group.visible = (p >= c.range[0] && p <= c.range[1]) || (section !== undefined && CARRIER_SECTION[id as CarrierId] === section);
       if (c.group.visible) c.update?.(t, dt, p);
     }
   };

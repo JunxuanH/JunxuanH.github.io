@@ -107,12 +107,12 @@ export const DRONE_LANES: DroneLane[] = [
 
 /** Suggested placement (which rigs where) — main.ts can override counts per tier. */
 export const DISTRICT_CROWDS = [
-  { path: EDUCATION_PLAZA, assets: ['geisha-bot', 'ronin', 'netrunner', 'oni-bouncer', 'corpo', 'maid-bot', 'geisha-bot'], count: { high: 7, med: 4, low: 2 } },
-  { path: CAMPUS_STREET, assets: ['ronin', 'schoolgirl-hacker', 'corpo', 'maid-bot'], count: { high: 4, med: 2, low: 1 } },
-  { path: WORK_WALK_LEFT, assets: ['corpo', 'mech-pilot', 'netrunner', 'idol'], count: { high: 5, med: 3, low: 1 } },
-  { path: WORK_WALK_RIGHT, assets: ['corpo', 'idol', 'corpo', 'mech-pilot', 'netrunner'], count: { high: 5, med: 3, low: 1 } },
-  { path: AVENUE_WALK_LEFT, assets: ['netrunner', 'cat-courier', 'corpo', 'punk', 'schoolgirl-hacker'], count: { high: 6, med: 3, low: 1 } },
-  { path: AVENUE_WALK_RIGHT, assets: ['corpo', 'ronin', 'idol', 'netrunner', 'mech-pilot'], count: { high: 6, med: 3, low: 1 } },
-  { path: PROJECTS_MARKET, assets: ['chef', 'vendor', 'idol', 'punk', 'schoolgirl-hacker', 'cat-courier', 'maid-bot', 'netrunner'], count: { high: 8, med: 5, low: 2 } },
-  { path: CONTACT_PAD, assets: ['corpo', 'cat-courier', 'mech-pilot'], count: { high: 3, med: 2, low: 1 } },
+  { path: EDUCATION_PLAZA, assets: ['geisha-bot', 'ronin', 'netrunner', 'oni-bouncer', 'skater', 'maid-bot', 'geisha-bot', 'salaryman'], count: { high: 9, med: 5, low: 2 } },
+  { path: CAMPUS_STREET, assets: ['ronin', 'schoolgirl-hacker', 'skater', 'maid-bot'], count: { high: 5, med: 2, low: 1 } },
+  { path: WORK_WALK_LEFT, assets: ['corpo', 'mech-pilot', 'salaryman', 'medic', 'idol'], count: { high: 7, med: 4, low: 1 } },
+  { path: WORK_WALK_RIGHT, assets: ['corpo', 'idol', 'patrol-bot', 'mech-pilot', 'salaryman'], count: { high: 7, med: 4, low: 1 } },
+  { path: AVENUE_WALK_LEFT, assets: ['netrunner', 'cat-courier', 'salaryman', 'punk', 'dj'], count: { high: 8, med: 4, low: 1 } },
+  { path: AVENUE_WALK_RIGHT, assets: ['corpo', 'medic', 'idol', 'patrol-bot', 'mech-pilot'], count: { high: 8, med: 4, low: 1 } },
+  { path: PROJECTS_MARKET, assets: ['chef', 'vendor', 'noodle-cook', 'dj', 'skater', 'cat-courier', 'maid-bot', 'punk'], count: { high: 10, med: 6, low: 2 } },
+  { path: CONTACT_PAD, assets: ['nomad', 'cat-courier', 'medic', 'mech-pilot'], count: { high: 4, med: 2, low: 1 } },
 ] as const;

@@ -1,0 +1,14 @@
+{
+  "name": "medic",
+  "generate_type": "LowPoly",
+  "height_meters": 1.72,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09e41-5c41-7740-8a83-bf41a337c58e rig=01a09e46-c40e-7133-9399-52f30646d156",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T05:02:10Z"
+}

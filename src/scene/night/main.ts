@@ -4,9 +4,6 @@ import { createContent } from './content';
 import { boot } from './boot';
 import { dedupeMaterials } from './districts/shared';
 import { createLightPool } from './lights';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 
 import { PAL, params, reducedMotion, loader, type Tier } from './palette';
 import { createSky, createHaze } from './sky';
@@ -17,7 +14,7 @@ import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
 import { createKitbash, loadGlbTowers } from './towers';
 import { createProps } from './props';
-import { loadCharacter, loadKenney, createCrowd } from './characters';
+import { loadCharacter, createCrowd } from './characters';
 import { createRobots } from './robots';
 import { createDrones } from './drones';
 import { DISTRICT_CROWDS, PATROLS, DRONE_LANES } from './paths';
@@ -29,13 +26,20 @@ import { createAds } from './ads';
 import { createTraffic } from './traffic';
 import { createRain } from './rain';
 import { createDistricts } from './districts';
-import { ANCHORS, poseAt, sectionAt, sectionStart, SECTIONS, type SectionId } from './journey';
-
-gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+import { ANCHORS, poseAt, rig, SECTIONS, type SectionId } from './journey';
+import { createNav, SPAWN } from './nav';
+import { createPlayer } from './player';
+import { createInput } from './input';
+import { createHud } from './hud';
+import { createInteractables } from './interactables';
+import { buildAreas, type WalkSection } from './walkable';
+import { THEMES } from './theme';
+import type { PropPlacement } from './props';
 
 /**
- * Night City. Bay vista hero → flight into the avenue → Education, Work, Projects, Contact districts.
- * All lights are emissive; bloom is the light source. `?q=high|med|low`, `?p=0.4` (jump to progress),
+ * Neon Harbor. Bay vista hero → the nav pans the camera along the rail to a district, where the visitor takes
+ * over the netrunner on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
+ * All lights are emissive; bloom is the light source. `?q=high|med|low`, `?p=0.4` (start the ride at that progress),
  * `?nobloom ?noca ?nosharp ?norain ?novideo ?kenney ?nokit ?noglb ?nowater ?debug`.
  */
 export async function start(root: HTMLElement) {
@@ -94,6 +98,10 @@ export async function start(root: HTMLElement) {
       return url;
     });
   }
+  // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
+  const RIGS_ALL = ['netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;
+  const RIGS_LITE = ['netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const;
+  if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
@@ -200,26 +208,20 @@ export async function start(root: HTMLElement) {
   scene.add(districts.group);
   for (const [x, y, z, c, i, d] of districts.lights) lamp(x, y, z, c, i, d);
 
-  // ---------- people, robots, drones (rigged fal characters near the camera, Kenney rigs as the far band)
+  // ---------- people, robots, drones (rigged fal characters; walkers stay visible out to 140 u)
   const life: { update(dt: number, cam: THREE.Camera): void }[] = [];
   if (!params.has('nopeople')) {
     try {
       boot.phase('waking the residents', 0.62);
-      const all = ['netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot'] as const;
-      const names = lite ? (['netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const) : all;
+      const all = RIGS_ALL;
+      const names = lite ? RIGS_LITE : all;
       const rigs = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await loadCharacter(n)]))) as Partial<Record<(typeof all)[number], Awaited<ReturnType<typeof loadCharacter>>>>;
-      const kenney = lite ? [] : await Promise.all(['character-male-a', 'character-female-b', 'character-male-c'].map((f) => loadKenney(f)));
       for (const d of DISTRICT_CROWDS) {
         const assets = d.assets.map((n) => rigs[n]).filter((a): a is NonNullable<typeof a> => !!a);
         if (!assets.length) continue;
-        const near = createCrowd({ path: d.path, assets, count: d.count[tier], seed: 7 });
+        const near = createCrowd({ path: d.path, assets, count: d.count[tier], seed: 7, cullDistance: 140 });
         scene.add(near.group);
         life.push(near);
-        if (kenney.length) {
-          const far = createCrowd({ path: d.path, assets: kenney, count: d.count[tier], height: 1.6, seed: 11, cullDistance: 140 });
-          scene.add(far.group);
-          life.push(far);
-        }
       }
       if (rigs['sec-bot']) {
         const robots = createRobots({ asset: rigs['sec-bot'], patrols: PATROLS, height: 2.1, searchlight: tier !== 'low' });
@@ -255,6 +257,57 @@ export async function start(root: HTMLElement) {
     padRing: districts.padRing, landingCar, padPosition: ANCHORS.pad.clone().setY(2.9),
   });
 
+  // ---------- walk mode: nav state machine, the protagonist, the HUD and what can be used on foot
+  const journey = { p: Number(params.get('p')) || 0 };
+  const hud = createHud();
+  // Street furniture becomes obstacles when props.ts exports its placements; otherwise walkable.ts replicates the rules.
+  const propsBuilt = await propsReady.catch(() => null);
+  const placements = (propsBuilt as unknown as { placements?: PropPlacement[] } | null)?.placements ?? null;
+  const areas = buildAreas(placements);
+  const protagonist = params.has('nopeople') ? null : await loadCharacter('netrunner').catch(() => null);
+  const footstep = (audio as unknown as { step?: () => void }).step; // audio.ts grows `step()` with the interactions pass
+  const player = protagonist ? createPlayer({ asset: protagonist, onStep: () => footstep?.call(audio) }) : null;
+  if (player) {
+    scene.add(player.root);
+    player.setArea(areas.education);
+    player.teleport(...SPAWN.education.pos, SPAWN.education.yaw); // in view of the pre-warm poses so its skin compiles now
+  }
+  const playerPos = new THREE.Vector3(); // player feet, or the spawn when there is no character (`?nopeople`)
+  const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
+  const nav = createNav({
+    journey,
+    onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
+    onSection: (id) => navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === id)),
+    onEnterWalk: (id) => {
+      const s = SPAWN[id];
+      playerPos.fromArray(s.pos);
+      if (player) { player.setArea(areas[id]); player.teleport(...s.pos, s.yaw); }
+      const th = THEMES[id];
+      hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase());
+      hud.showHintOnce();
+    },
+    onDock: (id) => content.dock(id),
+    onUndock: () => content.undock(),
+    dockOffset: (id, out) => (id === 'amd-dc' ? content.carrierDisplacement(id, out) : out.set(0, 0, 0)),
+    dockPoseOf: (id, pos, look) => { const c = content.carriers[id]; if (!c?.dockPose) return false; c.dockPose(pos, look); return true; },
+  });
+  hud.onBack(() => nav.undock());
+  const input = createInput({
+    stage: root, touch: hud.touch,
+    enabled: () => nav.mode === 'walk',
+    onKey: (e) => {
+      if (nav.mode !== 'dock') return false;
+      if (content.onKey(e)) return true; // the docked carrier first (Esc may collapse a menu row before it leaves)
+      if (e.key === 'Escape') { nav.undock(); return true; }
+      return false;
+    },
+  });
+  const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => hud.prompt(l), landingCar });
+  const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
+  jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); a.blur(); nav.panTo(a.dataset.section as SectionId); }));
+  (window as any).__player = player ? { position: player.position, teleport: player.teleport, get speed() { return player.speed; } } : null;
+  (window as any).__content = content;
+
   // ---------- hero copy (CSS3D slab anchored to the camera, lower-left)
   const cssRenderer = new CSS3DRenderer();
   cssRenderer.setSize(innerWidth, innerHeight);
@@ -279,7 +332,8 @@ export async function start(root: HTMLElement) {
   for (const [id, c] of Object.entries(content.carriers)) if (id !== 'contact') noReflect(c.group);
   for (const l of life as any[]) noReflect(l.group);
   for (const s of particles) noReflect(s.mesh);
-  pending.push(propsReady.then((p) => noReflect(p.group)));
+  if (player) noReflect(player.root);
+  if (propsBuilt) noReflect(propsBuilt.group);
   // Share identical plain materials before anything is built (fewer shader builds, fewer pipelines).
   {
     const d = dedupeMaterials(scene);
@@ -330,23 +384,13 @@ export async function start(root: HTMLElement) {
   }
   boot.phase('first light', 0.97);
   let firstFrame = true;
+  let heroAlpha = 1;
 
-  // ---------- journey
-  const journey = { p: Number(params.get('p')) || 0 };
-  ScrollTrigger.create({
-    trigger: '.journey', start: 'top top', end: 'bottom bottom', scrub: 0.4,
-    onUpdate: (st) => { if (!params.has('p')) journey.p = st.progress; },
-  });
-  const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
-  const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
-  const journeyEl = document.querySelector<HTMLElement>('.journey')!;
-  const scrollTo = (id: SectionId) => {
-    const y = journeyEl.offsetTop + sectionStart(id) * (journeyEl.offsetHeight - innerHeight) + 2;
-    if (reducedMotion) window.scrollTo(0, y);
-    else gsap.to(window, { scrollTo: y, duration: 1.0, ease: 'power2.inOut' });
-  };
-  jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); scrollTo(a.dataset.section as SectionId); }));
-  let currentSection: SectionId | null = null;
+  // ---------- journey: ride at p (the hero, or a `?p=` override) until the nav or the hero button pans somewhere
+  if (player) player.root.visible = false;
+  nav.start();
+  const railPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
   const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
   addEventListener('pointermove', (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1));
@@ -373,6 +417,8 @@ export async function start(root: HTMLElement) {
     }
     for (const k in stages) stages[k] = 0;
   };
+  // Loop order: input → nav/player (mode camera) → content (carriers, slabs) → districts/carriers with the section
+  // override → lights → the rest → render.
   renderer.setAnimationLoop(() => {
     clock.update();
     const t = reducedMotion ? 0 : clock.getElapsed();
@@ -380,27 +426,36 @@ export async function start(root: HTMLElement) {
     govern(dt);
     eased.lerp(pointer, 0.05);
     const p = journey.p;
-    timed('content', () => content.update(p, t, dt)); // carriers first so the blimp's displacement is current
-    poseAt(p, pos, look);
+    const mode = nav.mode;
+    const walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
+    const inp = input.poll();
+    if (mode === 'dock' && inp.walkIntent) nav.undock(); // walking away leaves the carrier
+    if (player) {
+      player.update(dt, inp, nav.mode === 'walk');
+      if (nav.mode !== 'ride') playerPos.copy(player.position);
+    }
+    timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
+    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact, nav.mode === 'walk' ? walkSec ?? null : null));
+    const rigP = nav.samplePath(pos, look); // rail pose, or the fly-over's during a non-adjacent jump
     content.followOffset(p, off);
     pos.add(off); look.add(off);
-    camera.position.set(pos.x + eased.x * 1.2, pos.y + Math.sin(t * 0.6) * 0.1 - eased.y * 0.5, pos.z); // small bob: the CSS3D slabs re-rasterize when their screen scale changes
-    camera.lookAt(look);
-    camera.rotation.z -= eased.x * 0.02;
-    heroCopy.style.opacity = String(THREE.MathUtils.clamp(1 - (p - 0.05) * 25, 0, 1));
-    heroCopy.style.pointerEvents = p > 0.09 ? 'none' : 'auto';
+    rig.update(camera, rigP, pos, look, pointer, t, dt, reducedMotion); // look-ahead, damped parallax, bob, banking roll (journey.ts)
+    railPose.pos.copy(camera.position); railPose.look.copy(look);
+    // Blend rail / follow / dock cameras (nav.ts). In plain ride mode the rig's camera (with its roll) stands as is.
+    if (nav.resolveCamera(dt, railPose, player ? player.camera : null, camPos, camLook)) { camera.position.copy(camPos); camera.lookAt(camLook); }
+    else camera.rotation.z -= eased.x * 0.02;
+    // The hero slab belongs to the vista only: it fades the moment a pan starts (p may not move until a fly-over's apex).
+    const heroOn = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05;
+    heroAlpha += ((heroOn ? 1 : 0) - heroAlpha) * Math.min(1, dt * 6);
+    heroCopy.style.opacity = heroAlpha.toFixed(3);
+    heroCopy.style.pointerEvents = heroAlpha > 0.5 ? 'auto' : 'none';
     heroCopy.style.transform = `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
-    if (water) water.visible = p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
-    const sec = sectionAt(p);
-    if (sec !== currentSection) {
-      currentSection = sec;
-      navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === sec));
-    }
+    if (water) water.visible = walkSec ? walkSec === 'contact' : p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
     timed('traffic', () => traffic.update(dt, t, camera.position));
     timed('ads', () => ads.update(t));
     timed('life', () => { for (const l of life) l.update(dt, camera); });
-    timed('districts', () => districts.update(t, p));
+    timed('districts', () => districts.update(t, p, walkSec));
     timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));

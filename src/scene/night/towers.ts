@@ -281,8 +281,9 @@ function towerMaterial(map: THREE.Texture | null, bboxH: number, tint: number) {
   const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.7, metalness: 0.15 });
   const base = map ? texture(map, uv()).rgb : vec3(0.08, 0.09, 0.13);
   const glow = smoothstep(0.42, 0.62, luminance(base));
-  // Tier lines: four emissive bands up the height plus a roof strip.
-  const yn = positionLocal.y.div(bboxH);
+  // Tier lines: four emissive bands up the height plus a roof strip. Height and tint are uniforms so every
+  // tower shares one program (each mesh has its own height).
+  const yn = positionLocal.y.div(uniform(bboxH));
   const bands = smoothstep(0.012, 0.0, abs(fract(yn.mul(4.0)).sub(0.97)));
   const roof = smoothstep(0.975, 0.99, yn);
   const tierE = uniform(new THREE.Color(tint)).mul(max(bands, roof)).mul(3.0);

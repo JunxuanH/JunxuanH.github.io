@@ -4,11 +4,13 @@
  * Stands at the east end of the market street, facing the camera's approach from the west.
  */
 import * as THREE from 'three/webgpu';
-import { color, uv, fract, step, float, mix, time, hash, floor, smoothstep } from '../tsl';
+import { color, uv, fract, step, float, mix, time, hash, floor, smoothstep, glowMaterial } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import gsap from 'gsap';
 import { THEMES } from '../theme';
 import { neonText } from '../signs';
+import { sfx } from '../audio';
+import { hint, clearHint, retrigger, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 const POS = new THREE.Vector3(72, 0.22, -227);
@@ -22,7 +24,7 @@ export function create(ctx: CarrierCtx): Carrier {
   group.rotation.y = YAW;
 
   const dark = new THREE.MeshStandardNodeMaterial({ color: 0x1a1e2c, roughness: 0.6, metalness: 0.4 });
-  const neon = (tint: number, gain: number) => { const m = new THREE.MeshBasicNodeMaterial(); m.colorNode = color(tint).mul(gain); return m; };
+  const neon = glowMaterial;
 
   // Counter + four posts + top rails (roofless so the cone passes through), crates beside it.
   const counter = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.0, 2.6).translate(0, 0.5, 0), dark);
@@ -50,9 +52,7 @@ export function create(ctx: CarrierCtx): Carrier {
   // Projector puck + ring on the counter; the additive cone reaches the front card's bottom edge.
   const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.8, 0.22, 24).translate(0, 1.11, 0), dark);
   const ringGain = new THREE.Vector3(1.6, 0, 0);
-  const ringMat = new THREE.MeshBasicNodeMaterial();
-  ringMat.colorNode = color(T.secondary).mul(2.4);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 6, 40).rotateX(Math.PI / 2).translate(0, 1.24, 0), ringMat);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 6, 40).rotateX(Math.PI / 2).translate(0, 1.24, 0), glowMaterial(T.secondary, 2.4));
   const coneH = CARD_BOTTOM - 1.55;
   const coneMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
   const buzz = mix(float(1), hash(floor(time.mul(24))), step(0.92, hash(floor(time.mul(0.6)))));
@@ -75,10 +75,41 @@ export function create(ctx: CarrierCtx): Carrier {
     if (open) { gsap.killTweensOf(ringGain); gsap.fromTo(ringGain, { x: 2.4 }, { x: 1.6, duration: 1.2, ease: 'power2.out' }); }
   };
 
+  // ---- dock: ←/→ flipping is content.ts's default (the stack owns the cards); Enter opens the front card's GitHub in a
+  // new tab, or pulses its "private beta" badge. The cards live in the CSS3D layer, so they are looked up globally.
+  const cards = () => [...document.querySelectorAll<HTMLElement>('.card')];
+  const frontCard = () => document.querySelector<HTMLElement>('.card.is-front') ?? cards()[0] ?? null;
+  const flip = (d: number) => {
+    const all = cards(), i = Number(frontCard()?.dataset.index ?? -1);
+    if (i < 0 || !all.length) return;
+    document.querySelector<HTMLButtonElement>(`.stack-nav [data-goto="${(i + d + all.length) % all.length}"]`)?.click();
+    sfx.select();
+  };
+  const open = () => {
+    const card = frontCard();
+    if (!card) return;
+    const link = card.querySelector<HTMLAnchorElement>('.links a[href*="github.com"]');
+    if (link) { window.open(link.href, '_blank', 'noopener'); sfx.confirm(); return; }
+    const badge = card.querySelector<HTMLElement>('h3 small');
+    if (badge) retrigger(badge, 'is-pulse');
+    sfx.select();
+  };
+  const actions: DockActions = { left: () => flip(-1), right: () => flip(1), confirm: open };
+
   return {
     group, mount, width: 8, px: 640, style: '',
     range: [0.55, 0.95],
     lights: [[72, 3.5, -226, T.secondary, 500, 16]],
     rise,
+    interact: {
+      onEnter() { for (const c of cards()) hint(c, '<kbd>◀</kbd><kbd>▶</kbd> flip · <kbd>Enter</kbd> open'); },
+      onExit() { for (const c of cards()) { clearHint(c); c.querySelector('h3 small')?.classList.remove('is-pulse'); } },
+      onKey(e) {
+        if (e.key !== 'Enter' && e.code !== 'KeyE') return false; // ←/→ fall through to the stack's own flip
+        if (!e.repeat) open();
+        return true;
+      },
+      actions,
+    },
   };
 }

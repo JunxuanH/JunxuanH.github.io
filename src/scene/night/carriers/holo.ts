@@ -1,6 +1,9 @@
 import * as THREE from 'three/webgpu';
-import { color, float, floor, hash, length, mix, smoothstep, step, time, uv } from '../tsl';
+import { color, float, floor, hash, length, mix, smoothstep, step, time, uv, glowMaterial } from '../tsl';
 import { PAL } from '../palette';
+import gsap from 'gsap';
+import { sfx } from '../audio';
+import { keyToAction, hint, clearHint, glitch, clearGlitch, type DockActions } from './dock';
 import type { Carrier, CarrierCtx } from './index';
 
 /*
@@ -29,13 +32,9 @@ export function create(_ctx: CarrierCtx): Carrier {
   // Projector disc (truncated cone, dark metal), emissive ring on its top face, three emitter lenses.
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.5, DISC_H, 32).translate(0, DISC_H / 2, 0),
     new THREE.MeshStandardNodeMaterial({ color: 0x141826, roughness: 0.35, metalness: 0.6 }));
-  const ringMat = new THREE.MeshBasicNodeMaterial();
-  ringMat.colorNode = color(PAL.cyan).mul(2.5);
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.06, 8, 48).rotateX(Math.PI / 2), ringMat);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.06, 8, 48).rotateX(Math.PI / 2), glowMaterial(PAL.cyan, 2.5));
   ring.position.y = DISC_H;
-  const lensMat = new THREE.MeshBasicNodeMaterial();
-  lensMat.colorNode = color(PAL.cyan).mul(4.0);
-  const lenses = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), lensMat, 3);
+  const lenses = new THREE.InstancedMesh(new THREE.SphereGeometry(0.1, 8, 6), glowMaterial(PAL.cyan, 4.0), 3);
   const m = new THREE.Matrix4();
   for (let k = 0; k < 3; k++) {
     const a = (k / 3) * Math.PI * 2;
@@ -72,6 +71,26 @@ export function create(_ctx: CarrierCtx): Carrier {
   mount.rotation.y = -0.76;
   group.add(mount);
 
+  // ---- dock: the mount spins a full turn with a glitch on arrival (E re-triggers it); ←/→ turn it ±0.15 rad,
+  // clamped to ±1.2 so the pane never shows its (culled) back face.
+  const YAW = mount.rotation.y;
+  let off = 0, slab: HTMLElement | null = null;
+  const spin = () => {
+    if (!slab) return;
+    glitch(slab);
+    gsap.killTweensOf(mount.rotation);
+    if (_ctx.reducedMotion) { mount.rotation.y = YAW + off; return; }
+    gsap.fromTo(mount.rotation, { y: YAW + off }, { y: YAW + off + Math.PI * 2, duration: 1.2, ease: 'power2.inOut', onComplete: () => { mount.rotation.y = YAW + off; } });
+  };
+  const turn = (d: number) => {
+    off = THREE.MathUtils.clamp(off + d, -1.2, 1.2);
+    gsap.killTweensOf(mount.rotation);
+    if (_ctx.reducedMotion) mount.rotation.y = YAW + off;
+    else gsap.to(mount.rotation, { y: YAW + off, duration: 0.35, ease: 'power2.out' });
+    sfx.select();
+  };
+  const actions: DockActions = { left: () => turn(0.15), right: () => turn(-0.15), confirm: () => { spin(); sfx.confirm(); } };
+
   return {
     group,
     mount,
@@ -83,6 +102,22 @@ export function create(_ctx: CarrierCtx): Carrier {
     fit(h) {
       // Slab bottom stays on the cone's base at y 2.6; only the centre moves with the measured height.
       mount.position.y = SLAB_BOTTOM - DISC.y + h / 2;
+    },
+    interact: {
+      onEnter(el) {
+        slab = el; off = 0;
+        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> turn · <kbd>E</kbd> respin');
+        spin();
+      },
+      onExit(el) {
+        clearGlitch(el); clearHint(el);
+        slab = null; off = 0;
+        gsap.killTweensOf(mount.rotation);
+        if (_ctx.reducedMotion) mount.rotation.y = YAW;
+        else gsap.to(mount.rotation, { y: YAW, duration: 0.5, ease: 'power2.out' });
+      },
+      onKey: (e) => keyToAction(e, actions),
+      actions,
     },
   };
 }

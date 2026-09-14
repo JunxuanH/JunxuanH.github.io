@@ -1,0 +1,14 @@
+{
+  "name": "nomad",
+  "generate_type": "LowPoly",
+  "height_meters": 1.78,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09e3b-a1d4-7441-9832-3185a5c31bc2 rig=01a09e41-dc58-71a0-bda9-65cf1c4b04d8",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T04:55:30Z"
+}

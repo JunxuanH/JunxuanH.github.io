@@ -22,8 +22,29 @@ export interface NightAudio {
   level(): number;
   /** Split-flap clacks: `count` short filtered noise bursts `interval` s apart (no-op while muted). */
   clack(count?: number, interval?: number): void;
+  /** Footstep: a soft 120 Hz thump, 40 ms, very quiet (player.ts calls it on each stride). */
+  step(): void;
+  /** Menu cursor move: 1.2 kHz, 30 ms. */
+  select(): void;
+  /** Confirm: two blips, 900 → 1400 Hz. */
+  confirm(): void;
+  /** Channel change: 80 ms of band-passed noise. */
+  static(): void;
   dispose(): void;
 }
+
+/**
+ * Module-level handle for code that has no reference to the NightAudio instance (the carriers' dock
+ * interactions): every call forwards to the most recently created audio, and is a no-op before that.
+ */
+let current: NightAudio | null = null;
+export const sfx = {
+  step: () => current?.step(),
+  select: () => current?.select(),
+  confirm: () => current?.confirm(),
+  static: () => current?.static(),
+  clack: (count?: number, interval?: number) => current?.clack(count, interval),
+};
 
 /** Triangle window over a section range with ±FEATHER feathering; 1 well inside, 0 outside. */
 function windowFor(p: number, start: number, end: number) {
@@ -105,27 +126,65 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     masterGain.gain.setTargetAtTime(muted ? 0 : master, ctx.currentTime, 0.25);
   }
 
-  let noiseBuf: AudioBuffer | null = null;
-  function clack(count = 1, interval = 0.07) {
-    if (!ctx || !masterGain || muted) return;
-    if (!noiseBuf) {
-      noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.03), ctx.sampleRate);
-      const d = noiseBuf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
-    }
-    for (let k = 0; k < count; k++) {
-      const t0 = ctx.currentTime + k * interval;
-      const src = ctx.createBufferSource();
-      src.buffer = noiseBuf;
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = 1400 + Math.random() * 600; bp.Q.value = 6;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.5, t0);
-      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
-      src.connect(bp); bp.connect(g); g.connect(masterGain);
-      src.start(t0);
-    }
+  // ---- synth SFX: one-shot bursts (oscillator or band-passed noise) with an exponential decay, straight into the master.
+  interface Burst {
+    /** Oscillator pitch, or the bandpass centre for `noise`. */
+    freq: number;
+    /** Bandpass Q (noise only). */
+    q?: number;
+    gain: number;
+    /** Decay time (s). */
+    dur: number;
+    noise?: boolean;
+    type?: OscillatorType;
+    /** Pitch glide target (oscillator only). */
+    to?: number;
+    /** Start offset (s) from now. */
+    at?: number;
   }
+  let noiseBuf: AudioBuffer | null = null;
+  let bursts = 0;
+  function burst(b: Burst) {
+    if (!ctx || !masterGain || muted) return;
+    const t0 = ctx.currentTime + (b.at ?? 0);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(b.gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + b.dur);
+    g.connect(masterGain);
+    let src: AudioScheduledSourceNode;
+    if (b.noise) {
+      if (!noiseBuf) {
+        noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      const n = ctx.createBufferSource();
+      n.buffer = noiseBuf;
+      n.loop = true;
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = b.freq; bp.Q.value = b.q ?? 1;
+      n.connect(bp); bp.connect(g);
+      src = n;
+    } else {
+      const o = ctx.createOscillator();
+      o.type = b.type ?? 'sine';
+      o.frequency.setValueAtTime(b.freq, t0);
+      if (b.to) o.frequency.exponentialRampToValueAtTime(b.to, t0 + b.dur);
+      o.connect(g);
+      src = o;
+    }
+    src.start(t0);
+    src.stop(t0 + b.dur + 0.02);
+    bursts++;
+  }
+  /** Split-flap clacks: `count` bursts `interval` s apart, each a random 1.4–2 kHz bandpassed tick. */
+  function clack(count = 1, interval = 0.07) {
+    for (let k = 0; k < count; k++) burst({ freq: 1400 + Math.random() * 600, q: 6, gain: 0.5, dur: 0.05, noise: true, at: k * interval });
+  }
+  const step = () => burst({ freq: 120, to: 60, gain: 0.05, dur: 0.04 });
+  const select = () => burst({ freq: 1200, gain: 0.14, dur: 0.03, type: 'triangle' });
+  const confirm = () => { burst({ freq: 900, gain: 0.16, dur: 0.05, type: 'triangle' }); burst({ freq: 1400, gain: 0.16, dur: 0.07, type: 'triangle', at: 0.07 }); };
+  const staticBurst = () => burst({ freq: 2500, q: 0.6, gain: 0.3, dur: 0.08, noise: true });
 
   function applyMix(p: number, immediate = false) {
     if (!ctx) return;
@@ -155,7 +214,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
       lastP = p;
       if (ready) applyMix(p);
     },
-    clack,
+    clack, step, select, confirm, static: staticBurst,
     setMuted(m) {
       muted = m;
       try { localStorage.setItem(STORAGE_KEY, m ? 'off' : 'on'); } catch { /* ignore */ }
@@ -181,7 +240,8 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     },
   };
   document.documentElement.dataset.audio = muted ? 'off' : 'on';
-  (window as any).__audio = { level: () => api.level(), ready: () => api.ready, muted: () => api.muted };
+  (window as any).__audio = { level: () => api.level(), ready: () => api.ready, muted: () => api.muted, bursts: () => bursts };
+  current = api;
   return api;
 }
 

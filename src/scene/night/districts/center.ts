@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, smoothstep, abs, mix, float } from '../tsl';
+import { color, positionLocal, smoothstep, abs, mix, float, glowMaterial } from '../tsl';
 import { PAL } from '../palette';
 import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';
@@ -13,19 +13,34 @@ import { createFlameSign, createConduit, type DistrictBuild, type DistrictCtx } 
  * flame-graph signs, cold blue lamps. Punks stay out; corpos and the security patrol own it.
  */
 
+// Lobbies with the same height and tint share their glass; every lobby shares the lit floor (one node
+// build each instead of one per lobby).
+const glassCache = new Map<string, THREE.MeshStandardNodeMaterial>();
+let lobbyFloor: THREE.MeshStandardNodeMaterial | null = null;
+function lobbyGlass(h: number, tint: number) {
+  const key = `${h}|${tint}`;
+  let glass = glassCache.get(key);
+  if (!glass) {
+    glass = new THREE.MeshStandardNodeMaterial({ transparent: true, opacity: 0.32, roughness: 0.08, metalness: 0.6, depthWrite: false });
+    glass.colorNode = color(0xdfe8ff);
+    const edge = smoothstep(0.03, 0.0, abs(abs(positionLocal.y.div(h / 2)).sub(1.0)));
+    glass.emissiveNode = color(tint).mul(edge).mul(1.4).add(color(0x8fb0ff).mul(0.06));
+    glassCache.set(key, glass);
+  }
+  return glass;
+}
+
 /** Glass lobby: translucent box (no transmission), bright interior floor, dark columns, a desk. */
 function glassLobby(w: number, h: number, d: number, tint: number) {
   const group = new THREE.Group();
-  const glass = new THREE.MeshStandardNodeMaterial({ transparent: true, opacity: 0.32, roughness: 0.08, metalness: 0.6, depthWrite: false });
-  glass.colorNode = color(0xdfe8ff);
-  const edge = smoothstep(0.03, 0.0, abs(abs(positionLocal.y.div(h / 2)).sub(1.0)));
-  glass.emissiveNode = color(tint).mul(edge).mul(1.4).add(color(0x8fb0ff).mul(0.06));
-  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), glass);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), lobbyGlass(h, tint));
   box.renderOrder = 3;
-  const floorMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.15, metalness: 0.4 });
-  floorMat.colorNode = color(0x0a0c14);
-  floorMat.emissiveNode = color(0xdfe8ff).mul(0.9);
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, 0.2, d - 0.4).translate(0, 0.1, 0), floorMat);
+  if (!lobbyFloor) {
+    lobbyFloor = new THREE.MeshStandardNodeMaterial({ roughness: 0.15, metalness: 0.4 });
+    lobbyFloor.colorNode = color(0x0a0c14);
+    lobbyFloor.emissiveNode = color(0xdfe8ff).mul(0.9);
+  }
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, 0.2, d - 0.4).translate(0, 0.1, 0), lobbyFloor);
   const colMat = new THREE.MeshStandardNodeMaterial({ color: 0x080a12, roughness: 0.3, metalness: 0.5 });
   for (const [x, z] of [[-w / 3, -d / 3], [w / 3, -d / 3], [-w / 3, d / 3], [w / 3, d / 3]] as const) {
     const col = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.9).translate(0, h / 2, 0), colMat);
@@ -34,7 +49,7 @@ function glassLobby(w: number, h: number, d: number, tint: number) {
   }
   const desk = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 1.1, 1.2).translate(0, 0.55, 0), colMat);
   desk.position.set(0, 0.2, -d * 0.25);
-  const deskGlow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.06, 0.06), (() => { const m = new THREE.MeshBasicNodeMaterial(); m.colorNode = color(tint).mul(2.2); return m; })());
+  const deskGlow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.06, 0.06), glowMaterial(tint, 2.2));
   deskGlow.position.set(0, 1.32, -d * 0.25 + 0.62);
   // Forecourt: black marble slab in front of the lobby.
   const forecourt = new THREE.Mesh(new THREE.BoxGeometry(w + 6, CURB_H, 6), new THREE.MeshStandardNodeMaterial({ color: 0x0a0b12, roughness: 0.12, metalness: 0.5 }));

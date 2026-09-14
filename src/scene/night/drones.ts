@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, step, fract, time, float, uv, smoothstep, hash } from './tsl';
+import { color, step, fract, time, float, uv, beamMaterial } from './tsl';
 import { gltfLoader, applySkin } from './characters';
 import type { DroneLane } from './paths';
 
@@ -32,21 +32,34 @@ interface Drone {
   light?: THREE.SpotLight;
 }
 
+// One instance of each drone material for the whole fleet (every material instance is a node build at boot).
+let strobeMat: THREE.MeshBasicNodeMaterial | null = null;
 function strobeMaterial() {
+  if (strobeMat) return strobeMat;
   const m = new THREE.MeshBasicNodeMaterial();
   // Left half red, right half blue, alternating at 3 Hz.
   const phase = step(0.5, fract(time.mul(3)));
   const left = step(0.5, uv().x);
   const on = left.mul(phase).add(float(1).sub(left).mul(float(1).sub(phase)));
   m.colorNode = color(0xff2030).mul(left).add(color(0x2060ff).mul(float(1).sub(left))).mul(on.mul(3.5).add(0.3));
-  return m;
+  return (strobeMat = m);
 }
 
-function coneMaterial(tint: THREE.ColorRepresentation) {
-  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-  m.colorNode = color(tint);
-  m.opacityNode = float(1).sub(uv().y).mul(0.18).mul(smoothstep(0.0, 0.1, uv().y));
-  return m;
+let rotorMat: THREE.MeshBasicNodeMaterial | null = null;
+function rotorMaterial() {
+  if (rotorMat) return rotorMat;
+  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, opacity: 0.35 });
+  m.colorNode = color(0x9aa4b8);
+  return (rotorMat = m);
+}
+
+let panelMat: THREE.MeshBasicNodeMaterial | null = null;
+function panelMaterial() {
+  if (panelMat) return panelMat;
+  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide });
+  m.colorNode = color(0x00e5ff).mul(step(0.5, fract(uv().y.mul(40).add(time.mul(4)))).mul(0.3).add(0.8));
+  m.opacityNode = float(0.55);
+  return (panelMat = m);
 }
 
 export async function createDrones(opts: DronesOptions) {
@@ -84,8 +97,7 @@ export async function createDrones(opts: DronesOptions) {
 
     // Rotor discs (spun in update) — four thin cylinders near the corners of the body footprint.
     const rotors: THREE.Object3D[] = [];
-    const rot = new THREE.MeshBasicNodeMaterial({ transparent: true, opacity: 0.35 });
-    rot.colorNode = color(0x9aa4b8);
+    const rot = rotorMaterial();
     const hx = (box.max.x - box.min.x) * s * 0.42, hz = (box.max.z - box.min.z) * s * 0.42, top = (box.max.y - box.min.y) * s * 0.5;
     for (const [x, z] of [[-hx, -hz], [hx, -hz], [-hx, hz], [hx, hz]]) {
       const disc = new THREE.Mesh(new THREE.CylinderGeometry(size * 0.16, size * 0.16, 0.01, 12), rot);
@@ -104,19 +116,13 @@ export async function createDrones(opts: DronesOptions) {
         light.position.set(0, -0.1, 0);
         light.target.position.set(0, -20, 6);
         root.add(light, light.target);
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(3.2, 18, 20, 1, true), coneMaterial(0xdff2ff));
+        const cone = new THREE.Mesh(new THREE.ConeGeometry(3.2, 18, 20, 1, true), beamMaterial(0xdff2ff, 0.18, 0.1));
         cone.rotation.x = Math.PI - 0.28;
         cone.position.set(0, -9, 2.6);
         root.add(cone);
       }
     } else {
-      panel = opts.adPanel?.();
-      if (!panel) {
-        const m = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide });
-        m.colorNode = color(0x00e5ff).mul(step(0.5, fract(uv().y.mul(40).add(time.mul(4)))).mul(0.3).add(0.8));
-        m.opacityNode = float(0.55);
-        panel = new THREE.Mesh(new THREE.PlaneGeometry(size * 1.4, size * 0.8), m);
-      }
+      panel = opts.adPanel?.() ?? new THREE.Mesh(new THREE.PlaneGeometry(size * 1.4, size * 0.8), panelMaterial());
       panel.position.y = -size * 0.75;
       root.add(panel);
     }

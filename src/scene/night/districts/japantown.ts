@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, positionWorld, smoothstep, mix, pow, sin, time, length, float, uv, step, fract } from '../tsl';
+import { color, positionLocal, positionWorld, smoothstep, mix, pow, sin, time, length, float, uv, step, fract, glowMaterial } from '../tsl';
 import { rng } from '../palette';
 import { ANCHORS } from '../journey';
 import { neonText, createKeyedSigns } from '../signs';
@@ -20,8 +20,7 @@ const VERMILION = 0xc8351f;
 function pagodaRoof(w: number, d: number, tiers: number, tint: number) {
   const group = new THREE.Group();
   const tileMat = new THREE.MeshStandardNodeMaterial({ color: 0x14131c, roughness: 0.6, metalness: 0.3 });
-  const eaveMat = new THREE.MeshBasicNodeMaterial();
-  eaveMat.colorNode = color(tint).mul(2.0);
+  const eaveMat = glowMaterial(tint, 2.0);
   const profile: THREE.Vector2[] = [];
   for (let i = 0; i <= 8; i++) {
     const t = i / 8;
@@ -89,10 +88,8 @@ function stoneLanterns(positions: [number, number, number][], tint: number) {
     new THREE.ConeGeometry(0.7, 0.45, 4).rotateY(Math.PI / 4).translate(0, 2.25 + 0.22, 0),
   ], false)!;
   const stone = new THREE.MeshStandardNodeMaterial({ color: 0x2a2c34, roughness: 0.9 });
-  const glowMat = new THREE.MeshBasicNodeMaterial();
-  glowMat.colorNode = color(tint).mul(2.4);
   const stones = new THREE.InstancedMesh(stoneGeo, stone, positions.length);
-  const glows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.4, 0.5).translate(0, 1.95, 0), glowMat, positions.length);
+  const glows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.4, 0.5).translate(0, 1.95, 0), glowMaterial(tint, 2.4), positions.length);
   positions.forEach(([x, y, z], i) => { const m = new THREE.Matrix4().makeTranslation(x, y, z); stones.setMatrixAt(i, m); glows.setMatrixAt(i, m); });
   const group = new THREE.Group();
   group.add(stones, glows);

@@ -1,8 +1,8 @@
 import * as THREE from 'three/webgpu';
 import {
   texture, uv, color, vec3, float, step, normalize, cameraPosition, positionWorld, normalWorld, dot, max, pow,
-  luminance, mx_rgbtohsv, mix,
- uniform } from './tsl';
+  luminance, mx_rgbtohsv, mix, smoothstep, length,
+  uniform } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
@@ -10,8 +10,8 @@ import type { PathDef } from './paths';
 
 /**
  * Character assets: fal-generated rigs (public/night/characters/<name>/{rigged,walk,run,idle}.glb,
- * see scripts/night-character.sh) and the Kenney CC0 mini-characters (public/night/cc0/*.glb) as a
- * far-crowd fallback. One loader, cached assets, SkeletonUtils clones, one mixer per instance.
+ * see scripts/night-character.sh). One loader, cached assets, SkeletonUtils clones, one mixer per
+ * instance, and a shared contact "blob" shadow under every instance (no shadow maps in this scene).
  */
 export interface CharacterAsset {
   name: string;
@@ -70,20 +70,6 @@ export function loadCharacter(name: string, base = '/night/characters'): Promise
       // fal rigs are ~1.75 u tall already; measure to be safe.
       const height = bboxHeight(g.scene) || 1.75;
       return { name, scene: g.scene, clips, height, meta };
-    })());
-  }
-  return cache.get(key)!;
-}
-
-/** Kenney mini-character (idle/walk/sit clips baked in). */
-export function loadKenney(file = 'character-male-a'): Promise<CharacterAsset> {
-  const key = `/night/cc0/${file}`;
-  if (!cache.has(key)) {
-    cache.set(key, (async () => {
-      const g = await gltfLoader().loadAsync(`${key}.glb`);
-      const clips = new Map<string, THREE.AnimationClip>();
-      g.animations.forEach((c, i) => clips.set(nameClip(c, `clip${i}`), c));
-      return { name: file, scene: g.scene, clips, height: bboxHeight(g.scene) || 1 };
     })());
   }
   return cache.get(key)!;
@@ -152,11 +138,13 @@ export interface Instance {
   current: string | null;
   play(name: string, fade?: number): THREE.AnimationAction | null;
   height: number;
-  /** Head bone (Meshy `Head` / mixamorig:Head / Kenney `head`) for look-at, when the rig has one. */
+  /** Head bone (Meshy `Head` / mixamorig:Head) for look-at, when the rig has one. */
   headBone?: THREE.Bone;
+  /** Contact shadow blob under the feet (child of `root`; hidden with it, follows it, ignores the head look-at). */
+  blob: THREE.Mesh;
 }
 
-/** Find the head bone of a rig by common names (Meshy, Mixamo, Kenney). */
+/** Find the head bone of a rig by common names (Meshy, Mixamo). */
 export function getHead(root: THREE.Object3D): THREE.Bone | undefined {
   let found: THREE.Bone | undefined;
   root.traverse((o: any) => {
@@ -166,7 +154,50 @@ export function getHead(root: THREE.Object3D): THREE.Bone | undefined {
   return found;
 }
 
-/** Clone a rig, apply the skin, scale to `height` world units, set up a mixer with all clips. */
+// ---------- Contact shadow blob ----------
+// The scene has dozens of point lights and no shadow maps, so every rig gets a cheap elliptical
+// darkening on the ground under its feet. One geometry and one material are shared by all blobs
+// (each material instance is a shader build here); size/placement are per-mesh transforms.
+
+const BLOB_W = 0.9, BLOB_D = 0.6, BLOB_LIFT = 0.02, BLOB_OPACITY = 0.55;
+let blobGeometry: THREE.PlaneGeometry | null = null;
+let blobMaterial: THREE.MeshBasicNodeMaterial | null = null;
+function blobShared() {
+  if (!blobGeometry) {
+    blobGeometry = new THREE.PlaneGeometry(1, 1);
+    blobGeometry.rotateX(-Math.PI / 2); // lie flat, normal +y
+  }
+  if (!blobMaterial) {
+    const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.NormalBlending });
+    m.colorNode = vec3(0.0, 0.0, 0.0);
+    // Radial (elliptical, since the plane is non-square) falloff: BLOB_OPACITY at the centre → 0 at the rim.
+    const d = length(uv().sub(0.5).mul(2.0));
+    m.opacityNode = float(1).sub(smoothstep(0.0, 1.0, d)).mul(BLOB_OPACITY);
+    m.name = 'blob-shadow';
+    blobMaterial = m;
+  }
+  return { geometry: blobGeometry, material: blobMaterial };
+}
+
+/** Blob shadow for a rig root: sized in the root's local units so the parent scale gives `height`-relative world size. */
+function makeBlob(root: THREE.Object3D, localHeight: number) {
+  const { geometry, material } = blobShared();
+  const blob = new THREE.Mesh(geometry, material);
+  blob.name = 'blob-shadow';
+  blob.scale.set(BLOB_W * localHeight, 1, BLOB_D * localHeight);
+  blob.position.y = BLOB_LIFT / (root.scale.y || 1);
+  blob.renderOrder = 2; // after the ground (transparent pass, depthWrite off)
+  blob.castShadow = false;
+  blob.receiveShadow = false;
+  blob.matrixAutoUpdate = true;
+  blob.layers.mask = root.layers.mask;
+  // Layers are per object; callers move roots to layer 1 (no reflection) after instantiate, so re-sync lazily.
+  blob.onBeforeRender = () => { if (blob.layers.mask !== root.layers.mask) blob.layers.mask = root.layers.mask; };
+  root.add(blob);
+  return blob;
+}
+
+/** Clone a rig, apply the skin, scale to `height` world units, set up a mixer with all clips, add a blob shadow. */
 export function instantiate(asset: CharacterAsset, opts: SkinOptions & { height?: number } = {}): Instance {
   const root = SkeletonUtils.clone(asset.scene) as THREE.Object3D;
   applySkin(root, opts);
@@ -175,8 +206,9 @@ export function instantiate(asset: CharacterAsset, opts: SkinOptions & { height?
   const mixer = new THREE.AnimationMixer(root);
   const actions = new Map<string, THREE.AnimationAction>();
   for (const [name, clip] of asset.clips) actions.set(name, mixer.clipAction(clip));
+  const blob = makeBlob(root, asset.height);
   const inst: Instance = {
-    root, mixer, actions, current: null, height, headBone: getHead(root),
+    root, mixer, actions, current: null, height, headBone: getHead(root), blob,
     play(name, fade = 0.25) {
       const next = actions.get(name) ?? actions.get('idle') ?? [...actions.values()][0];
       if (!next) return null;
@@ -195,7 +227,7 @@ export function instantiate(asset: CharacterAsset, opts: SkinOptions & { height?
 
 export interface CrowdOptions {
   path: PathDef;
-  /** Assets cycled through the walkers (fal rigs); Kenney rigs can be mixed in for the far band. */
+  /** Assets cycled through the walkers (fal rigs). */
   assets: CharacterAsset[];
   count: number;
   /** Per-asset skin options (by index, cycled). */

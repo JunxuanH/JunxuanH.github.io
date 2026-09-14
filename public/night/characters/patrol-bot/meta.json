@@ -1,0 +1,14 @@
+{
+  "name": "patrol-bot",
+  "generate_type": "LowPoly",
+  "height_meters": 1.9,
+  "concept": "concept-v2-1.png",
+  "fal_requests": "3d=01a09e3b-b799-7fa2-8921-218fcc79105d rig=01a09e43-5364-7123-8c33-afc09bbdd081",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T04:57:06Z"
+}

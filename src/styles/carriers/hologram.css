@@ -1,24 +1,27 @@
-/* Hologram (holo carrier): translucent cyan glass, glowing text, scanlines and a refresh band.
+/* Hologram (holo carrier): a dark translucent pane (the lobby behind it is bright cyan glass, so the glass
+   itself carries the contrast), near-white glowing text with a dark halo, scanlines and a refresh band.
    Overrides `.slab` / `.slab.job` from night.css (loaded before this via the carriers glob).
    Never set transform / opacity / filter on the slab itself — CSS3DRenderer writes those inline;
    the band animates the ::after background-position only, and only while `.is-on`. */
 .slab.hologram {
-  background: rgb(0 229 255 / 0.06); background-image: none;
-  border: 1px solid rgb(0 229 255 / 0.35); color: #eafcff;
-  font-size: 21px; min-height: 0;
-  text-shadow: 0 0 8px rgb(0 229 255 / 0.55);
-  box-shadow: 0 0 40px rgb(0 229 255 / 0.15), inset 0 0 60px rgb(0 229 255 / 0.08);
+  background: linear-gradient(180deg, rgb(2 12 24 / 0.86), rgb(3 18 34 / 0.80));
+  border: 1px solid rgb(0 229 255 / 0.6); color: #f6feff;
+  font-size: 24px; min-height: 0; padding: 28px 34px 30px;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.95), 0 1px 3px rgb(0 0 0 / 0.85), 0 0 12px rgb(0 229 255 / 0.45);
+  box-shadow: 0 0 44px rgb(0 229 255 / 0.28), inset 0 0 0 1px rgb(0 229 255 / 0.18), inset 0 0 60px rgb(0 229 255 / 0.10);
 }
 .slab.job.hologram { min-height: 0; } /* wins over `.slab.job` regardless of stylesheet order */
-.slab.hologram h2 { color: #fff; }
-.slab.hologram .kicker { color: var(--cyan); }
+.slab.hologram h2 { color: #fff; font-size: 48px; }
+.slab.hologram .kicker { color: var(--cyan); font-size: 17px; }
+.slab.hologram .meta { font-size: 20px; color: #8ff4ff; }
+.slab.hologram .team { font-size: 24px; color: rgb(255 255 255 / 0.9); }
 
 /* Keep the top-left bracket (::before); ::after becomes the overlay: 5 px scanlines + a 12 px refresh band
    parked just above the top edge until `.is-on` sweeps it down. */
 .slab.hologram::after {
   content: ''; position: absolute; inset: 0; width: auto; height: auto; border: 0; pointer-events: none;
   background:
-    repeating-linear-gradient(0deg, rgb(0 229 255 / 0.10) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(0deg, rgb(0 229 255 / 0.08) 0 2px, transparent 2px 5px),
     linear-gradient(rgb(0 229 255 / 0.25), transparent) 0 -12px / 100% 12px no-repeat;
 }
 .slab.hologram.is-on::after { animation: holo-band 3.5s linear infinite; }

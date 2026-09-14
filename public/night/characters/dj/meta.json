@@ -1,0 +1,14 @@
+{
+  "name": "dj",
+  "generate_type": "LowPoly",
+  "height_meters": 1.7,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a09e4b-d8de-7530-8446-f01b4ef28d82 rig=01a09e51-8f47-79b0-9d5b-e2b7bff62712",
+  "files": [
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "generated": "2026-09-14T05:11:36Z"
+}

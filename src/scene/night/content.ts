@@ -2,16 +2,19 @@
  * Résumé content in the scene: the DOM slabs from index.astro (education, four jobs, contact) are
  * mounted as CSS3D objects on their carriers (carriers/*: terminal kiosk, bus-stop poster, LED wall,
  * blimp banner, hologram, departures board) and the project cards form a Flip-3D stack rising out of
- * the market's holo stall. Each slab has a scroll window (data-window="a,b") during which it is
- * visible; on phones the same elements live in a bottom sheet instead.
+ * the market's holo stall. In ride mode each slab has a p window (data-window="a,b") during which it is
+ * visible; on foot it fades in by proximity to its carrier, and in dock mode only the docked slab shows
+ * (`dock` / `undock` / `onKey`). On phones the same elements live in a bottom sheet instead.
  */
 import * as THREE from 'three/webgpu';
 import { CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import gsap from 'gsap';
-import { ANCHORS, followWeight } from './journey';
+import { ANCHORS, followWeight, type SectionId } from './journey';
 import { params, reducedMotion, type Tier } from './palette';
 import { createCarriers, type Carrier, type CarrierId, type CarrierCtx } from './carriers/index';
 import type { DistrictTextures } from './districts/shared';
+import type { Mode } from './nav';
+import { DOCK_EVENT, UNDOCK_EVENT, type DockEventDetail } from './hud';
 
 export interface ContentOptions {
   scene: THREE.Scene;
@@ -22,10 +25,26 @@ export interface ContentOptions {
   onFlap?: () => void;
 }
 
-interface Slab { el: HTMLElement; carrier?: Carrier; win: [number, number]; on: boolean; cueArmed: boolean }
+/**
+ * What the visitor is doing this frame (nav.ts). `ride` = slabs fade by their p windows as before; `walk` = each slab
+ * fades by the player's horizontal distance to its carrier mount; `dock` = only the docked slab, fully on.
+ */
+export interface ContentView {
+  mode: Mode;
+  /** Section whose carriers stay drawn whatever p says (walk / dock); undefined in ride mode. */
+  section?: SectionId;
+  docked: CarrierId | null;
+  /** Player feet position (walk mode). */
+  player: THREE.Vector3 | null;
+}
+
+interface Slab { id: string; el: HTMLElement; carrier?: Carrier; win: [number, number]; on: boolean; cueArmed: boolean }
 
 const smooth = (a: number, b: number, x: number) => { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const FADE = 0.012;
+/** Walk-mode proximity fade per carrier: [full at, gone at] horizontal distance (u). Big high carriers read from further. */
+const WALK_RANGE: Partial<Record<string, [number, number]>> = { kioxia: [40, 70], 'amd-dc': [20, 45] };
+const WALK_DEFAULT: [number, number] = [6, 14];
 
 /** Card slots in the stack's local frame (0 = front). */
 const SLOT = (k: number) => ({ x: k * 1.5, y: k * 0.45, z: -k * 2.0, ry: -k * 0.1 });
@@ -82,13 +101,42 @@ export async function createContent(opts: ContentOptions) {
   let stallCarrier: Carrier | undefined;
   let active = 0, override: number | null = null, lastSlotP = -1;
 
+  // ---- phone sheet: the stack is a horizontal snap-scroller. ◀ ▶ (keys, or the stall's actions from the HUD chip bar via
+  // `.stack-nav`) scroll it a card at a time, and the card nearest the centre carries `.is-front` so the stall's ✓ opens
+  // the one on screen (stall.ts looks the front card up globally).
+  let sheetCards: HTMLElement[] = [];
+  const sheetFront = (i: number) => sheetCards.forEach((c, k) => c.classList.toggle('is-front', k === i));
+  const sheetFrontIndex = () => Math.max(0, sheetCards.findIndex((c) => c.classList.contains('is-front')));
+  function sheetGoto(i: number) {
+    const st = stackEl, c = sheetCards[i];
+    if (!st || !c) return;
+    const left = c.getBoundingClientRect().left - st.getBoundingClientRect().left + st.scrollLeft - (st.clientWidth - c.offsetWidth) / 2;
+    st.scrollTo({ left, behavior: reducedMotion ? 'auto' : 'smooth' });
+    sheetFront(i);
+  }
+  function sheetStack(st: HTMLElement, cardEls: HTMLElement[]) {
+    sheetCards = cardEls;
+    sheetFront(0);
+    let raf = 0;
+    st.addEventListener('scroll', () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const sl = st.getBoundingClientRect().left, mid = st.clientWidth / 2;
+        let best = 0, bd = Infinity;
+        sheetCards.forEach((c, k) => { const r = c.getBoundingClientRect(); const d = Math.abs(r.left - sl + r.width / 2 - mid); if (d < bd) { bd = d; best = k; } });
+        sheetFront(best);
+      });
+    }, { passive: true });
+  }
+
   for (const el of els) {
     const id = el.dataset.slab!;
     if (id === 'projects') {
       stackEl = el;
       stackWin = winOf(el);
       const cardEls = [...el.querySelectorAll<HTMLElement>('.card')];
-      if (narrow) { sheet?.appendChild(el); el.hidden = true; continue; }
+      if (narrow) { sheet?.appendChild(el); el.hidden = true; sheetStack(el, cardEls); continue; }
       const target = parentFor(id);
       if (!target) continue;
       stackRoot = target.parent;
@@ -103,7 +151,7 @@ export async function createContent(opts: ContentOptions) {
       cards[0]?.el.classList.add('is-front');
       continue;
     }
-    if (narrow) { sheet?.appendChild(el); el.hidden = true; slabs.push({ el, win: winOf(el), on: false, cueArmed: true }); continue; }
+    if (narrow) { sheet?.appendChild(el); el.hidden = true; slabs.push({ id, el, carrier: carriers.byId[id as CarrierId], win: winOf(el), on: false, cueArmed: true }); continue; }
     const target = parentFor(id);
     if (!target) continue;
     if (target.carrier) {
@@ -114,7 +162,7 @@ export async function createContent(opts: ContentOptions) {
     if (target.carrier?.fit) target.carrier.fit((el.offsetHeight || 400) * target.w / target.px);
     el.style.visibility = 'hidden';
     el.style.opacity = '0';
-    slabs.push({ el, carrier: target.carrier, win: winOf(el), on: false, cueArmed: true });
+    slabs.push({ id, el, carrier: target.carrier, win: winOf(el), on: false, cueArmed: true });
   }
 
   // ---- Flip-3D: tween every card to its slot; the card leaving the front swings out and around the back.
@@ -153,28 +201,44 @@ export async function createContent(opts: ContentOptions) {
       gsap.to(card.obj.position, { y: s.y, duration: 0.9, delay: 0.08 * card.slot, ease: 'power3.out', overwrite: 'auto' });
     }
   }
-  document.querySelectorAll<HTMLButtonElement>('.stack-nav [data-goto]').forEach((b) => b.addEventListener('click', () => { override = Number(b.dataset.goto); layout(); }));
+  document.querySelectorAll<HTMLButtonElement>('.stack-nav [data-goto]').forEach((b) => b.addEventListener('click', () => { override = Number(b.dataset.goto); if (narrow) sheetGoto(override); else layout(); }));
 
   let sheetShown: HTMLElement | null = null;
   const showInSheet = (el: HTMLElement | null) => {
     if (el === sheetShown) return;
     if (sheetShown) sheetShown.hidden = true;
     sheetShown = el;
-    if (sheet) sheet.hidden = !el;
+    if (sheet) { sheet.hidden = !el; sheet.scrollTop = 0; }
     if (el) { el.hidden = false; el.classList.remove('is-on'); void el.offsetWidth; el.classList.add('is-on'); }
   };
 
   const windowK = (win: [number, number], p: number) => smooth(win[0] - FADE, win[0], p) * (1 - smooth(win[1], win[1] + FADE, p));
+  const mountPos = new THREE.Vector3();
+  /** Visibility 0…1 of a slab for this frame: p window (ride), proximity to its mount (walk), docked or not (dock). */
+  const visibilityK = (id: string, carrier: Carrier | undefined, win: [number, number], p: number, view?: ContentView) => {
+    if (!view || view.mode === 'ride') return windowK(win, p);
+    if (view.mode === 'dock') return view.docked === id ? 1 : 0;
+    if (narrow) return 0; // phones: the bottom sheet only opens for the docked slab (the E prompt leads there)
+    if (!view.player || !carrier) return windowK(win, p);
+    carrier.mount.getWorldPosition(mountPos);
+    const d = Math.hypot(mountPos.x - view.player.x, mountPos.z - view.player.z);
+    const [near, far] = WALK_RANGE[id] ?? WALK_DEFAULT;
+    return 1 - smooth(near, far, d);
+  };
 
-  function update(p: number, t: number, dt: number) {
-    carriers.update(t, dt, p);
-    const w = followWeight(p);
+  let docked: CarrierId | null = null;
+  const dockedEl = (id: CarrierId) => (id === 'projects' ? stackEl : slabs.find((s) => s.id === id)?.el) ?? null;
+
+  function update(p: number, t: number, dt: number, view?: ContentView) {
+    carriers.update(t, dt, p, view?.section);
+    const w = docked === 'amd-dc' ? 1 : followWeight(p);
     (carriers.byId['amd-dc'] as any)?.setSpeedScale?.(1 - 0.23 * w);
+    const ride = !view || view.mode === 'ride';
 
-    let sheetTarget: HTMLElement | null = null;
+    let sheetTarget: HTMLElement | null = null, sheetK = 0.5;
     for (const s of slabs) {
-      const k = windowK(s.win, p);
-      if (narrow) { if (k > 0.5) sheetTarget = s.el; continue; }
+      const k = visibilityK(s.id, s.carrier, s.win, p, view);
+      if (narrow) { if (k > sheetK) { sheetTarget = s.el; sheetK = k; } continue; }
       const on = k > 0.01;
       if (on !== s.on) {
         s.on = on;
@@ -189,12 +253,13 @@ export async function createContent(opts: ContentOptions) {
         else if (!s.cueArmed && p < cue.p - 0.05) s.cueArmed = true;
       }
     }
-    // Project stack: which card is in front follows the scroll through the window; a click overrides until the scroll moves on.
+    // Project stack: which card is in front follows the ride through the window; a click overrides until the ride moves on.
+    // On foot / docked the ride stands still, so the front card only changes by click or key.
     if (stackEl) {
       const [a, b] = stackWin;
-      const k = windowK(stackWin, p);
-      const slotP = THREE.MathUtils.clamp(Math.floor(((p - a) / (b - a)) * Math.max(cards.length, 1)), 0, Math.max(cards.length - 1, 0));
-      if (narrow) { if (k > 0.5) sheetTarget = stackEl; }
+      const k = visibilityK('projects', stallCarrier, stackWin, p, view);
+      const slotP = ride ? THREE.MathUtils.clamp(Math.floor(((p - a) / (b - a)) * Math.max(cards.length, 1)), 0, Math.max(cards.length - 1, 0)) : 0;
+      if (narrow) { if (k > sheetK) { sheetTarget = stackEl; sheetK = k; } }
       else {
         const on = k > 0.01;
         if (on !== stackEl.classList.contains('is-on')) {
@@ -222,6 +287,54 @@ export async function createContent(opts: ContentOptions) {
     if (!c?.displacement || w <= 0) return out.copy(zero);
     return c.displacement(out).multiplyScalar(w);
   }
+  /** A moving carrier's displacement from its home pose (the dock camera rides along with the blimp). */
+  function carrierDisplacement(id: CarrierId, out: THREE.Vector3) {
+    const c = carriers.byId[id];
+    return c?.displacement ? c.displacement(out) : out.copy(zero);
+  }
 
-  return { update, followOffset, stackRoot, lights: carriers.lights, props: carriers.props, npcs: carriers.npcs, carriers: carriers.byId, activeLights: carriers.activeLights };
+  // ---- dock mode: the docked slab is interactive; keys go to its carrier's `interact` block (carriers/*.ts)
+  function dock(id: CarrierId) {
+    if (docked === id) return;
+    if (docked) undock();
+    docked = id;
+    const el = dockedEl(id);
+    if (!el) return;
+    el.classList.add('is-docked');
+    carriers.byId[id]?.interact?.onEnter?.(el);
+    // The HUD's phone chip bar mirrors the carrier's named actions (hud.ts).
+    document.dispatchEvent(new CustomEvent<DockEventDetail>(DOCK_EVENT, { detail: { id, actions: carriers.byId[id]?.interact?.actions ?? null } }));
+  }
+  function undock() {
+    if (!docked) return;
+    const id = docked, el = dockedEl(id);
+    docked = null;
+    document.dispatchEvent(new CustomEvent(UNDOCK_EVENT));
+    if (!el) return;
+    el.classList.remove('is-docked');
+    carriers.byId[id]?.interact?.onExit?.(el);
+  }
+  /** Route a key to the docked carrier; true when handled. Cards flip with ←/→ unless the stall carrier takes the key. */
+  function onKey(e: KeyboardEvent): boolean {
+    if (!docked) return false;
+    const el = dockedEl(docked);
+    if (!el) return false;
+    if (carriers.byId[docked]?.interact?.onKey?.(e, el)) return true;
+    if (narrow && docked === 'projects' && sheetCards.length && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      sheetGoto((sheetFrontIndex() + (e.key === 'ArrowRight' ? 1 : sheetCards.length - 1)) % sheetCards.length);
+      return true;
+    }
+    if (docked === 'projects' && cards.length && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const front = override ?? active;
+      override = (front + (e.key === 'ArrowRight' ? 1 : cards.length - 1)) % cards.length;
+      layout();
+      return true;
+    }
+    return false;
+  }
+
+  return {
+    update, followOffset, carrierDisplacement, dock, undock, onKey, get docked() { return docked; },
+    stackRoot, lights: carriers.lights, props: carriers.props, npcs: carriers.npcs, carriers: carriers.byId, activeLights: carriers.activeLights,
+  };
 }

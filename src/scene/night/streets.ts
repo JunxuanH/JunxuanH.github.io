@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {
-  positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, vec3,
+  positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, uniform,
 } from './tsl';
 import { loader, rng } from './palette';
 
@@ -78,13 +78,17 @@ export async function loadGroundTextures(): Promise<GroundTextures> {
   };
 }
 
-/** Standard "wet surface" material from an albedo + normal pair, tiled per world unit. */
+/**
+ * Standard "wet surface" material from an albedo + normal pair, tiled per world unit. Tile, axis swap,
+ * tint and normal scale are uniforms, so every ground surface in the city shares one program.
+ */
 export function groundMaterial(map: THREE.Texture, normal: THREE.Texture | null, tile: number, opts: { roughness?: number; tint?: number; normalScale?: number; rotate?: boolean } = {}) {
   const m = new THREE.MeshStandardNodeMaterial({ roughness: opts.roughness ?? 0.55, metalness: 0.08 });
   // `rotate` swaps the tiling axes so a directional texture (planks) runs along world X instead of Z.
-  const uvw = (opts.rotate ? positionWorld.zx : positionWorld.xz).mul(1 / tile);
-  m.colorNode = texture(map, uvw).rgb.mul(opts.tint !== undefined ? color(opts.tint) : vec3(1, 1, 1));
-  if (normal) m.normalNode = normalMap(texture(normal, uvw), vec2(opts.normalScale ?? 0.8, opts.normalScale ?? 0.8));
+  const uvw = mix(positionWorld.xz, positionWorld.zx, uniform(opts.rotate ? 1 : 0)).mul(uniform(1 / tile));
+  m.colorNode = texture(map, uvw).rgb.mul(color(opts.tint ?? 0xffffff));
+  const ns = opts.normalScale ?? 0.8;
+  if (normal) m.normalNode = normalMap(texture(normal, uvw), uniform(new THREE.Vector2(ns, ns)));
   return m;
 }
 

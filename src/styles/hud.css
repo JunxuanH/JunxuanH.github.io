@@ -1,0 +1,167 @@
+/* Walk-mode HUD (scene/night/hud.ts). Holo chrome shared with .nav: var(--holo) glass, 1px cyan border, corner
+   brackets. The root never takes pointer events; only its chips and touch controls do. */
+#hud { position: fixed; inset: 0; z-index: 6; pointer-events: none; font-family: var(--font-display); color: var(--ink); }
+html.no-3d #hud { display: none; }
+#hud > * { position: absolute; }
+.hud-chrome, .hud-prompt, .hud-hint, .hud-back, .hud-toast {
+  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.55);
+  box-shadow: 0 0 18px rgb(0 229 255 / 0.22), inset 0 0 0 1px rgb(0 229 255 / 0.1);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.hud-prompt::before, .hud-hint::before, .hud-toast::before,
+.hud-prompt::after, .hud-hint::after, .hud-toast::after { content: ''; position: absolute; width: 10px; height: 10px; border: 2px solid var(--cyan); }
+.hud-prompt::before, .hud-hint::before, .hud-toast::before { left: -3px; top: -3px; border-right: 0; border-bottom: 0; }
+.hud-prompt::after, .hud-hint::after, .hud-toast::after { right: -3px; bottom: -3px; border-left: 0; border-top: 0; }
+#hud kbd {
+  display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 7px;
+  font: 700 14px/1 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase;
+  color: #101008; background: var(--yellow); border-radius: 5px; box-shadow: 0 0 10px rgb(242 255 61 / 0.45), inset 0 -2px 0 rgb(0 0 0 / 0.25);
+}
+
+/* Interaction prompt: bottom centre pill */
+.hud-prompt {
+  left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; padding: 9px 18px 9px 10px; border-radius: 999px;
+  font-size: 17px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+  opacity: 0; transition: opacity 0.18s ease;
+}
+.hud-prompt.is-on { opacity: 1; animation: hud-glitch 0.35s steps(5); }
+.hud-prompt-label { color: var(--cyan); text-shadow: 0 0 8px rgb(0 229 255 / 0.5); }
+
+/* Controls hint (first walk) */
+.hud-hint {
+  right: 20px; bottom: calc(28px + env(safe-area-inset-bottom)); width: 236px; padding: 12px 16px 14px;
+  opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.hud-hint.is-on { opacity: 1; transform: none; animation: hud-glitch 0.4s steps(6); }
+.hud-hint-title { margin: 0 0 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--yellow); }
+.hud-hint ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(234 252 255 / 0.85); }
+.hud-hint li { display: flex; align-items: center; gap: 6px; }
+.hud-hint li span { margin-left: auto; color: var(--cyan); }
+.hud-hint kbd { min-width: 22px; height: 22px; font-size: 12px; padding: 0 5px; }
+.hud-hint .touch-only { display: none; }
+
+/* Back chip (dock mode) */
+.hud-back {
+  pointer-events: auto; left: 20px; bottom: calc(28px + env(safe-area-inset-bottom));
+  padding: 9px 18px; border-radius: 999px; cursor: pointer;
+  font: 600 15px var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan);
+}
+.hud-back:hover { color: #fff; text-shadow: 0 0 8px var(--cyan); }
+.hud-back:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+
+/* Section title toast (arrival) */
+.hud-toast {
+  left: 50%; top: 84px; transform: translateX(-50%); padding: 10px 26px 12px; text-align: center; white-space: nowrap;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+.hud-toast.is-on { opacity: 1; animation: hud-glitch 0.45s steps(7); }
+.hud-toast-name { display: block; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: 0.12em; text-transform: uppercase; }
+.hud-toast-sub { display: block; margin-top: 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--yellow); }
+.hud-toast-sub::before { content: '· '; color: var(--cyan); }
+
+@keyframes hud-glitch {
+  0% { clip-path: inset(40% 0 40% 0); }
+  40% { clip-path: inset(10% 2% 55% 0); }
+  70% { clip-path: inset(0 0 0 2%); }
+  100% { clip-path: inset(0); }
+}
+
+/* Touch controls: only for coarse pointers, only while walking / docked */
+.hud-touch { display: none; inset: 0; }
+.stick-zone { position: absolute; left: 0; bottom: 0; width: 50%; height: 62%; pointer-events: auto; touch-action: none; }
+.stick {
+  position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none;
+  border: 1px solid rgb(0 229 255 / 0.55); background: rgb(8 10 20 / 0.35); box-shadow: 0 0 18px rgb(0 229 255 / 0.2), inset 0 0 0 1px rgb(0 229 255 / 0.1);
+  opacity: 0; transition: opacity 0.15s ease;
+}
+.stick.is-on { opacity: 1; }
+.stick-knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 14px rgb(0 229 255 / 0.7); }
+.hud-btns { position: absolute; right: 18px; bottom: calc(24px + env(safe-area-inset-bottom)); display: flex; gap: 14px; align-items: flex-end; pointer-events: auto; touch-action: none; }
+.hud-btn {
+  width: 62px; height: 62px; border-radius: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.6); color: var(--cyan);
+  font: 700 22px var(--font-display); box-shadow: 0 0 16px rgb(0 229 255 / 0.3), inset 0 0 0 1px rgb(0 229 255 / 0.12);
+}
+.hud-btn.is-held, .hud-btn:active { color: #101008; background: var(--cyan); }
+.hud-btn-e { width: 76px; height: 76px; color: #101008; background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 22px rgb(242 255 61 / 0.5); font-size: 28px; }
+.hud-btn-e:active { background: #fff; }
+.hud-btn-e.is-hot { animation: hud-pulse 1.1s ease-in-out infinite; }
+@keyframes hud-pulse {
+  0%, 100% { box-shadow: 0 0 22px rgb(242 255 61 / 0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 34px rgb(242 255 61 / 0.9), 0 0 0 9px rgb(242 255 61 / 0.16); transform: scale(1.06); }
+}
+/* The interactable's label, riding on the E button (touch replaces the bottom-centre pill with this). */
+.hud-elabel {
+  position: absolute; right: 0; bottom: calc(100% + 10px); display: none; max-width: calc(100vw - 36px); padding: 6px 12px;
+  border-radius: 999px; background: var(--holo); border: 1px solid rgb(242 255 61 / 0.6); box-shadow: 0 0 14px rgb(242 255 61 / 0.25);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font: 600 13px/1.2 var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+.hud-elabel.is-on { display: block; animation: hud-glitch 0.35s steps(5); }
+
+/* Chip bar (dock mode, touch): the docked carrier's ▲ ▼ ◀ ▶ ✓ actions on the sheet's top edge (hud.ts hides the undefined ones). */
+.hud-chips { display: none; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); gap: 8px; pointer-events: auto; touch-action: none; }
+.hud-chip {
+  width: 48px; height: 44px; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.6); color: var(--cyan);
+  font: 700 18px/1 var(--font-display); box-shadow: 0 0 16px rgb(0 229 255 / 0.3), inset 0 0 0 1px rgb(0 229 255 / 0.12);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.hud-chip.is-held, .hud-chip:active { color: #101008; background: var(--cyan); }
+.hud-chip-ok { width: 60px; color: #101008; background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 18px rgb(242 255 61 / 0.45); font-size: 22px; }
+.hud-chip-ok.is-held, .hud-chip-ok:active { background: #fff; }
+
+@media (pointer: coarse) {
+  #hud[data-mode="walk"] .hud-touch, #hud[data-mode="dock"] .hud-touch { display: block; }
+  /* Docked: no joystick / E / run (the chip bar and Back take over); the sheet keeps native scrolling (no touch-action on it). */
+  #hud[data-mode="dock"] .stick-zone, #hud[data-mode="dock"] .hud-btns { display: none; }
+  #hud[data-mode="dock"] .hud-chips { display: flex; }
+  /* The pill stays a live region for screen readers but the E button carries the visible label. */
+  #hud .hud-prompt { clip-path: inset(50%); width: 1px; height: 1px; padding: 0; border: 0; box-shadow: none; animation: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* Arrival toast and the one-time hint stack under the nav, clear of the joystick zone (left half, bottom 62%). */
+  .hud-toast { top: calc(var(--nav-b, 60px) + 8px); }
+  .hud-hint {
+    left: auto; right: 16px; bottom: auto; top: calc(var(--nav-b, 60px) + 72px); width: min(300px, calc(100vw - 32px)); padding: 10px 14px 11px;
+    transform: translateY(-6px);
+  }
+  .hud-hint-title { margin-bottom: 6px; font-size: 10px; }
+  .hud-hint ul { gap: 4px; font-size: 13px; }
+  .hud-hint .touch-only { display: flex; }
+  .hud-hint .keys-only { display: none; }
+  /* Dock: Back and the chip bar share one row. With a sheet it straddles the sheet's top edge (content scrolls under it);
+     without one (a CSS3D slab in the scene) it sits on the bottom edge. */
+  .hud-back { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); padding: 0 14px; height: 44px; font-size: 14px; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  #hud.has-sheet .hud-back, #hud.has-sheet .hud-chips { bottom: calc(var(--sheet-h, 0px) - 22px); }
+  html[data-mode="dock"] .sheet { padding-top: 34px; scroll-padding-top: 34px; }
+  /* Fade band under the chip row: scrolled sheet text dims as it passes beneath the chips. */
+  #hud.has-sheet[data-mode="dock"]::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: calc(var(--sheet-h, 0px) - 40px); height: 40px; pointer-events: none;
+    background: linear-gradient(180deg, rgb(7 7 12 / 0.88) 0, rgb(7 7 12 / 0.88) 14px, rgb(7 7 12 / 0) 100%);
+  }
+}
+@media (pointer: coarse) and (max-height: 500px) {
+  /* Landscape phones: a shorter stack under the one-row nav, smaller buttons, and a taller sheet. */
+  html .sheet { max-height: 60vh; }
+  .hud-toast { padding: 6px 14px 8px; }
+  .hud-toast-name { font-size: 18px; }
+  .hud-toast-sub { font-size: 10px; }
+  .hud-hint { top: calc(var(--nav-b, 48px) + 8px); width: 250px; }
+  .hud-hint ul { gap: 3px; font-size: 12px; }
+  .hud-btns { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); gap: 10px; }
+  .hud-btn { width: 54px; height: 54px; }
+  .hud-btn-e { width: 64px; height: 64px; font-size: 24px; }
+}
+@media (max-width: 760px) {
+  .hud-toast { top: 64px; padding: 8px 18px 10px; }
+  .hud-toast-name { font-size: 22px; }
+  .hud-prompt { font-size: 14px; }
+}
+@media (max-width: 760px) and (pointer: coarse) {
+  .hud-toast { top: calc(var(--nav-b, 60px) + 8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud-prompt.is-on, .hud-hint.is-on, .hud-toast.is-on, .hud-elabel.is-on, .hud-btn-e.is-hot { animation: none; }
+  .hud-prompt, .hud-hint, .hud-toast, .stick { transition: none; }
+}
