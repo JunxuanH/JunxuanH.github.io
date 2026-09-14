@@ -116,7 +116,7 @@ export async function start(root: HTMLElement) {
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
-  if (!panoUrl) pending.push(createBackdrop({ ring: params.has('ring') }).then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e))); // ?ring=1: skyline plates on every side (preview)
+  if (!panoUrl) pending.push(createBackdrop({ ring: !params.has('noring') }).then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e))); // skyline plates on every side; ?noring = the north plate only
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
