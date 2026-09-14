@@ -325,6 +325,8 @@ export async function start(root: HTMLElement) {
   const input = createInput({
     stage: root, touch: hud.touch,
     enabled: () => nav.mode === 'walk',
+    // E interacts while a prompt is up or a dialogue / terminal is open; with nothing to use it turns the camera (Q / E).
+    interactable: () => nav.mode !== 'walk' || !!(prompts.talk || prompts.use) || !!dialogueOpen(),
     onKey: (e) => {
       if (nav.mode !== 'dock') return false;
       if (content.onKey(e)) return true; // the docked carrier first (Esc may collapse a menu row before it leaves)
@@ -334,6 +336,7 @@ export async function start(root: HTMLElement) {
   });
   // One HUD prompt slot, two writers: the residents' "Talk to …" (dialogue.ts) wins over the carriers' prompt.
   const prompts: { talk: string | null; use: string | null } = { talk: null, use: null };
+  let dialogueOpen: () => boolean = () => false; // bound once the dialogue exists (below)
   const publishPrompt = () => hud.prompt(prompts.talk ?? prompts.use);
   const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => { prompts.use = l; publishPrompt(); }, landingCar });
   // ---------- talking to the residents (dialogue.ts): every crowd walker, plus the two carrier NPCs matched by where they stand
@@ -346,6 +349,7 @@ export async function start(root: HTMLElement) {
     if (row) dialogueTargets.push(carrierTarget(npc, row[2], row[3]));
   }
   const dialogue = createDialogue({ hud, prompt: (l) => { prompts.talk = l; publishPrompt(); }, getTargets: () => dialogueTargets, playerYaw: () => player?.yaw ?? null });
+  dialogueOpen = () => dialogue.open;
   const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
   jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); a.blur(); nav.panTo(a.dataset.section as SectionId); }));
   (window as any).__player = player ? { position: player.position, teleport: player.teleport, get speed() { return player.speed; } } : null;

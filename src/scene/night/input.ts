@@ -3,7 +3,8 @@
  * pointer drag on the stage = orbit, and for coarse pointers a virtual joystick (any touch on the left
  * half of the HUD's stick zone) plus E / run buttons. Pointer events only, no touch API. `poll()` returns
  * the frame's snapshot and clears the edge flags and drag deltas. Keys are never intercepted while the
- * focus is in a form field, link or button, so the nav stays keyboard-usable. `skip` (Esc / Enter / Space,
+ * focus is in a form field, link or button, so the nav stays keyboard-usable. Q / E (held) turn the camera when
+ * nothing is in range (`interactable`). `skip` (Esc / Enter / Space,
  * or a tap / click on the stage without a drag) lets nav.ts cut a transition cutscene short.
  */
 import * as THREE from 'three/webgpu';
@@ -41,6 +42,11 @@ export interface InputOptions {
   onKey?: (e: KeyboardEvent) => boolean | void;
   /** Keys move the player only while this returns true (arrows are then prevented from scrolling). */
   enabled?: () => boolean;
+  /**
+   * E is the interact key while this returns true (something in range, a dialogue or terminal open); otherwise
+   * holding E turns the camera right, the mirror of Q. Defaults to always interact.
+   */
+  interactable?: () => boolean;
 }
 
 const MOVE_KEYS: Record<string, [number, number, boolean]> = {
@@ -48,6 +54,8 @@ const MOVE_KEYS: Record<string, [number, number, boolean]> = {
   ArrowUp: [0, 1, false], ArrowDown: [0, -1, false], ArrowLeft: [-1, 0, false], ArrowRight: [1, 0, false],
 };
 const STICK_R = 48, DEAD = 0.15;
+/** Q / E camera turn: CSS-pixel-equivalent orbit per second (player.ts maps 0.005 rad per px → ~110°/s). */
+const KEY_ORBIT_PX = 380;
 /** Finger this far past the ring's radius = run (the knob stays on the ring; the ring turns yellow). */
 const RUN_PAST = 1.35;
 
@@ -76,6 +84,8 @@ export function createInput(opts: InputOptions) {
     if (e.code in MOVE_KEYS) { held.add(e.code); if (enabled()) e.preventDefault(); return; }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { run = true; return; }
     if (e.repeat) return;
+    if (e.code === 'KeyQ') { held.add('KeyQ'); if (enabled()) e.preventDefault(); return; }
+    if (e.code === 'KeyE' && enabled() && !(opts.interactable?.() ?? true)) { held.add('KeyE'); e.preventDefault(); return; } // nothing to use: E turns the camera
     if (e.code === 'KeyE' || e.code === 'Enter') { interact = true; if (e.code === 'Enter') skip = true; e.preventDefault(); return; }
     if (e.code === 'Escape') { back = true; skip = true; return; }
     if (e.code === 'Space') { skip = true; e.preventDefault(); return; }
@@ -164,7 +174,11 @@ export function createInput(opts: InputOptions) {
   });
 
   /** The frame's input; edge flags and drag deltas reset. */
+  let lastPoll = 0;
   function poll(): InputState {
+    const now = performance.now(), dt = lastPoll ? Math.min((now - lastPoll) / 1000, 0.05) : 0; lastPoll = now;
+    if (held.has('KeyQ')) orbitX -= KEY_ORBIT_PX * dt;
+    if (held.has('KeyE')) orbitX += KEY_ORBIT_PX * dt;
     const m = state.move.set(0, 0);
     let wasd = false;
     if (stickOn) { m.copy(stickV); wasd = stickV.lengthSq() > 0.25; }
