@@ -301,22 +301,30 @@ export async function start(root: HTMLElement) {
   // every material/render object now (behind the boot bar) instead of the first time a district scrolls
   // into view. Backgrounding this proved unreliable (three keys the cache per render pass); a slightly
   // longer boot with a progress bar beats freezes while scrolling.
-  boot.phase('compiling shaders', 0.86);
+  // Each step gates the scene exactly as the journey will at that point (districts.update / content.update),
+  // so a step builds only its own district and the boot bar visibly advances nine times; a yield before every
+  // step lets the label paint and the skip link appear. Frustum culling is off so a district's whole
+  // content is built, not just what the pose happens to frame.
   {
     const t0 = performance.now();
-    const hidden: THREE.Object3D[] = [];
-    scene.traverse((o) => { if (!o.visible) { o.visible = true; hidden.push(o); } });
-    const poses = [0, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0];
+    const meshes: THREE.Object3D[] = [];
+    scene.traverse((o: any) => { if (o.isMesh || o.isPoints || o.isLine) meshes.push(o); });
+    const culled = meshes.map((o) => o.frustumCulled);
+    for (const o of meshes) o.frustumCulled = false;
+    const poses = [0, 0.10, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0]; // 0.10: campus appears while the water still reflects
     for (let i = 0; i < poses.length; i++) {
-      if (water) water.visible = poses[i] === 0 || poses[i] === 1.0; // the reflection pass only where the water is seen
-      poseAt(poses[i], pos, look); camera.position.copy(pos); camera.lookAt(look); camera.updateMatrixWorld(true);
+      boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * i) / poses.length);
+      await new Promise((r) => setTimeout(r, 16)); // paint the label before the (synchronous) frame
+      const pp = poses[i];
+      districts.update(0, pp);
+      content.update(pp, 0, 0);
+      if (water) water.visible = pp < 0.14 || pp > 0.86;
+      poseAt(pp, pos, look); camera.position.copy(pos); camera.lookAt(look); camera.updateMatrixWorld(true);
       const tp = performance.now();
       pipeline.render();
-      if (params.has('prof')) console.info('[night] pre-warm pose', poses[i], Math.round(performance.now() - tp), 'ms');
-      boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * (i + 1)) / poses.length);
-      await new Promise((r) => setTimeout(r, 0)); // let the boot bar paint between the (synchronous) frames
+      if (params.has('prof')) console.info('[night] pre-warm pose', pp, Math.round(performance.now() - tp), 'ms');
     }
-    for (const o of hidden) o.visible = false;
+    meshes.forEach((o, i) => { o.frustumCulled = culled[i]; });
     console.info('[night] pre-warm', Math.round(performance.now() - t0), 'ms', params.has('prof') ? Object.entries(stages).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ') : '');
   }
   boot.phase('first light', 0.97);
