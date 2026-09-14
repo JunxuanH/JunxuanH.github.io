@@ -12,7 +12,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 FF=/opt/homebrew/bin/ffmpeg; FP=/opt/homebrew/bin/ffprobe
-DIR=design/night/cutscenes; RAW=$DIR/raw; OUT=public/night/cutscenes; CLIPS=$DIR/clips.tsv; LEDGER=$DIR/ledger.tsv
+DIR=design/night/cutscenes; RAW=$DIR/raw; LEDGER=$DIR/ledger.tsv
+# Alternate sets (e.g. an archived sky): CUTSCENE_TAKE=pano reads raw/<pair>.pano.mp4, CUTSCENE_OUT / CUTSCENE_CLIPS redirect the outputs.
+TAKE="${CUTSCENE_TAKE:-}"; OUT="${CUTSCENE_OUT:-public/night/cutscenes}"; CLIPS="${CUTSCENE_CLIPS:-$DIR/clips.tsv}"
 MAX_BYTES=2500000
 mkdir -p "$OUT"; touch "$CLIPS"
 
@@ -28,13 +30,14 @@ fi
 ledger_of() {
   # provenance: raw/<pair>.request (model, request id — written by cutscene-gen.sh, or by hand when an older take is restored),
   # else the ledger's last row for the pair
-  if [[ -f "$RAW/$1.request" ]]; then awk -F'\t' '{ printf "%s\t%s", $2, $3 }' "$RAW/$1.request"; return; fi
-  awk -F'\t' -v p="$1" '$2 == p { m = $3; r = $5 } END { printf "%s\t%s", m, r }' "$LEDGER" 2>/dev/null
+  local side="$RAW/$1${TAKE:+.$TAKE}.request"
+  if [[ -f "$side" ]]; then awk -F'\t' '{ printf "%s\t%s", $2, $3 }' "$side"; return; fi
+  awk -F'\t' -v p="$1" '$2 == p && $7 !~ /not shipped/ { m = $3; r = $5 } END { printf "%s\t%s", m, r }' "$LEDGER" 2>/dev/null
 }
 
 # encode <pair> <source-pair> <reverse:0|1>
 encode() {
-  local pair="$1" srcpair="$2" rev="$3" src="$RAW/$2.mp4" out="$OUT/$1.mp4" vf crf size
+  local pair="$1" srcpair="$2" rev="$3" src="$RAW/$2${TAKE:+.$TAKE}.mp4" out="$OUT/$1.mp4" vf crf size
   [[ -f "$src" ]] || { echo "missing $src" >&2; return 1; }
   vf="scale=1280:720:flags=lanczos,format=yuv420p"; [[ $rev == 1 ]] && vf="reverse,$vf"
   for crf in 24 26 28; do
