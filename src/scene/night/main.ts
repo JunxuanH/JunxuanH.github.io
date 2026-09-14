@@ -39,7 +39,7 @@ import type { PropPlacement } from './props';
 
 /**
  * Neon Harbor. Bay vista hero → the nav pans the camera along the rail to a district, where the visitor takes
- * over the protagonist (the `agent` rig) on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
+ * over the protagonist (the `soldier` rig) on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
  * All lights are emissive; bloom is the light source. `?q=high|med|low`, `?p=0.4` (start the ride at that progress),
  * `?nobloom ?noca ?nosharp ?norain ?novideo ?kenney ?nokit ?noglb ?nowater ?debug`.
  */
@@ -108,7 +108,7 @@ export async function start(root: HTMLElement) {
     depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
   } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
-  const PROTAGONIST = 'agent'; // the player's rig (rigs.ts row: height 1.80, cyan rim); netrunner stays a crowd rig
+  const PROTAGONIST = 'soldier'; // the player's rig (rigs.ts row: height 1.85, cyan rim); agent + netrunner stay on disk / in the crowd
   const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot'] as const;
   const RIGS_LITE = [PROTAGONIST, 'netrunner', 'sec-bot', 'idol', 'maid-bot', 'cat-courier'] as const;
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
@@ -116,7 +116,7 @@ export async function start(root: HTMLElement) {
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
-  if (!panoUrl) pending.push(createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e)));
+  if (!panoUrl) pending.push(createBackdrop({ ring: params.has('ring') }).then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e))); // ?ring=1: skyline plates on every side (preview)
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],

@@ -47,7 +47,8 @@ RESP="$(curl -sS "$RESPONSE_URL" "${AUTH[@]}")"
 mkdir -p "$(dirname "$OUT")"
 echo "$RESP" > "${OUT%.*}.response.json"
 URL="$(jq -r "$JQ_URL" <<<"$RESP")"
-[[ -n "$URL" ]] || { echo "No url in response: $RESP" >&2; exit 1; }
+# A fal error body ({"detail": …}) has no url: fail here (nothing is logged) instead of curl-ing "null".
+[[ -n "$URL" && "$URL" != "null" ]] || { echo "No url in response ($ENDPOINT): $(jq -c '.detail // .' <<<"$RESP" | head -c 400)" >&2; exit 1; }
 curl -sS -L -o "$OUT" "$URL"
 printf '%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$ENDPOINT" "$PRICE" "$LABEL" >> "$LOG"
 echo "$OUT ($(du -h "$OUT" | cut -f1)) · logged \$$PRICE · total \$$(awk -F'\t' '{s+=$3} END {printf "%.2f", s}' "$LOG") of \$$BUDGET"

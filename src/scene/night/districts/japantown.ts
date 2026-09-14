@@ -3,7 +3,7 @@ import { color, positionLocal, positionWorld, smoothstep, mix, pow, sin, time, l
 import { rng } from '../palette';
 import { ANCHORS } from '../journey';
 import { neonText, createKeyedSigns } from '../signs';
-import { CURB_H, CROSS_Z, groundMaterial } from '../streets';
+import { CURB_H, PATCH_LIFT, CROSS_Z, groundMaterial } from '../streets';
 import { THEMES } from '../theme';
 import { facadeBlock, stringLights, type DistrictBuild, type DistrictCtx } from './shared';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -138,14 +138,18 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const c = ANCHORS.campus;
   const streetZ = CROSS_Z[0]; // −60: the approach street north of the plaza
 
-  // Plaza paving (slightly warm stone) and a stepped approach from the street.
+  // Plaza paving (slightly warm stone) and a stepped approach from the street. Both are PATCH_LIFT taller than the
+  // street's sidewalk slabs (streets.ts, top at CURB_H): where they overlap the z −60 cross-street sidewalk their top
+  // faces would otherwise be coplanar and z-fight (blocky interleaving around the torii). The approach starts at the
+  // plaza's north edge so the two patches never overlap each other.
   const g = ctx.tex.ground;
   const plazaMat = g?.plaza ? groundMaterial(g.plaza, g.plazaN, 7, { roughness: 0.5 }) : new THREE.MeshStandardNodeMaterial({ color: T.ground, roughness: 0.8 });
-  const plaza = new THREE.Mesh(new THREE.BoxGeometry(84, CURB_H, 62), plazaMat);
-  plaza.position.set(c.x, CURB_H / 2, c.z);
+  const plaza = new THREE.Mesh(new THREE.BoxGeometry(84, CURB_H + PATCH_LIFT, 62), plazaMat);
+  plaza.position.set(c.x, (CURB_H + PATCH_LIFT) / 2, c.z);
   group.add(plaza);
-  const approach = new THREE.Mesh(new THREE.BoxGeometry(18, CURB_H, 18), plazaMat);
-  approach.position.set(c.x, CURB_H / 2, streetZ - 9 - 0.5);
+  const plazaNorth = c.z + 31, approachEnd = streetZ - 0.5;
+  const approach = new THREE.Mesh(new THREE.BoxGeometry(18, CURB_H + PATCH_LIFT, approachEnd - plazaNorth), plazaMat);
+  approach.position.set(c.x, (CURB_H + PATCH_LIFT) / 2, (plazaNorth + approachEnd) / 2);
   group.add(approach);
 
   // Campus blocks with pagoda roofs: two flanking the plaza, one main hall at the back.

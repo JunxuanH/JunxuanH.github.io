@@ -59,7 +59,9 @@ if typ == 'LowPoly': body['polygon_type'] = 'triangle'
 json.dump(body, open(out, 'w'))
 EOF
   PRICE=$([[ "$TYPE" == LowPoly ]] && echo 0.60 || echo 0.525)
-  OUT3D="$(scripts/fal-run.sh fal-ai/hunyuan3d-v3/image-to-3d "$PRICE" "night/char/$NAME/3d" "$DES/3d-input.json" "$DES/model-raw.glb" '.model_glb.url')"
+  OUT3D="$(scripts/fal-run.sh fal-ai/hunyuan3d-v3/image-to-3d "$PRICE" "night/char/$NAME/3d" "$DES/3d-input.json" "$DES/model-raw.glb" '.model_glb.url')" || {
+    # fal-run exits non-zero without logging spend; surface fal's error (e.g. downstream_service_unavailable) and stop.
+    echo "3D step failed for $NAME: $(jq -r '.detail // . | tostring' "$DES/model-raw.response.json" 2>/dev/null | head -c 300)" >&2; exit 1; }
   echo "$OUT3D"; ids+=("3d=$(grep -o 'queued: [^ ]*' <<<"$OUT3D" | cut -d' ' -f2)")
   jq -r '.thumbnail.url // empty' "$DES/model-raw.response.json" | { read -r u || true; [[ -n "${u:-}" ]] && curl -sSL -o "$DES/thumbnail.png" "$u" || true; }
 fi
@@ -69,7 +71,8 @@ fi
 if [[ -n "$MODEL_OVERRIDE" ]]; then
   if [[ -f "$MODEL_OVERRIDE" ]]; then MODEL_URL="file:$MODEL_OVERRIDE"; else MODEL_URL="$MODEL_OVERRIDE"; fi
 else
-  MODEL_URL="$(jq -r '.model_glb.url' "$DES/model-raw.response.json")"
+  MODEL_URL="$(jq -r '.model_glb.url // empty' "$DES/model-raw.response.json")"
+  [[ "$MODEL_URL" == http* ]] || { echo "no model_glb.url in $DES/model-raw.response.json: $(jq -c '.detail // .' "$DES/model-raw.response.json" | head -c 300)" >&2; exit 1; }
   # Hunyuan3D occasionally returns an OBJ zip in model_glb; convert it before rigging (see README).
   if [[ "$(jq -r '.model_glb.file_name // ""' "$DES/model-raw.response.json")" == *.obj ]]; then
     echo "NOTE: $NAME came back as an OBJ zip — unzip, run obj2gltf, then re-run with --skip-3d --model-url <glb> --rig" >&2
@@ -98,6 +101,7 @@ fi
 
 # ---------- 3. extra Meshy clips (multi-animation: $0.20 + $0.12 per clip) ----------
 CLIP_LABELS=()
+has_label() { local l; for l in "${CLIP_LABELS[@]:-}"; do [[ "$l" == "$1" ]] && return 0; done; return 1; }
 if [[ -n "$CLIPS" ]]; then
   # "label=id,label=id" or bare ids (label = clip-<id>)
   CLIP_IDS=()
@@ -125,10 +129,14 @@ EOF
     [[ -f "$DES/rigged-raw.glb" ]] && mv "$DES/rigged-raw.glb" "$DES/rigged-raw.prev.glb"
     cp "$DES/clips-rigged-raw.glb" "$DES/rigged-raw.glb"
     dlc() { local u; u="$(jq -r "$1 // empty" "$RC")"; [[ -n "$u" ]] && curl -sSL -o "$2" "$u" && echo "  $2 ($(du -h "$2" | cut -f1))" || echo "  (no $1)"; }
-    dlc '.basic_animations.walking_armature_glb.url' "$DES/walk-armature-raw.glb"
-    dlc '.basic_animations.running_armature_glb.url' "$DES/run-armature-raw.glb"
+    # Meshy's basic walking/running come with every rig; a labelled walk=/run= clip from the library replaces them
+    # (the basic ones are still downloaded as walk-basic/run-basic for reference, not shipped).
+    if has_label walk; then dlc '.basic_animations.walking_armature_glb.url' "$DES/walk-basic-armature-raw.glb"; [[ -f "$DES/walk-armature-raw.glb" ]] && mv "$DES/walk-armature-raw.glb" "$DES/walk-armature-raw.prev.glb"
+    else dlc '.basic_animations.walking_armature_glb.url' "$DES/walk-armature-raw.glb"; fi
+    if has_label run; then dlc '.basic_animations.running_armature_glb.url' "$DES/run-basic-armature-raw.glb"; [[ -f "$DES/run-armature-raw.glb" ]] && mv "$DES/run-armature-raw.glb" "$DES/run-armature-raw.prev.glb"
+    else dlc '.basic_animations.running_armature_glb.url' "$DES/run-armature-raw.glb"; fi
     # An idle from the earlier --rig call would be on the previous skeleton: keep it only when re-requested here.
-    if ! printf '%s\n' "${CLIP_LABELS[@]}" | grep -qx idle; then [[ -f "$DES/idle-raw.glb" ]] && mv "$DES/idle-raw.glb" "$DES/idle-raw.prev.glb"; fi
+    if ! has_label idle; then [[ -f "$DES/idle-raw.glb" ]] && mv "$DES/idle-raw.glb" "$DES/idle-raw.prev.glb"; fi
   fi
 fi
 
@@ -149,12 +157,12 @@ if [[ $SLIM == 1 ]]; then
   echo "slimming:"
   [[ -f "$DES/model-raw.glb" ]] && slim "$DES/model-raw.glb" "$PUB/model.glb" && files+=(model.glb)
   [[ -f "$DES/rigged-raw.glb" ]] && slim "$DES/rigged-raw.glb" "$PUB/rigged.glb" && files+=(rigged.glb)
-  [[ -f "$DES/walk-armature-raw.glb" ]] && slim "$DES/walk-armature-raw.glb" "$PUB/walk.glb" && files+=(walk.glb)
-  [[ -f "$DES/run-armature-raw.glb" ]] && slim "$DES/run-armature-raw.glb" "$PUB/run.glb" && files+=(run.glb)
-  [[ -f "$DES/idle-raw.glb" ]] && slim "$DES/idle-raw.glb" "$PUB/idle.glb" && files+=(idle.glb)
-  # Extra clips (full-model GLBs from multi-animation): strip the mesh first → armature-only, then slim.
+  if ! has_label walk; then [[ -f "$DES/walk-armature-raw.glb" ]] && slim "$DES/walk-armature-raw.glb" "$PUB/walk.glb" && files+=(walk.glb); fi
+  if ! has_label run; then [[ -f "$DES/run-armature-raw.glb" ]] && slim "$DES/run-armature-raw.glb" "$PUB/run.glb" && files+=(run.glb); fi
+  if ! has_label idle; then [[ -f "$DES/idle-raw.glb" ]] && slim "$DES/idle-raw.glb" "$PUB/idle.glb" && files+=(idle.glb); fi
+  # Labelled clips (full-model GLBs from multi-animation, idle included): strip the mesh → armature-only, then slim.
   for label in "${CLIP_LABELS[@]:-}"; do
-    [[ -z "$label" || "$label" == idle ]] && continue # (bash 3.2 + set -u: an empty array expands to "") · idle shipped above
+    [[ -z "$label" ]] && continue # (bash 3.2 + set -u: an empty array expands to "")
     f="$DES/$label-raw.glb"; [[ -f "$f" ]] || continue
     t="$(mktemp -d)"; node scripts/night-strip-mesh.mjs "$f" "$t/arm.glb" >/dev/null 2>&1 || cp "$f" "$t/arm.glb"
     slim "$t/arm.glb" "$PUB/$label.glb" && files+=("$label.glb"); rm -rf "$t"
@@ -164,7 +172,8 @@ fi
 # ---------- 5. meta ----------
 jq -n --arg name "$NAME" --arg type "$TYPE" --argjson height "$HEIGHT" --arg ids "${ids[*]:-}" \
   --argjson files "$(printf '%s\n' "${files[@]:-}" | jq -R . | jq -s 'map(select(length>0))')" \
-  --arg concept "$(basename "$CONCEPT")" \
-  '{name: $name, generate_type: $type, height_meters: $height, concept: $concept, fal_requests: $ids, files: $files, generated: (now | todate)}' \
+  --arg concept "$(basename "$CONCEPT")" --arg idle "$IDLE" --arg clips "$CLIPS" \
+  '{name: $name, generate_type: $type, height_meters: $height, concept: $concept, fal_requests: $ids, files: $files,
+    meshy_idle: (if $idle == "" then null else ($idle | tonumber) end), meshy_clips: $clips, generated: (now | todate)}' \
   > "$PUB/meta.json"
 cat "$PUB/meta.json"

@@ -1,0 +1,21 @@
+{
+  "name": "soldier",
+  "generate_type": "Normal",
+  "height_meters": 1.85,
+  "concept": "concept-1.png",
+  "fal_requests": "3d=01a0a0de-9093-7d70-a215-8ac2ac4ecd2a clips=01a0a0e0-32d6-7921-8250-157249a4bda4",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "idle.glb",
+    "combat.glb",
+    "walk.glb",
+    "strut.glb",
+    "run.glb",
+    "lookaround.glb",
+    "gesture.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "idle=0 Idle, combat=89 Combat_Stance (crouched guard, kept for dialogue/cutscenes), walk=Meshy basic walking (armature), strut=106 Confident_Walk, run=14 Run_02, lookaround=338 Short_Breathe_and_Look_Around, gesture=2 Alert",
+  "generated": "2026-09-14T17:09:37Z"
+}

@@ -20,6 +20,8 @@ export interface RigMeta {
   /** Same for the run / idle clips when they differ (the run dips deeper, the idle pose sits on 0). */
   groundOffsetRun?: number;
   groundOffsetIdle?: number;
+  /** Any other clip by key (lookaround, gesture, strut, …); unlisted clips use the idle offset. */
+  groundOffsets?: Record<string, number>;
   /** Head bone height at rest (rig units) — look-at target, follow-camera focus. */
   headY: number;
   /** Distance between successive footfalls when walking (u, footstep cue). */
@@ -44,6 +46,7 @@ export const RIG_DEFAULT: RigMeta = {
  * the walk/run clips while the idle pose sits on 0, hence the per-clip offsets.
  */
 export const RIG_META: Record<string, Partial<RigMeta>> = {
+  soldier: { height: 1.85, stride: 1.54, strideRun: 4.6, groundOffset: 0.02, groundOffsetRun: 0, groundOffsetIdle: 0, groundOffsets: { lookaround: -0.077, combat: -0.077, gesture: -0.014, strut: 0 }, headY: 1.65, stepLen: 0.82, stepLenRun: 1.76, note: 'protagonist v2 (2026-09-14): concept-1 of 3, Hunyuan Normal+PBR (39.6 k tris) + Meshy multi-animation on one skeleton — idle 0, lookaround 338 (one-shot idle variety after 8 s), run 14 Run_02, walk = Meshy basic walking; extras on disk: combat 89 (crouched guard stance, floats 7.7 cm → offset), strut 106 Confident_Walk (0.71 u/s, too slow for the 2.4 u/s walk), gesture 2 Alert. Clean skin (stray 0, maxDisp 0.12 on walk/run)' },
   agent: { height: 1.8, stride: 1.42, strideRun: 5.03, groundOffset: 0.025, groundOffsetRun: 0.039, groundOffsetIdle: 0, headY: 1.57, stepLen: 0.76, stepLenRun: 1.68, note: 'protagonist (2026-09-14): concept-2 of 3 (cleanest A-pose), Hunyuan LowPoly + Meshy idle 0; clean rig, no faults' },
   netrunner: { height: 1.75, stride: 1.44, strideRun: 5.25, groundOffset: 0, groundOffsetRun: 0.019, headY: 1.56, stepLen: 0.77, stepLenRun: 1.75, note: 'clean; was the protagonist, now a crowd rig. Data fix only (stride 1.44 vs the old 1.2 assumption)' },
   corpo: { height: 1.75, stride: 1.36, strideRun: 4.98, groundOffset: 0.022, groundOffsetRun: 0.03, groundOffsetIdle: 0.014, headY: 1.54, stepLen: 0.73, stepLenRun: 1.66, note: 'clean (OBJ-zip quirk at generation, see README); data fix only' },
@@ -73,6 +76,7 @@ export const RIG_NAMES = Object.keys(RIG_META);
 
 /** Ground offset to apply while `clip` plays (rig units). */
 export function groundOffsetFor(meta: RigMeta, clip: string | null | undefined) {
+  if (clip && meta.groundOffsets && meta.groundOffsets[clip] !== undefined) return meta.groundOffsets[clip];
   if (clip === 'run' && meta.groundOffsetRun !== undefined) return meta.groundOffsetRun;
   if (clip === 'idle' && meta.groundOffsetIdle !== undefined) return meta.groundOffsetIdle;
   if (clip && clip !== 'walk' && clip !== 'run' && meta.groundOffsetIdle !== undefined) return meta.groundOffsetIdle; // talk/wave/sit: standing clips

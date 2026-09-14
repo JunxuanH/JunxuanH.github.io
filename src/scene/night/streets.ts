@@ -20,6 +20,12 @@ export const isRoad = (x: number, z: number) => Math.abs(x) < AVENUE_HALF || CRO
 export const isSidewalk = (x: number, z: number) =>
   !isRoad(x, z) && (Math.abs(x) < AVENUE_HALF + SIDEWALK || CROSS_Z.some((cz) => Math.abs(z - cz) < CROSS_HALF + SIDEWALK));
 export const CURB_H = 0.22;
+/**
+ * District ground patches (the campus plaza, the lobby forecourts) that overlap the sidewalk slabs are built this much
+ * taller, so their top faces sit just above the slabs' instead of coplanar with them (coplanar faces z-fight into
+ * blocky interleaved patches, worst on phones). 1.5 cm: invisible as a step, far above depth-buffer resolution.
+ */
+export const PATCH_LIFT = 0.015;
 /** Waterfront edge: streets stop here, the bay begins. */
 export const QUAY_Z = -20;
 
@@ -62,7 +68,8 @@ export interface GroundTextures {
   planks: THREE.Texture | null; planksN: THREE.Texture | null;
 }
 
-const rep = (t: THREE.Texture, srgb = true) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
+/** Tiling + sRGB, and 4× anisotropy: the ground is seen at grazing angles from the follow camera (a sampler setting, no new program). */
+const rep = (t: THREE.Texture, srgb = true) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
 const tryLoad = (p: string, srgb = true) => loader.loadAsync(p).then((t) => rep(t, srgb)).catch(() => null);
 
 /** Loads the fal ground set (public/night/ground/*.jpg + *-n.jpg), falling back to canvas textures. */
