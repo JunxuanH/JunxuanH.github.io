@@ -70,6 +70,35 @@ export function createPlayer(opts: PlayerOptions) {
     root.updateMatrixWorld(true);
   }
 
+  /** Turn to face (x, z) now; the follow camera swings behind (so leaving a carrier resumes facing it). */
+  function face(x: number, z: number) {
+    const dx = x - pos.x, dz = z - pos.z;
+    if (Math.hypot(dx, dz) < 0.05) return;
+    yaw = camYaw = Math.atan2(dx, dz);
+    root.rotation.y = yaw;
+  }
+
+  /**
+   * Phone dock camera: over the character's shoulder, 4.2 u back (more for wide carriers) and 2.2 u up along the
+   * line to `target` (a carrier's mount), nudged sideways so the character does not cover it. The bottom sheet hides the lower half
+   * of the screen, so the look direction is pitched ~16° under the target: it lands in the upper quarter whether
+   * it is a kiosk screen 2 u away or an LED wall 25 u up the tower.
+   */
+  function frame(target: THREE.Vector3, normal: THREE.Vector3 | null, width: number, outPos: THREE.Vector3, outLook: THREE.Vector3) {
+    let dx = pos.x - target.x, dz = pos.z - target.z, l = Math.hypot(dx, dz) || 1;
+    dx /= l; dz /= l; // target → character
+    // Mostly the screen's own facing direction (so a poster is never read edge-on), pulled toward where the character stands.
+    if (normal && Math.hypot(normal.x, normal.z) > 0.2) { const nl = Math.hypot(normal.x, normal.z); dx = dx * 0.35 + (normal.x / nl) * 0.65; dz = dz * 0.35 + (normal.z / nl) * 0.65; const bl = Math.hypot(dx, dz) || 1; dx /= bl; dz /= bl; }
+    const back = THREE.MathUtils.clamp(width * 1.5, 4.2, 16) + Math.min(l, 4); // a 3 u kiosk screen from ~7 u, a 10 u board from ~19 (portrait hFOV ≈ 31°)
+    pivot.set(pos.x, pos.y + 0.6, pos.z);
+    outPos.set(target.x + dx * back - dz * 1.1, pos.y + 2.2 + (back - 6) * 0.2, target.z + dz * back + dx * 1.1);
+    if (area) limitCamera(area, pivot, outPos);
+    outPos.y = Math.max(outPos.y, pos.y + 0.8);
+    const tx = target.x - outPos.x, ty = target.y - outPos.y, tz = target.z - outPos.z;
+    const h = Math.hypot(tx, tz) || 1, a = Math.atan2(ty, h) - 0.29;
+    outLook.set(outPos.x + tx, outPos.y + Math.tan(a) * h, outPos.z + tz);
+  }
+
   /**
    * One frame. `control` = the player may move / orbit (walk mode); otherwise only the animation and the
    * damped camera keep running (dock, transitions).
@@ -131,7 +160,7 @@ export function createPlayer(opts: PlayerOptions) {
     get speed() { return speed; },
     get camera() { return { pos: camPos, look: camLook }; },
     setArea(a: Area | null) { area = a; },
-    teleport, update,
+    teleport, face, frame, update,
   };
 }
 

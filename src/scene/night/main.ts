@@ -109,7 +109,7 @@ export async function start(root: HTMLElement) {
   pending.push(createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
-    [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-30, -95, 18], [30, -95, 18], [-22, -190, 18],
+    [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
     [ANCHORS.campus.x, ANCHORS.campus.z, 52], [ANCHORS.campus.x, -72, 24], [ANCHORS.market.x, ANCHORS.market.z, 44], [ANCHORS.pad.x - 10, -24, 34],
     [34, -118, 17], // media tower (carriers/megascreen.ts)
   ];
@@ -136,7 +136,7 @@ export async function start(root: HTMLElement) {
   if (!params.has('noglb')) {
     pending.push(loadGlbTowers([
       { file: 'tower-a', x: ANCHORS.towerA.x, z: ANCHORS.towerA.z, height: 84, tint: PAL.cyan },
-      { file: 'tower-b', x: -30, z: -95, height: 70, yaw: 0.2, tint: PAL.magenta },
+      { file: 'tower-b', x: -33, z: -95, height: 70, yaw: 0.2, tint: PAL.magenta }, // 3 u back from the sidewalk: its ground floor used to swallow the bus shelter's panel
       { file: 'tower-c', x: 30, z: -95, height: 64, yaw: -0.3, tint: PAL.cyan },
       { file: 'tower-d', x: -22, z: -190, height: 78, yaw: 0.1, tint: PAL.yellow },
       { file: 'tower-01', x: -62, z: -130, height: 58, yaw: 0.2, tint: PAL.cyan },
@@ -273,6 +273,7 @@ export async function start(root: HTMLElement) {
     player.teleport(...SPAWN.education.pos, SPAWN.education.yaw); // in view of the pre-warm poses so its skin compiles now
   }
   const playerPos = new THREE.Vector3(); // player feet, or the spawn when there is no character (`?nopeople`)
+  const dockTarget = new THREE.Vector3(), dockNormal = new THREE.Vector3();
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
   const nav = createNav({
     journey,
@@ -286,10 +287,30 @@ export async function start(root: HTMLElement) {
       hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase());
       hud.showHintOnce();
     },
-    onDock: (id) => content.dock(id),
+    onDock: (id) => {
+      content.dock(id);
+      // The character turns to the carrier: the follow camera (and the phone dock framing) look at it too.
+      const c = content.carriers[id];
+      if (player && c && id !== 'amd-dc') { c.mount.getWorldPosition(dockTarget); player.face(dockTarget.x, dockTarget.z); }
+    },
     onUndock: () => content.undock(),
     dockOffset: (id, out) => (id === 'amd-dc' ? content.carrierDisplacement(id, out) : out.set(0, 0, 0)),
-    dockPoseOf: (id, pos, look) => { const c = content.carriers[id]; if (!c?.dockPose) return false; c.dockPose(pos, look); return true; },
+    dockPoseOf: (id, pos, look) => {
+      const c = content.carriers[id];
+      // Phones have no CSS3D slab to frame: the dwell poses would stare at an empty panel. The camera stays over the
+      // character's shoulder, looking at the carrier (the blimp's formation flight is the view on every device).
+      if (narrow && player && c && id !== 'amd-dc') { c.mount.getWorldPosition(dockTarget); c.mount.getWorldDirection(dockNormal); player.frame(dockTarget, dockNormal, c.width, pos, look); return true; }
+      if (!c?.dockPose) return false;
+      c.dockPose(pos, look);
+      if (narrow) {
+        // Portrait: the formation slot sits a little further out (the avenue's towers are close on the port side, so not
+        // much further) and the look point drops so the banner's middle band shows above the bottom sheet.
+        pos.sub(look).multiplyScalar(1.35).add(look);
+        const dx = look.x - pos.x, dz = look.z - pos.z, h = Math.hypot(dx, dz) || 1, a = Math.atan2(look.y - pos.y, h) - 0.2;
+        look.y = pos.y + Math.tan(a) * h;
+      }
+      return true;
+    },
   });
   hud.onBack(() => nav.undock());
   const input = createInput({
@@ -409,6 +430,7 @@ export async function start(root: HTMLElement) {
   const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); perf.dpr = dpr; };
   (window as any).__perf = perf;
   (window as any).__scene = scene;
+  (window as any).__camera = camera;
   const timed = (name: string, fn: () => void) => {
     const a = performance.now(); fn(); const d = performance.now() - a;
     if (d > 40) {

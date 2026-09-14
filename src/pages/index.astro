@@ -183,15 +183,19 @@ const win = (k: string) => WINDOWS[k].join(',');
           <li class="keys-only"><kbd>E</kbd><span>interact</span></li>
           <li class="keys-only"><kbd>Esc</kbd><span>back</span></li>
           <li class="keys-only">drag<span>look around</span></li>
-          <li class="touch-only">left side<span>joystick</span></li>
-          <li class="touch-only">right side<span>look around</span></li>
+          <li class="touch-only">left thumb<span>move</span></li>
+          <li class="touch-only">push past the ring<span>run</span></li>
+          <li class="touch-only">right thumb<span>look around</span></li>
           <li class="touch-only"><kbd>E</kbd><span>interact</span></li>
         </ul>
       </div>
       <button class="hud-back" type="button" hidden>← Back</button>
       <div class="hud-touch" aria-hidden="true">
-        <div class="stick-zone"><div class="stick"><i class="stick-knob"></i></div></div>
-        <div class="hud-btns"><span class="hud-elabel"></span><button class="hud-btn" data-act="run" type="button" tabindex="-1">⇧</button><button class="hud-btn hud-btn-e" data-act="interact" type="button" tabindex="-1">E</button></div>
+        <div class="stick-zone">
+          <div class="stick"><i class="stick-knob"></i></div>
+          <div class="stick-rest"><span>move</span></div>
+        </div>
+        <div class="hud-btns"><span class="hud-elabel"></span><button class="hud-btn hud-btn-e" data-act="interact" type="button" tabindex="-1">E</button></div>
       </div>
       <!-- Phone chip bar (dock mode, coarse pointers): the docked carrier's named actions; hud.ts shows only the ones it defines. -->
       <div class="hud-chips" hidden aria-hidden="true">

@@ -45,6 +45,8 @@ const MOVE_KEYS: Record<string, [number, number, boolean]> = {
   ArrowUp: [0, 1, false], ArrowDown: [0, -1, false], ArrowLeft: [-1, 0, false], ArrowRight: [1, 0, false],
 };
 const STICK_R = 48, DEAD = 0.15;
+/** Finger this far past the ring's radius = run (the knob stays on the ring; the ring turns yellow). */
+const RUN_PAST = 1.35;
 
 function inField(el: EventTarget | null): boolean {
   const n = el as HTMLElement | null;
@@ -59,7 +61,7 @@ export function createInput(opts: InputOptions) {
   let interact = false, back = false;
   let orbitX = 0, orbitY = 0;
   const stickV = new THREE.Vector2();
-  let stickOn = false;
+  let stickOn = false, stickRun = false;
   const state: InputState = { move: new THREE.Vector2(), run: false, interact: false, back: false, orbitX: 0, orbitY: 0, walkIntent: false, stick: false };
   const enabled = () => opts.enabled?.() ?? true;
 
@@ -125,6 +127,8 @@ export function createInput(opts: InputOptions) {
       let dx = (e.clientX - ox) / STICK_R, dy = (e.clientY - oy) / STICK_R;
       const len = Math.hypot(dx, dy);
       if (len > 1) { dx /= len; dy /= len; }
+      const running = len > RUN_PAST;
+      if (running !== stickRun) { stickRun = running; stick?.classList.toggle('is-run', running); }
       if (knob) knob.style.transform = `translate(${(dx * STICK_R).toFixed(1)}px, ${(dy * STICK_R).toFixed(1)}px)`;
       const l = Math.min(1, len);
       const k = l < DEAD ? 0 : (l - DEAD) / (1 - DEAD) / (l || 1); // dead zone, rescaled to 0…1
@@ -132,8 +136,8 @@ export function createInput(opts: InputOptions) {
     });
     const end = (e: PointerEvent) => {
       if (e.pointerId !== id) return;
-      id = null; stickOn = false; stickV.set(0, 0);
-      stick?.classList.remove('is-on');
+      id = null; stickOn = false; stickRun = false; stickV.set(0, 0);
+      stick?.classList.remove('is-on', 'is-run');
     };
     zone.addEventListener('pointerup', end);
     zone.addEventListener('pointercancel', end);
@@ -160,7 +164,7 @@ export function createInput(opts: InputOptions) {
       for (const code of held) { const k = MOVE_KEYS[code]; if (!k) continue; m.x += k[0]; m.y += k[1]; if (k[2]) wasd = true; }
       if (m.lengthSq() > 1) m.normalize();
     }
-    state.run = run || runBtn;
+    state.run = run || runBtn || (stickOn && stickRun);
     state.interact = interact; state.back = back;
     state.orbitX = orbitX; state.orbitY = orbitY;
     state.walkIntent = wasd && m.lengthSq() > 0.01;

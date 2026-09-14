@@ -51,7 +51,7 @@ export function createHud() {
     if (backBtn) backBtn.hidden = m !== 'dock';
     if (m !== 'walk') showPrompt(null);
     if (m !== 'dock') setActions(null);
-    if (m === 'ride') hideHint();
+    if (m !== 'walk') hideHint();
   };
 
   function showPrompt(label: string | null, key = coarse ? 'TAP' : 'E') {
