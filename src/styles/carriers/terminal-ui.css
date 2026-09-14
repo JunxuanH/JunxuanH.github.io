@@ -51,7 +51,10 @@
     border-left: 0; border-right: 0; border-bottom: 0; font-size: 13px;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .term-head { position: static; padding: 8px 14px; font-size: 11px; }
+  .term-head { position: static; padding: 8px 14px; font-size: 11px; white-space: normal; line-height: 1.5; }
+  .term-node { overflow: visible; text-overflow: clip; }
+  /* the HUD chip row straddles the panel's top edge (22 px inside): the header starts below it */
+  html[data-mode="dock"] .sheet.term { padding-top: 28px; }
   .term-body { padding: 12px 14px 16px; }
   .term-foot { display: none; }
 }
@@ -65,7 +68,9 @@
   animation: type-in 0.45s steps(16) forwards;
   animation-delay: calc(min(var(--i, 0), 30) * 45ms);
 }
-@keyframes type-in { to { clip-path: inset(0); } }
+/* The end state reaches past the box (negative insets): glyph overhang, trailing letter-spacing and the ' · ' separator
+   pseudo-elements must never be shaved off the last characters of a line (iOS cut "2015 – 2019" to "2015 – 201"). */
+@keyframes type-in { to { clip-path: inset(-0.4em -4em -0.4em -0.4em); } }
 
 @media (prefers-reduced-motion: reduce) {
   .sheet.is-on, .sheet.is-on .term-body *, .term-cursor, .term-head::before { animation: none !important; }

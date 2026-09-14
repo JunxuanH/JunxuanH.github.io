@@ -440,14 +440,16 @@ export async function start(root: HTMLElement) {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
   const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
+  let tiltOn = false; // a phone is feeding device tilt into `pointer`
   addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1); });
   // Phones: device tilt drives the same parallax as the mouse, a little stronger. iOS only grants motion access from a
   // user gesture, so the permission is requested on the first touch; Android delivers events directly. `?nogyro` opts out.
   if (matchMedia('(pointer: coarse)').matches && !reducedMotion && !params.has('nogyro') && 'DeviceOrientationEvent' in window) {
-    rig.parallaxScale = 2.2;
+    rig.parallaxScale = 3;
     let base: { x: number; y: number } | null = null;
     const onTilt = (e: DeviceOrientationEvent) => {
       if (e.beta == null || e.gamma == null) return;
+      tiltOn = true;
       const angle = Number(screen.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation ?? 0);
       let x = e.gamma, y = e.beta; // portrait: gamma = roll left/right, beta = pitch toward/away
       if (angle === 90) { x = e.beta; y = -e.gamma; } else if (angle === -90 || angle === 270) { x = -e.beta; y = e.gamma; }
@@ -458,7 +460,24 @@ export async function start(root: HTMLElement) {
     const listen = () => addEventListener('deviceorientation', onTilt);
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE.requestPermission === 'function') {
-      addEventListener('pointerdown', () => { DOE.requestPermission!().then((s) => { if (s === 'granted') listen(); }).catch(() => {}); }, { once: true, capture: true });
+      // iOS: the request only counts inside a completed tap (touchend / click; pointerdown and touchstart are refused
+      // without a prompt). Ask on the first tap anywhere, retry on the next if WebKit refused, stop once answered. The
+      // hero's TILT chip is the explicit way in (a tap on "Enter the city" would prompt mid-cutscene).
+      const chip = document.querySelector<HTMLButtonElement>('.hero-tilt');
+      let asking = false;
+      const done = (granted: boolean) => {
+        removeEventListener('touchend', ask, true); removeEventListener('click', ask, true);
+        if (chip) { chip.textContent = granted ? 'Tilt on ◈' : 'Tilt off'; chip.disabled = true; setTimeout(() => { chip.hidden = true; }, 1600); }
+      };
+      const ask = () => {
+        if (asking) return;
+        asking = true;
+        DOE.requestPermission!().then((s) => { if (s === 'granted') listen(); done(s === 'granted'); })
+          .catch(() => { asking = false; }); // not a gesture WebKit accepts: try again on the next tap
+      };
+      addEventListener('touchend', ask, true);
+      addEventListener('click', ask, true);
+      if (chip) chip.hidden = false;
     } else listen();
     (window as any).__tilt = (beta: number, gamma: number) => onTilt({ beta, gamma } as DeviceOrientationEvent); // probes
   }
@@ -517,7 +536,12 @@ export async function start(root: HTMLElement) {
     rig.update(camera, rigP, pos, look, pointer, t, dt, reducedMotion); // look-ahead, damped parallax, bob, banking roll (journey.ts)
     railPose.pos.copy(camera.position); railPose.look.copy(look);
     // Blend rail / follow / dock cameras (nav.ts). In plain ride mode the rig's camera (with its roll) stands as is.
-    if (nav.resolveCamera(dt, railPose, player ? player.camera : null, camPos, camLook)) { camera.position.copy(camPos); camera.lookAt(camLook); }
+    if (nav.resolveCamera(dt, railPose, player ? player.camera : null, camPos, camLook)) {
+      camera.position.copy(camPos); camera.lookAt(camLook);
+      // On foot / docked, tilt turns the view a few degrees like looking around a window (the rail camera already
+      // takes it as parallax through the rig).
+      if (tiltOn) { camera.rotateY(-eased.x * 0.07); camera.rotateX(-eased.y * 0.045); }
+    }
     else camera.rotation.z -= eased.x * 0.02;
     // The hero slab belongs to the vista only: it fades the moment a pan starts (p may not move until a fly-over's apex).
     const heroOn = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05;
