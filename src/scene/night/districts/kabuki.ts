@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, mix, step, fract, texture, uv, float, smoothstep, time, hash, floor } from 'three/tsl';
+import { color, positionLocal, mix, step, fract, texture, uv, float, smoothstep, time, hash, floor, uniform } from '../tsl';
 import { PAL, rng } from '../palette';
 import { ANCHORS } from '../journey';
 import { neonText, createKeyedSigns, signMat } from '../signs';
@@ -22,7 +22,7 @@ function overhang(w: number, tint: number) {
   roof.position.set(0, 0, 1.7);
   const stripMat = new THREE.MeshBasicNodeMaterial();
   const buzz = mix(float(1), hash(floor(time.mul(20))), step(0.9, hash(floor(time.mul(0.4)))));
-  stripMat.colorNode = color(tint).mul(1.8).mul(buzz.mul(0.4).add(0.6));
+  stripMat.colorNode = uniform(new THREE.Color(tint)).mul(1.8).mul(buzz.mul(0.4).add(0.6));
   const strip = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 0.1, 0.1), stripMat);
   strip.position.set(0, -0.18, 3.2);
   const brace = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.08), new THREE.MeshStandardNodeMaterial({ color: 0x0c0d14 }));

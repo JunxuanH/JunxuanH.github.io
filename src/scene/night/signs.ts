@@ -1,14 +1,15 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, float, mix, step, hash, floor, time, color } from 'three/tsl';
+import { texture, uv, float, mix, step, hash, floor, time, color, uniform } from './tsl';
 import { loadSRGB } from './palette';
 
 /** Neon sign material: buzzing brightness (fast hash gated by a slow one), alpha from the cutout. */
 export function signMat(tex: THREE.Texture, id: number, tint = 0xffffff, gain = 3.2) {
   const m = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false });
   const t = texture(tex, uv());
-  const slow = hash(float(id).add(floor(time.mul(0.5))));
-  const buzz = mix(float(1), hash(float(id).add(floor(time.mul(30)))), step(0.88, slow));
-  m.colorNode = t.rgb.mul(color(tint)).mul(gain).mul(buzz.mul(0.6).add(0.4));
+  const uid = uniform(id), uTint = uniform(new THREE.Color(tint)), uGain = uniform(gain); // uniforms: one shared program for every sign
+  const slow = hash(uid.add(floor(time.mul(0.5))));
+  const buzz = mix(float(1), hash(uid.add(floor(time.mul(30)))), step(0.88, slow));
+  m.colorNode = t.rgb.mul(uTint).mul(uGain).mul(buzz.mul(0.6).add(0.4));
   m.opacityNode = t.a;
   return m;
 }

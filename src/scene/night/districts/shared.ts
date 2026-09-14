@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs } from 'three/tsl';
+import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs, uniform } from '../tsl';
 import { PAL, rng } from '../palette';
 import { neonText } from '../signs';
 import type { PropPlacement } from '../props';
@@ -79,7 +79,7 @@ export function createFlameSign(label: string, rows: number, seed: number, tint:
   const backing = new THREE.Mesh(new THREE.BoxGeometry(w + 1.0, h + 1.0, 0.3), new THREE.MeshStandardNodeMaterial({ color: 0x05060c, roughness: 0.6 }));
   group.add(backing);
   const frameMat = new THREE.MeshBasicNodeMaterial();
-  frameMat.colorNode = color(frameTint).mul(1.6);
+  frameMat.colorNode = uniform(new THREE.Color(frameTint)).mul(1.6);
   const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 1.2, h + 1.2, 0.2), frameMat);
   frame.position.z = -0.1;
   group.add(frame);
@@ -88,8 +88,9 @@ export function createFlameSign(label: string, rows: number, seed: number, tint:
   const cols = [PAL.cyan, tint, 0xdfe8ff];
   const mats = cols.map((c) => {
     const m = new THREE.MeshBasicNodeMaterial();
-    const buzz = mix(float(1), hash(floor(time.mul(24)).add(seed)), step(0.93, hash(floor(time.mul(0.7)).add(seed))));
-    m.colorNode = color(c).mul(1.7).mul(buzz.mul(0.5).add(0.5)); // just over the bloom threshold
+    const uSeed = uniform(seed);
+    const buzz = mix(float(1), hash(floor(time.mul(24)).add(uSeed)), step(0.93, hash(floor(time.mul(0.7)).add(uSeed))));
+    m.colorNode = uniform(new THREE.Color(c)).mul(1.7).mul(buzz.mul(0.5).add(0.5)); // just over the bloom threshold
     return m;
   });
   const rowH = (h - 1.2) / Math.max(rows, 3);
@@ -131,7 +132,8 @@ export function createConduit(points: THREE.Vector3[], tint: number = PAL.cyan) 
   const coreMat = new THREE.MeshBasicNodeMaterial();
   const s = uv().x;
   const pulse = pow(fract(s.mul(6.0).sub(time.mul(0.25))), 20.0);
-  coreMat.colorNode = mix(color(tint).mul(0.4), color(tint).mul(3.5), pulse);
+  const uT = uniform(new THREE.Color(tint));
+  coreMat.colorNode = mix(uT.mul(0.4), uT.mul(3.5), pulse);
   group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 200, 0.1, 6), coreMat));
   return group;
 }
@@ -144,7 +146,7 @@ export function stringLights(from: THREE.Vector3, to: THREE.Vector3, n: number, 
     mats.push(new THREE.Matrix4().makeTranslation(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * sag, from.z + (to.z - from.z) * t));
   }
   const mat = new THREE.MeshBasicNodeMaterial();
-  mat.colorNode = color(tint).mul(gain);
+  mat.colorNode = uniform(new THREE.Color(tint)).mul(uniform(gain));
   const im = new THREE.InstancedMesh(new THREE.SphereGeometry(radius, 6, 4), mat, mats.length);
   mats.forEach((m, k) => im.setMatrixAt(k, m));
   return im;
@@ -163,4 +165,29 @@ export function padTexture(col = '#f2ff3d') {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
+}
+
+/**
+ * Replace plain (non-TSL) materials that are configured identically with one shared instance. Every
+ * material instance costs a shader build (~10–20 ms of JS, twice when the water reflects it), so the
+ * district builders' habit of `new MeshStandardNodeMaterial({ color })` per element adds seconds to boot.
+ * Materials with node overrides (colorNode/emissiveNode/opacityNode/positionNode) are left alone.
+ */
+export function dedupeMaterials(root: THREE.Object3D) {
+  const pool = new Map<string, THREE.Material>();
+  let before = 0, after = 0;
+  const seen = new Set<string>();
+  root.traverse((o: any) => {
+    const m: any = o.material;
+    if (!m || Array.isArray(m) || !o.isMesh) return;
+    if (!seen.has(m.uuid)) { seen.add(m.uuid); before++; }
+    if (m.colorNode || m.emissiveNode || m.opacityNode || m.positionNode || m.normalNode || m.roughnessNode || m.metalnessNode || m.map || m.userData?.keep) return;
+    const key = [m.type, m.color?.getHex(), m.emissive?.getHex(), m.emissiveIntensity, m.roughness, m.metalness, m.transparent, m.opacity, m.side, m.depthWrite, m.depthTest, m.blending, m.vertexColors, m.wireframe, m.flatShading].join('|');
+    const shared = pool.get(key);
+    if (shared) o.material = shared; else pool.set(key, m);
+  });
+  const left = new Set<string>();
+  root.traverse((o: any) => { if (o.isMesh && o.material && !Array.isArray(o.material)) left.add(o.material.uuid); });
+  after = left.size;
+  return { before, after };
 }

@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import {
   positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, vec3,
-} from 'three/tsl';
+} from './tsl';
 import { loader, rng } from './palette';
 
 /*

@@ -5,7 +5,7 @@
  * waiting outside the south end. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
-import { color } from 'three/tsl';
+import { color } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { CURB_H } from '../streets';

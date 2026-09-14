@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   attribute, positionLocal, normalLocal, uv, float, vec2, vec3, color, mix, step, smoothstep, fract, floor,
   abs, hash, time, instanceIndex, texture, luminance, max, positionWorld, cameraPosition, length,
-} from 'three/tsl';
+ uniform } from './tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -285,7 +285,7 @@ function towerMaterial(map: THREE.Texture | null, bboxH: number, tint: number) {
   const yn = positionLocal.y.div(bboxH);
   const bands = smoothstep(0.012, 0.0, abs(fract(yn.mul(4.0)).sub(0.97)));
   const roof = smoothstep(0.975, 0.99, yn);
-  const tierE = color(tint).mul(max(bands, roof)).mul(3.0);
+  const tierE = uniform(new THREE.Color(tint)).mul(max(bands, roof)).mul(3.0);
   m.colorNode = base.mul(0.5);
   m.emissiveNode = base.mul(glow).mul(2.4).add(tierE);
   return m;

@@ -75,12 +75,6 @@ export async function createCarriers(ctx: CarrierCtx) {
     try {
       const c = await (await load()).create(ctx);
       byId[id] = c;
-      // Lights ride inside the carrier group (gated by `range`), see districts.ts for why.
-      for (const [x, y, z, col, i, d] of c.lights ?? []) {
-        const l = new THREE.PointLight(col, i, d ?? 55, 2);
-        l.position.set(x, y, z);
-        c.group.add(l);
-      }
       group.add(c.group);
       if (c.props) props.push(...c.props);
       if (c.npcs) npcs.push(...c.npcs);
@@ -95,5 +89,7 @@ export async function createCarriers(ctx: CarrierCtx) {
       if (c.group.visible) c.update?.(t, dt, p);
     }
   };
-  return { byId, group, lights, props, npcs, update };
+  /** Specs of the carriers currently drawn — fed to the light pool (lights.ts) every frame. */
+  const activeLights = (): LightSpec[] => Object.values(byId).flatMap((c) => (c.group.visible ? c.lights ?? [] : []));
+  return { byId, group, lights, props, npcs, update, activeLights };
 }

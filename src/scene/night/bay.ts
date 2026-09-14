@@ -3,7 +3,7 @@ import {
   add, sub, div, vec2, vec3, float, time, texture, normalize, cameraPosition, positionWorld, positionLocal,
   transformNormalToView, sin, cos, max, dot, pow, length, mix, reflector, color, uv, step, fract, floor, hash,
   smoothstep, abs, reflect,
-} from 'three/tsl';
+} from './tsl';
 import { PAL, loader } from './palette';
 import { groundMaterial } from './streets';
 

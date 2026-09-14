@@ -17,20 +17,13 @@ export async function createDistricts(ctx: DistrictCtx) {
   const [jp, ce, ka, pi] = await Promise.all([japantown.create(ctx), center.create(ctx), kabuki.create(ctx), pier.create(ctx)]);
   const builds: DistrictBuild[] = [jp, ce, ka, pi];
   const group = new THREE.Group();
-  for (const b of builds) {
-    // Lights are children of the district group: three's WebGPU path shades every visible light per fragment,
-    // so gating them with the district keeps the per-pixel cost flat across the journey.
-    for (const [x, y, z, c, i, d] of b.lights) {
-      const l = new THREE.PointLight(c, i, d ?? 55, 2);
-      l.position.set(x, y, z);
-      b.group.add(l);
-    }
-    group.add(b.group);
-  }
+  for (const b of builds) group.add(b.group);
   return {
     group,
     props: builds.flatMap((b) => b.props),
-    lights: [] as LightSpec[], // already mounted inside the groups
+    lights: [] as LightSpec[],
+    /** Specs of the districts currently drawn — fed to the light pool (lights.ts) every frame. */
+    activeLights: () => builds.flatMap((b) => (b.group.visible ? b.lights : [])),
     padRing: pi.padRing,
     // Districts are only drawn near their own section (hundreds of small meshes each; invisible from the vista anyway).
     update: (t: number, p: number) => {

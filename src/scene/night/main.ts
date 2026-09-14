@@ -1,7 +1,9 @@
 import * as THREE from 'three/webgpu';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js';
 import { createContent } from './content';
 import { boot } from './boot';
+import { dedupeMaterials } from './districts/shared';
+import { createLightPool } from './lights';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -95,7 +97,8 @@ export async function start(root: HTMLElement) {
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
-  createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e));
+  const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
+  pending.push(createBackdrop().then((m) => scene.add(m)).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-30, -95, 18], [30, -95, 18], [-22, -190, 18],
@@ -123,7 +126,7 @@ export async function start(root: HTMLElement) {
 
   // Signature (fal) towers first, playweave set as mid-ground fill.
   if (!params.has('noglb')) {
-    loadGlbTowers([
+    pending.push(loadGlbTowers([
       { file: 'tower-a', x: ANCHORS.towerA.x, z: ANCHORS.towerA.z, height: 84, tint: PAL.cyan },
       { file: 'tower-b', x: -30, z: -95, height: 70, yaw: 0.2, tint: PAL.magenta },
       { file: 'tower-c', x: 30, z: -95, height: 64, yaw: -0.3, tint: PAL.cyan },
@@ -134,7 +137,7 @@ export async function start(root: HTMLElement) {
       { file: 'tower-04', x: 90, z: -120, height: 54, yaw: 0.3, tint: PAL.magenta },
       { file: 'tower-05', x: -96, z: -180, height: 60, yaw: -0.2, tint: PAL.cyan },
       { file: 'tower-06', x: 40, z: -260, height: 70, yaw: 0.5, tint: PAL.yellow },
-    ]).then((g) => scene.add(g));
+    ]).then((g) => scene.add(g)));
   }
 
   // ---------- bay
@@ -239,8 +242,10 @@ export async function start(root: HTMLElement) {
     scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople') && !lite, // carrier NPCs are desktop-only
     onFlap: () => audio.clack(6, 0.07),
   });
-  for (const [x, y, z, c, i, d] of content.lights) lamp(x, y, z, c, i, d);
-  createProps({ tier, extra: [...districts.props, ...content.props] }).then((p) => { scene.add(p.group); console.info('[night] props', p.count); });
+  // District + carrier lights go through a fixed-size pool (constant light count → no shader rebuilds).
+  const lightPool = createLightPool(scene, 6);
+  const propsReady = createProps({ tier, extra: [...districts.props, ...content.props] }).then((p) => { scene.add(p.group); console.info('[night] props', p.count); return p; });
+  pending.push(propsReady);
 
   // ---------- interactions (sign flicker, NPC glances, landing car on the pier)
   const landingCar = traffic.models.ground[0]?.clone(true) ?? null;
@@ -255,16 +260,66 @@ export async function start(root: HTMLElement) {
   cssRenderer.setSize(innerWidth, innerHeight);
   cssRenderer.domElement.classList.add('css3d');
   root.appendChild(cssRenderer.domElement);
+  // The hero slab is camera-locked, so it is plain fixed DOM (2D parallax below) rather than a CSS3D object:
+  // Safari hit-tests 3D-transformed elements inside a perspective context a few pixels off their paint.
   const heroCopy = document.getElementById('hero-copy')!;
-  heroCopy.style.width = '720px';
-  const heroObj = new CSS3DObject(heroCopy);
-  heroObj.scale.setScalar(4.6 / 720);
-  heroObj.position.set(narrow ? 0 : -5.2, narrow ? -4.2 : -3.0, -14);
-  camera.add(heroObj);
+  document.body.appendChild(heroCopy);
+  heroCopy.classList.add('is-fixed');
+  const heroScale = () => { heroCopy.style.setProperty('--hero-scale', String(THREE.MathUtils.clamp(innerWidth / 1800, 0.55, 1))); };
+  heroScale();
 
   // ---------- post
-  const pipeline = createPost(renderer, scene, camera, tier);
-  boot.phase('first light', 0.94);
+  const { pipeline, scenePass } = createPost(renderer, scene, camera, tier);
+  const pos = new THREE.Vector3(), look = new THREE.Vector3(), off = new THREE.Vector3();
+  // The water reflector renders with a camera that only sees layer 0: street-level detail goes to layer 1 so it
+  // is drawn by the main camera but never mirrored (half the shader builds, far fewer reflection draws).
+  camera.layers.enable(1);
+  const noReflect = (o: THREE.Object3D | null | undefined) => o?.traverse((c) => { if (!(c as any).isLight) c.layers.set(1); });
+  for (const b of [districts.group.children[0], districts.group.children[1], districts.group.children[2]]) noReflect(b); // campus, downtown, market (the pier stays mirrored)
+  for (const [id, c] of Object.entries(content.carriers)) if (id !== 'contact') noReflect(c.group);
+  for (const l of life as any[]) noReflect(l.group);
+  for (const s of particles) noReflect(s.mesh);
+  pending.push(propsReady.then((p) => noReflect(p.group)));
+  // Share identical plain materials before anything is built (fewer shader builds, fewer pipelines).
+  {
+    const d = dedupeMaterials(scene);
+    console.info('[night] materials', d.before, '→', d.after);
+  }
+  // `?prof`: time three's internal stages so a slow frame says where it went (node builds, pipelines, uploads).
+  const stages: Record<string, number> = {};
+  if (params.has('prof')) {
+    const wrap = (obj: any, method: string, label: string) => {
+      const orig = obj?.[method]; if (!orig) return;
+      obj[method] = function (...args: any[]) { const a = performance.now(); const r = orig.apply(this, args); stages[label] = (stages[label] || 0) + performance.now() - a; return r; };
+    };
+    const r: any = renderer;
+    wrap(r._nodes, 'getForRender', 'nodes'); wrap(r._pipelines, 'getForRender', 'pipelines'); wrap(r._textures, 'updateTexture', 'textures');
+    wrap(r._geometries, 'updateForRender', 'geometries'); wrap(r._bindings, 'updateForRender', 'bindings'); wrap(r._objects, 'get', 'objects');
+    wrap(r.backend, 'draw', 'draw'); wrap(r.backend, 'createRenderPipeline', 'gpuPipeline'); wrap(r.backend, 'createTexture', 'gpuTexture'); wrap(r.backend, 'updateTexture', 'gpuTexUpload');
+  }
+  // Pre-warm: real frames from every key pose with the whole city visible, so three builds and caches
+  // every material/render object now (behind the boot bar) instead of the first time a district scrolls
+  // into view. Backgrounding this proved unreliable (three keys the cache per render pass); a slightly
+  // longer boot with a progress bar beats freezes while scrolling.
+  boot.phase('compiling shaders', 0.86);
+  {
+    const t0 = performance.now();
+    const hidden: THREE.Object3D[] = [];
+    scene.traverse((o) => { if (!o.visible) { o.visible = true; hidden.push(o); } });
+    const poses = [0, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0];
+    for (let i = 0; i < poses.length; i++) {
+      if (water) water.visible = poses[i] === 0 || poses[i] === 1.0; // the reflection pass only where the water is seen
+      poseAt(poses[i], pos, look); camera.position.copy(pos); camera.lookAt(look); camera.updateMatrixWorld(true);
+      const tp = performance.now();
+      pipeline.render();
+      if (params.has('prof')) console.info('[night] pre-warm pose', poses[i], Math.round(performance.now() - tp), 'ms');
+      boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * (i + 1)) / poses.length);
+      await new Promise((r) => setTimeout(r, 0)); // let the boot bar paint between the (synchronous) frames
+    }
+    for (const o of hidden) o.visible = false;
+    console.info('[night] pre-warm', Math.round(performance.now() - t0), 'ms', params.has('prof') ? Object.entries(stages).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ') : '');
+  }
+  boot.phase('first light', 0.97);
   let firstFrame = true;
 
   // ---------- journey
@@ -274,20 +329,20 @@ export async function start(root: HTMLElement) {
     onUpdate: (st) => { if (!params.has('p')) journey.p = st.progress; },
   });
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
+  const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
   const journeyEl = document.querySelector<HTMLElement>('.journey')!;
   const scrollTo = (id: SectionId) => {
     const y = journeyEl.offsetTop + sectionStart(id) * (journeyEl.offsetHeight - innerHeight) + 2;
     if (reducedMotion) window.scrollTo(0, y);
     else gsap.to(window, { scrollTo: y, duration: 1.0, ease: 'power2.inOut' });
   };
-  navLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); scrollTo(a.dataset.section as SectionId); }));
+  jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); scrollTo(a.dataset.section as SectionId); }));
   let currentSection: SectionId | null = null;
 
   const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
   addEventListener('pointermove', (e) => pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1));
 
   const clock = new THREE.Timer();
-  const pos = new THREE.Vector3(), look = new THREE.Vector3(), off = new THREE.Vector3();
   const perf = { cpu: 0, frames: 0, renderer, dpr };
   // Adaptive resolution: drop the pixel ratio when frames run long, creep back up when there is headroom.
   let ema = 16, slow = 0, fast = 0;
@@ -301,6 +356,14 @@ export async function start(root: HTMLElement) {
   const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); perf.dpr = dpr; };
   (window as any).__perf = perf;
   (window as any).__scene = scene;
+  const timed = (name: string, fn: () => void) => {
+    const a = performance.now(); fn(); const d = performance.now() - a;
+    if (d > 40) {
+      const detail = Object.entries(stages).filter(([, v]) => v > 5).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ');
+      console.warn('[slow]', name, Math.round(d), 'ms at p=', journey.p.toFixed(3), detail);
+    }
+    for (const k in stages) stages[k] = 0;
+  };
   renderer.setAnimationLoop(() => {
     clock.update();
     const t = reducedMotion ? 0 : clock.getElapsed();
@@ -308,7 +371,7 @@ export async function start(root: HTMLElement) {
     govern(dt);
     eased.lerp(pointer, 0.05);
     const p = journey.p;
-    content.update(p, t, dt); // carriers first so the blimp's displacement is current
+    timed('content', () => content.update(p, t, dt)); // carriers first so the blimp's displacement is current
     poseAt(p, pos, look);
     content.followOffset(p, off);
     pos.add(off); look.add(off);
@@ -317,29 +380,41 @@ export async function start(root: HTMLElement) {
     camera.rotation.z -= eased.x * 0.02;
     heroCopy.style.opacity = String(THREE.MathUtils.clamp(1 - (p - 0.05) * 25, 0, 1));
     heroCopy.style.pointerEvents = p > 0.09 ? 'none' : 'auto';
+    heroCopy.style.transform = `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
     if (water) water.visible = p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
     const sec = sectionAt(p);
     if (sec !== currentSection) {
       currentSection = sec;
       navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === sec));
     }
-    traffic.update(dt, t, camera.position);
-    ads.update(t);
-    for (const l of life) l.update(dt, camera);
-    districts.update(t, p);
-    for (const s of particles) s.update(p, dt);
-    interact.update(dt, p);
-    audio.update(p);
+    // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
+    timed('traffic', () => traffic.update(dt, t, camera.position));
+    timed('ads', () => ads.update(t));
+    timed('life', () => { for (const l of life) l.update(dt, camera); });
+    timed('districts', () => districts.update(t, p));
+    timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
+    timed('particles', () => { for (const s of particles) s.update(p, dt); });
+    timed('interact', () => interact.update(dt, p));
+    timed('audio', () => audio.update(p));
     const t0 = performance.now();
-    pipeline.render();
-    cssRenderer.render(scene, camera);
-    if (firstFrame) { firstFrame = false; boot.done(); }
+    timed('render', () => pipeline.render());
+    timed('css3d', () => cssRenderer.render(scene, camera));
+    if (firstFrame) {
+      firstFrame = false; boot.done();
+      if (params.has('prof')) {
+        const vis = (o: THREE.Object3D) => { for (let a: THREE.Object3D | null = o; a; a = a.parent) if (!a.visible) return false; return true; };
+        const now: string[] = []; scene.traverse((o: any) => { if (o.isLight && vis(o)) now.push(o.type + '#' + o.id); });
+        console.info('[night] frame lights', now.length, now.join(' '));
+        console.info('[night] frame contextNode', (renderer as any).contextNode?.id, (renderer as any).contextNode?.version);
+      }
+    }
     perf.cpu += performance.now() - t0;
     perf.frames++;
   });
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
+    heroScale();
     renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight);
     cssRenderer.setSize(innerWidth, innerHeight);

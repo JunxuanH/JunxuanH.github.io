@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { uv, float, smoothstep, color, sin, time, fract, step, hash } from 'three/tsl';
+import { uv, float, smoothstep, color, sin, time, fract, step, hash } from './tsl';
 import { instantiate, type CharacterAsset, type SkinOptions } from './characters';
 import type { PathDef } from './paths';
 
@@ -120,7 +120,10 @@ export function createRobots(opts: RobotsOptions) {
         }
       }
       const far = camera.position.distanceTo(root.getWorldPosition(tmp)) > 110;
-      root.visible = !far;
+      // Cull the body, never the light: a light leaving the visible set changes the lights hash of every
+      // material in the scene and three regenerates all their shaders (multi-second hitches).
+      for (const c of root.children) if (!(c as any).isLight && c !== r.light?.target && c !== r.cone) c.visible = !far;
+      if (far) { if (r.cone) r.cone.visible = false; if (r.light) r.light.intensity = 0; }
       if (!far) r.inst.mixer.update(dt);
     }
   };

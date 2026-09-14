@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   attribute, vec2, vec3, float, fract, floor, time, sin, cos, positionLocal, uniform, smoothstep, mix, color,
   texture, uv, mx_noise_float, cameraWorldMatrix, abs, max, step,
-} from 'three/tsl';
+} from './tsl';
 import { SECTIONS, type SectionId } from './journey';
 import { rng, type Tier } from './palette';
 

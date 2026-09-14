@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   positionLocal, normalize, mix, color, smoothstep, step, hash, floor, float, uv, texture, vec3,
   fog, densityFogFactor, positionWorld,
-} from 'three/tsl';
+} from './tsl';
 import { PAL, loadSRGB } from './palette';
 
 /**

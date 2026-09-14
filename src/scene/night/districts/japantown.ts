@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, positionWorld, smoothstep, mix, pow, sin, time, length, float, uv, step, fract } from 'three/tsl';
+import { color, positionLocal, positionWorld, smoothstep, mix, pow, sin, time, length, float, uv, step, fract } from '../tsl';
 import { rng } from '../palette';
 import { ANCHORS } from '../journey';
 import { neonText, createKeyedSigns } from '../signs';

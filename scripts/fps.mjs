@@ -8,7 +8,7 @@ for (const q of queries) {
   const [vw, vh] = (process.env.VIEW || '1600x900').split('x').map(Number);
   const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: Number(process.env.DPR) || 1 });
   await page.goto(`${base}?${q}`);
-  await page.waitForTimeout(8000);
+  await page.waitForTimeout(Number(process.env.WAIT) || 12000);
   const r = await page.evaluate(() => new Promise((res) => {
     const ts = [];
     const p = window.__perf; const cpu0 = p ? p.cpu : 0, fr0 = p ? p.frames : 0;

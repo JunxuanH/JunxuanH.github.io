@@ -4,7 +4,7 @@
  * Stands at the east end of the market street, facing the camera's approach from the west.
  */
 import * as THREE from 'three/webgpu';
-import { color, uv, fract, step, float, mix, time, hash, floor, smoothstep } from 'three/tsl';
+import { color, uv, fract, step, float, mix, time, hash, floor, smoothstep } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import gsap from 'gsap';
 import { THEMES } from '../theme';

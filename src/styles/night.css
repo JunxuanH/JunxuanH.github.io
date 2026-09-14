@@ -225,3 +225,12 @@ html.no-3d .slab.is-on, html.no-3d .card.is-on { animation: none; }
 @keyframes boot-out { 0% { clip-path: inset(0); } 30% { clip-path: inset(0 0 0 0); transform: translateX(6px); } 60% { clip-path: inset(20% 0 30% 0); } 100% { clip-path: inset(50% 0 50% 0); opacity: 0; } }
 @media (max-width: 760px) { .boot-wordmark { font-size: 44px; } .boot-skip { opacity: 1; } .boot-hint { display: block; } }
 @media (prefers-reduced-motion: reduce) { .boot-wordmark::before, .boot-wordmark::after, .boot-bar i, .boot-log li.is-live::after { animation: none; } .boot.is-done { animation: none; display: none; } }
+
+/* Hero slab as a fixed 2D overlay (camera-locked; see main.ts) */
+.hero-copy.is-fixed {
+  position: fixed; left: clamp(16px, 6vw, 110px); bottom: clamp(20px, 9vh, 110px); z-index: 4;
+  width: 720px; max-width: calc(100vw - 32px); transform-origin: left bottom; transform: scale(var(--hero-scale, 1));
+}
+@media (max-width: 760px) {
+  .hero-copy.is-fixed { left: 16px; right: 16px; bottom: max(24px, env(safe-area-inset-bottom)); width: auto; transform-origin: center bottom; }
+}

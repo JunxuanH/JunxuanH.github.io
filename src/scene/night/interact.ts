@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { uniform, mix, float, hash, floor, time } from 'three/tsl';
+import { uniform, mix, float, hash, floor, time } from './tsl';
 import gsap from 'gsap';
 import { sectionAt, type SectionId } from './journey';
 import type { Instance } from './characters';

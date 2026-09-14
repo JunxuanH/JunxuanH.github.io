@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, smoothstep, abs, mix, float } from 'three/tsl';
+import { color, positionLocal, smoothstep, abs, mix, float } from '../tsl';
 import { PAL } from '../palette';
 import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';

@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, positionLocal, vec3, smoothstep, float } from 'three/tsl';
+import { texture, uv, positionLocal, vec3, smoothstep, float } from './tsl';
 import { loader, loadSRGB } from './palette';
 
 /**

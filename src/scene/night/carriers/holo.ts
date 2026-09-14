@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, float, floor, hash, length, mix, smoothstep, step, time, uv } from 'three/tsl';
+import { color, float, floor, hash, length, mix, smoothstep, step, time, uv } from '../tsl';
 import { PAL } from '../palette';
 import type { Carrier, CarrierCtx } from './index';
 

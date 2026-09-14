@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   texture, uv, color, vec3, float, step, normalize, cameraPosition, positionWorld, normalWorld, dot, max, pow,
   luminance, mx_rgbtohsv, mix,
-} from 'three/tsl';
+ uniform } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
@@ -101,14 +101,20 @@ export interface SkinOptions {
 }
 
 /** Replace the GLB's standard materials with node materials: PBR maps kept, neon rim + LED glow added. */
+const skinCache = new Map<string, THREE.MeshStandardNodeMaterial>();
 export function applySkin(root: THREE.Object3D, opts: SkinOptions = {}) {
-  const rim = color(opts.rim ?? 0x00e5ff);
-  const rimStrength = opts.rimStrength ?? 0.6;
-  const tint = opts.tint !== undefined ? color(opts.tint) : null;
+  const rim = uniform(new THREE.Color(opts.rim ?? 0x00e5ff)); // uniforms so every rig shares one program
+  const rimStrength = uniform(opts.rimStrength ?? 0.6);
+  const tint = opts.tint !== undefined ? uniform(new THREE.Color(opts.tint)) : null;
   root.traverse((o: any) => {
     if (!o.isMesh) return;
     const src = o.material as THREE.MeshStandardMaterial;
     if ((src as any).__nightSkin) return;
+    // One material per (source material, skin options): clones of the same rig share it, so a crowd of
+    // 50 walkers costs a handful of shader builds instead of a hundred.
+    const key = [src.uuid, opts.rim ?? 0x00e5ff, opts.rimStrength ?? 0.6, opts.tint ?? -1, opts.glow !== false, opts.glowStrength ?? 2.2].join('|');
+    const cached = skinCache.get(key);
+    if (cached) { o.userData.srcMaterial = src; o.material = cached; o.castShadow = false; o.receiveShadow = false; o.frustumCulled = true; return; }
     const m = new THREE.MeshStandardNodeMaterial({
       roughness: src.roughness ?? 0.7, metalness: src.metalness ?? 0.0, side: src.side,
       transparent: src.transparent, alphaTest: src.alphaTest,
@@ -130,6 +136,7 @@ export function applySkin(root: THREE.Object3D, opts: SkinOptions = {}) {
     if (src.emissiveMap) emissive = emissive.add(texture(src.emissiveMap, uv()).rgb.mul(2.0));
     m.emissiveNode = emissive;
     (m as any).__nightSkin = true;
+    skinCache.set(key, m);
     o.userData.srcMaterial = src; // keeps the original maps inspectable (viewer HUD)
     o.material = m;
     o.castShadow = false;

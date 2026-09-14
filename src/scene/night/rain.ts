@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { attribute, vec3, fract, time, positionLocal, cameraPosition, color, float } from 'three/tsl';
+import { attribute, vec3, fract, time, positionLocal, cameraPosition, color, float } from './tsl';
 import { rng } from './palette';
 
 /** Rain streaks: instanced thin quads falling inside a camera-relative box (all on the GPU). */

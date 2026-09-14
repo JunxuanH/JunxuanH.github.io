@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, vec3, color, mix, step, fract, smoothstep, luminance, positionLocal, float, pow, time } from 'three/tsl';
+import { texture, uv, vec3, color, mix, step, fract, smoothstep, luminance, positionLocal, float, pow, time, uniform } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, params, rng, type Tier } from './palette';
@@ -36,7 +36,7 @@ function bakeModel(root: THREE.Object3D, bucket: (o: THREE.Mesh) => string, mate
 function nightCar(scene: THREE.Object3D, tint: number) {
   return bakeModel(scene, (o) => (/wheel|tire/i.test(o.name) ? 'wheel' : 'body'), (key) => {
     const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.35, metalness: 0.6 });
-    m.colorNode = key === 'wheel' ? color(0x0a0a0d) : mix(color(0x141826), color(tint), 0.35);
+    m.colorNode = key === 'wheel' ? color(0x0a0a0d) : mix(color(0x141826), uniform(new THREE.Color(tint)), 0.35);
     return m;
   });
 }
@@ -61,7 +61,7 @@ async function loadCarModels() {
           const base = map ? texture(map, uv()).rgb : vec3(0.12, 0.13, 0.18);
           const strip = smoothstep(0.45, 0.7, luminance(base));
           m.colorNode = base.mul(0.5);
-          m.emissiveNode = mix(color(tint), color(0xffffff), step(0.5, fract(positionLocal.z.mul(0.3)))).mul(strip).mul(3.0);
+          m.emissiveNode = mix(uniform(new THREE.Color(tint)), color(0xffffff), step(0.5, fract(positionLocal.z.mul(0.3)))).mul(strip).mul(3.0);
           return m;
         });
         const wrap = new THREE.Group();
@@ -144,8 +144,8 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
       const tube = new THREE.TubeGeometry(curve, 200, 0.12, 6);
       const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
       const s = uv().x;
-      const pulse = pow(fract(s.mul(28).sub(time.mul(0.9 * dir)).add(i * 0.3)), 6.0);
-      m.colorNode = color(tint).mul(pulse).mul(3.0);
+      const pulse = pow(fract(s.mul(28).sub(time.mul(0.9 * dir)).add(uniform(i * 0.3))), 6.0);
+      m.colorNode = uniform(new THREE.Color(tint)).mul(pulse).mul(3.0);
       m.opacityNode = pulse.mul(0.9);
       const mesh = new THREE.Mesh(tube, m);
       mesh.position.x = off;
@@ -169,4 +169,4 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
 }
 
 // TSL vec2 helper (avoid importing under the name used by three's Vector2 in this file)
-import { vec2 as vec2f } from 'three/tsl';
+import { vec2 as vec2f } from './tsl';

@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, fract, mix, positionLocal, smoothstep, step, time, uv, abs, atan, max } from 'three/tsl';
+import { color, fract, mix, positionLocal, smoothstep, step, time, uv, abs, atan, max } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createBillboard } from '../bay';
 import { THEMES } from '../theme';
@@ -104,9 +104,8 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   mount.rotation.y = Math.PI / 2;
   root.add(mount);
 
-  const light = new THREE.PointLight(PAL.cyan, 300, 40, 2);
-  light.position.set(0, -5.6, 0);
-  root.add(light);
+  // No child PointLight: a light that appears/disappears with the group changes the scene's light count
+  // and forces every shader to regenerate (see lights.ts); the banner and seams are emissive anyway.
 
   // Loop + heading. Matrix4.lookAt(eye, target, up) builds a frame whose +Z axis is (eye − target), so
   // lookAt(ahead, pos) points the root's local +Z along the direction of travel (drones.ts idiom; the hull nose is

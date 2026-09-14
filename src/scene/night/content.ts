@@ -223,5 +223,5 @@ export async function createContent(opts: ContentOptions) {
     return c.displacement(out).multiplyScalar(w);
   }
 
-  return { update, followOffset, stackRoot, lights: carriers.lights, props: carriers.props, npcs: carriers.npcs, carriers: carriers.byId };
+  return { update, followOffset, stackRoot, lights: carriers.lights, props: carriers.props, npcs: carriers.npcs, carriers: carriers.byId, activeLights: carriers.activeLights };
 }

@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, step, fract, time, float, uv, smoothstep, hash } from 'three/tsl';
+import { color, step, fract, time, float, uv, smoothstep, hash } from './tsl';
 import { gltfLoader, applySkin } from './characters';
 import type { DroneLane } from './paths';
 

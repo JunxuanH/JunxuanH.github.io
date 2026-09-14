@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { pass, mrt, output, velocity, vec2, vec3, vec4 } from 'three/tsl';
+import { pass, mrt, output, velocity, vec2, vec3, vec4 } from './tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import { traa } from 'three/addons/tsl/display/TRAANode.js';
 import { sharpen } from 'three/addons/tsl/display/SharpenNode.js';
@@ -17,7 +17,7 @@ export function createPost(renderer: THREE.WebGPURenderer, scene: THREE.Scene, c
   if (tier === 'low') {
     const p = pass(scene, camera);
     pipeline.outputNode = params.has('nobloom') ? p : p.add(bloom(bounded(p), 0.4, 0.4, 1.5));
-    return pipeline;
+    return { pipeline, scenePass: p };
   }
   const scenePass = pass(scene, camera);
   scenePass.setMRT(mrt({ output, velocity }));
@@ -33,5 +33,5 @@ export function createPost(renderer: THREE.WebGPURenderer, scene: THREE.Scene, c
   o = traa(o, depth, vel, camera);
   if (tier === 'high' && !params.has('nosharp')) o = sharpen(o, 0.2);
   pipeline.outputNode = o;
-  return pipeline;
+  return { pipeline, scenePass };
 }

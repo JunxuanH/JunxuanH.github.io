@@ -5,7 +5,7 @@
  * as the car lands. ~5 draws.
  */
 import * as THREE from 'three/webgpu';
-import { color } from 'three/tsl';
+import { color } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { neonText } from '../signs';

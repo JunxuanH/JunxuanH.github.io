@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, float, fract, floor, hash, length, smoothstep, step, time, uv, vec2, abs } from 'three/tsl';
+import { color, float, fract, floor, hash, length, smoothstep, step, time, uv, vec2, abs } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { facadeBlock } from '../districts/shared';
 import { THEMES } from '../theme';

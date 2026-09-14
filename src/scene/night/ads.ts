@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { texture, uv, float, step, fract, hash, floor, time, vec2 } from 'three/tsl';
+import { texture, uv, float, step, fract, hash, floor, time, vec2, uniform } from './tsl';
 import { PAL, params, loadSRGB } from './palette';
 
 export interface AdSpot { x: number; y: number; z: number; yaw?: number; h?: number }
@@ -8,7 +8,7 @@ export interface AdSpot { x: number; y: number; z: number; yaw?: number; h?: num
 export function adMaterial(t: THREE.Texture, id: number) {
   const m = new THREE.MeshBasicNodeMaterial({ transparent: true, side: THREE.DoubleSide });
   const scan = step(0.5, fract(uv().y.mul(90).add(time.mul(8)))).mul(0.12).add(0.88);
-  const glitch = step(0.97, hash(floor(time.mul(6)).add(float(id)))).mul(hash(floor(uv().y.mul(24)).add(time)).sub(0.5)).mul(0.04);
+  const glitch = step(0.97, hash(floor(time.mul(6)).add(uniform(id)))).mul(hash(floor(uv().y.mul(24)).add(time)).sub(0.5)).mul(0.04);
   const s = texture(t, uv().add(vec2(glitch, 0)));
   m.colorNode = s.rgb.mul(scan).mul(2.4);
   m.opacityNode = float(0.85);

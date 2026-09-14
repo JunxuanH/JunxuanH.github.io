@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { attribute, vec3, color } from 'three/tsl';
+import { attribute, vec3, color, uniform } from './tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, rng } from './palette';
@@ -94,7 +94,7 @@ function propMaterial(glow: number, glowTint: number) {
   const aLit = attribute('aLit', 'float');
   const aTint = attribute('aTint', 'vec3');
   m.colorNode = aTint.mul(vec3(0.3, 0.31, 0.36)); // night repaint: dark, slightly blue
-  m.emissiveNode = color(glowTint).mul(aLit).mul(glow);
+  m.emissiveNode = uniform(new THREE.Color(glowTint)).mul(aLit).mul(uniform(glow));
   return m;
 }
 

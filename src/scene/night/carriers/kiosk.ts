@@ -4,7 +4,7 @@
  * itself in, and an amber scanline plane glows through as the DOM fades. ~8 draws + the NPC.
  */
 import * as THREE from 'three/webgpu';
-import { color, step, fract, uv, time } from 'three/tsl';
+import { color, step, fract, uv, time } from '../tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { THEMES } from '../theme';
 import { CURB_H } from '../streets';
