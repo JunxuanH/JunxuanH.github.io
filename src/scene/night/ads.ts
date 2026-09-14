@@ -24,7 +24,8 @@ export async function createAds(spots: AdSpot[], files = ['ad-1', 'ad-2', 'ad-3'
     try {
       let t: THREE.Texture = await loadSRGB(`/night/ads/${name}.webp`);
       if (!params.has('novideo')) {
-        const ok = await fetch(`/night/ads/${name}-loop.mp4`, { method: 'HEAD' }).then((r) => r.ok).catch(() => false);
+        // Only ad-3 shipped with a video loop; probing the others just logs 404s.
+        const ok = name === 'ad-3' && await fetch(`/night/ads/${name}-loop.mp4`, { method: 'HEAD' }).then((r) => r.ok).catch(() => false);
         if (ok) {
           const v = document.createElement('video');
           Object.assign(v, { src: `/night/ads/${name}-loop.mp4`, muted: true, loop: true, playsInline: true, autoplay: true });
