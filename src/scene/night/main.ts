@@ -311,6 +311,7 @@ export async function start(root: HTMLElement) {
     scene.traverse((o: any) => { if (o.isMesh || o.isPoints || o.isLine) meshes.push(o); });
     const culled = meshes.map((o) => o.frustumCulled);
     for (const o of meshes) o.frustumCulled = false;
+    boot.allowSkip();
     const poses = [0, 0.10, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0]; // 0.10: campus appears while the water still reflects
     for (let i = 0; i < poses.length; i++) {
       boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * i) / poses.length);

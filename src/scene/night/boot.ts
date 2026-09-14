@@ -72,6 +72,8 @@ export const boot = {
     if (m) m.textContent = `${message} — loading the text version`;
     setTimeout(() => { el.remove(); cancelAnimationFrame(raf); }, 1200);
   },
+  /** Show the skip link now (the shader pre-warm can hold the main thread for seconds at a time). */
+  allowSkip() { el?.classList.add('is-slow'); },
   /** Flat page / no scene: drop the overlay immediately. */
   hide() {
     el?.remove();
