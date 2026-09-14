@@ -454,7 +454,7 @@ export async function start(root: HTMLElement) {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
   const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
-  let tiltOn = false; // a phone is feeding device tilt into `pointer`
+  let tiltOn = false, tiltLook = 1; // a phone is feeding device tilt into `pointer`; tiltLook = walk-mode tilt gain
   addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1); });
   // Phones: device tilt drives the same parallax as the mouse, a little stronger. iOS only grants motion access from a
   // user gesture, so the permission is requested on the first touch; Android delivers events directly. `?nogyro` opts out.
@@ -554,7 +554,12 @@ export async function start(root: HTMLElement) {
       camera.position.copy(camPos); camera.lookAt(camLook);
       // On foot / docked, tilt turns the view a few degrees like looking around a window (the rail camera already
       // takes it as parallax through the rig).
-      if (tiltOn) { camera.rotateY(-eased.x * 0.07); camera.rotateX(-eased.y * 0.045); }
+      // Tilt look fades out while the player moves: a phone held in walking hands jitters and read as camera shake.
+      if (tiltOn) {
+        tiltLook += ((player && player.speed > 0.4 ? 0 : 1) - tiltLook) * Math.min(1, dt * 3);
+        const dz = (v: number) => Math.sign(v) * Math.max(0, Math.abs(v) - 0.08) / 0.92; // ignore hand tremor
+        camera.rotateY(-dz(eased.x) * 0.06 * tiltLook); camera.rotateX(-dz(eased.y) * 0.04 * tiltLook);
+      }
     }
     else camera.rotation.z -= eased.x * 0.02;
     // The hero slab belongs to the vista only: it fades the moment a pan starts (p may not move until a fly-over's apex).

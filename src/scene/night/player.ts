@@ -46,7 +46,7 @@ export function createPlayer(opts: PlayerOptions) {
   const prev = new THREE.Vector3();
   const vel = new THREE.Vector3();
   const wish = new THREE.Vector3(), dir = new THREE.Vector3(), right = new THREE.Vector3();
-  let yaw = 0, speed = 0, phase = 0, stepIdx = 0, bob = 0;
+  let yaw = 0, speed = 0, phase = 0, stepIdx = 0;
   let clip: 'idle' | 'walk' | 'run' = 'idle';
   // Idle variety: after IDLE_VARIETY_AFTER s standing still play the rig's one-shot `lookaround` clip (when it
   // has one), hold its last frame and crossfade back to idle. Any movement cancels it.
@@ -63,6 +63,8 @@ export function createPlayer(opts: PlayerOptions) {
   // Follow camera state
   let camYaw = 0, pitch = PITCH0;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  const camOut = new THREE.Vector3(); // camPos + the stride bob (the bob never feeds back into the damped state)
+  let bobAmp = 0;
   const desired = new THREE.Vector3(), pivot = new THREE.Vector3(), lookT = new THREE.Vector3();
 
   const camDir = () => dir.set(Math.sin(camYaw), 0, Math.cos(camYaw));
@@ -84,7 +86,7 @@ export function createPlayer(opts: PlayerOptions) {
     yaw = camYaw = facing; pitch = PITCH0;
     root.rotation.y = yaw;
     desiredCamera();
-    camPos.copy(desired); camLook.copy(lookT);
+    camPos.copy(desired); camLook.copy(lookT); camOut.copy(desired); bobAmp = 0;
     if (clip !== 'idle' || variety) { clip = 'idle'; variety = false; inst.play('idle', 0); }
     idleFor = 0;
     root.updateMatrixWorld(true);
@@ -165,13 +167,16 @@ export function createPlayer(opts: PlayerOptions) {
       phase += (speed * dt) / (clip === 'run' ? STEP_RUN : STEP_WALK);
       const i = Math.floor(phase);
       if (i !== stepIdx) { stepIdx = i; opts.onStep?.(); }
-      bob += dt * (2.2 + speed * 1.6);
     }
-    // Camera: damped toward the boom pose, bobbing with the stride.
+    // Camera: damped toward the boom pose. The bob used to be added to camPos itself every frame, so it accumulated into
+    // the damped state and shook hard at run speed; now it is a separate, small offset locked to the footsteps (one dip
+    // per step) and eased in and out with speed.
     desiredCamera();
-    camPos.lerp(desired, 1 - Math.exp(-8 * dt));
-    camLook.lerp(lookT, 1 - Math.exp(-10 * dt));
-    camPos.y += Math.sin(bob) * 0.05 * Math.min(1, speed / 2);
+    camPos.lerp(desired, 1 - Math.exp(-6 * dt));
+    camLook.lerp(lookT, 1 - Math.exp(-7 * dt));
+    bobAmp += ((speed > 0.3 ? (clip === 'run' ? 0.018 : 0.01) : 0) - bobAmp) * (1 - Math.exp(-4 * dt));
+    camOut.copy(camPos);
+    camOut.y += (1 - Math.cos(phase * Math.PI * 2)) * 0.5 * -bobAmp;
   }
 
   return {
@@ -179,7 +184,7 @@ export function createPlayer(opts: PlayerOptions) {
     get position() { return pos; },
     get yaw() { return yaw; },
     get speed() { return speed; },
-    get camera() { return { pos: camPos, look: camLook }; },
+    get camera() { return { pos: camOut, look: camLook }; },
     setArea(a: Area | null) { area = a; },
     teleport, face, frame, update,
   };
