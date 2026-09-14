@@ -95,7 +95,10 @@ const MODULE_OF: Record<CarrierId, string> = {
   contact: './flapboard.ts',
 };
 type CarrierModule = { create: (ctx: CarrierCtx) => Promise<Carrier> | Carrier };
-const modules = import.meta.glob<CarrierModule>('./{kiosk,busstop,megascreen,blimp,holo,stall,flapboard}.ts');
+// Eager: the carriers ship inside the main bundle. As lazy chunks, a page served from Safari's cache after a redeploy
+// asked for chunk names that no longer existed, the kiosk failed and its board fell back to a wall floating over the plaza.
+const eager = import.meta.glob<CarrierModule>('./{kiosk,busstop,megascreen,blimp,holo,stall,flapboard}.ts', { eager: true });
+const modules = Object.fromEntries(Object.entries(eager).map(([k, m]) => [k, async () => m])) as Record<string, () => Promise<CarrierModule>>;
 
 export async function createCarriers(ctx: CarrierCtx) {
   const byId = {} as Record<CarrierId, Carrier>;

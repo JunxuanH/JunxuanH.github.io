@@ -105,6 +105,9 @@ export async function createContent(opts: ContentOptions) {
   const parentFor = (id: string): { parent: THREE.Object3D; w: number; px: number; carrier?: Carrier } | null => {
     const c = carriers.byId[id as CarrierId];
     if (c) return { parent: c.mount, w: c.width, px: c.px, carrier: c };
+    // No carrier (it failed to build): no board. The old free-floating fallback mounts put a 15 u wall over the plaza.
+    // `?fallbackboards` restores them for debugging.
+    if (!params.has('fallbackboards')) { console.warn('[night] no carrier for', id); return null; }
     const fb = fallbackMount(id);
     if (!fb) return null;
     scene.add(fb.obj);

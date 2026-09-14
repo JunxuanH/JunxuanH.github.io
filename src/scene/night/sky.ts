@@ -6,8 +6,8 @@ import {
 import { PAL, loadSRGB, loader } from './palette';
 
 /**
- * Night sky. Default: the 360° river-city panorama (see `pano` below). `?oldsky`: the earlier gradient dome (plum
- * horizon → near-black zenith), a star field, a low cloud band lit from below by the city, and a small moon.
+ * Night sky. Default: gradient dome (plum horizon → near-black zenith), a star field, a low cloud band lit from below by
+ * the city, and a small moon. `?pano=1`: the 360° river-city panorama instead (see `pano` below).
  * Everything is `fog: false`; the scene fog handles the haze between towers.
  */
 export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; depth?: string; depthScale?: number; rotation?: number; gain?: number }) {

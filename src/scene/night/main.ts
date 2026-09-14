@@ -69,9 +69,10 @@ export async function start(root: HTMLElement) {
   }
 
   const scene = new THREE.Scene();
-  // The 360° river-city backdrop (scripts/pano-build.sh; lite tiers get /night-lite via the URL rewrite). `?oldsky` brings
-  // back the plum gradient sky and the single skyline plate; `?pano=<url>` tries another panorama.
-  const panoUrl = params.has('oldsky') ? null : params.get('pano') || '/night/backdrop/pano.webp';
+  // Default: the night gradient sky + the aerial skyline plate (Ivan preferred it). `?pano=1` shows the 360° river-city
+  // panorama (scripts/pano-build.sh), `?pano=<url>` another equirect.
+  const panoParam = params.get('pano');
+  const panoUrl = panoParam ? (panoParam === '1' ? '/night/backdrop/pano.webp' : panoParam) : null;
   scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032, !!panoUrl);
   const camera = new THREE.PerspectiveCamera(narrow ? 62 : 50, innerWidth / innerHeight, 0.5, 2600);
   scene.add(camera);
@@ -103,7 +104,7 @@ export async function start(root: HTMLElement) {
   }
   // The sky loads after the URL rewrite, so phones fetch the half-size panorama.
   scene.add(createSky(tier, panoUrl ? {
-    url: panoUrl, depth: params.get('pano') ? undefined : '/night/backdrop/pano-depth.png',
+    url: panoUrl, depth: panoParam === '1' ? '/night/backdrop/pano-depth.png' : undefined,
     depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
   } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
