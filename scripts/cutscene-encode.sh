@@ -21,11 +21,16 @@ for a in "$@"; do
   case "$a" in --reverse) mode=rev ;; --forward) mode=fwd ;; --manifest) manifest_only=1 ;; *) if [[ $mode == rev ]]; then reverses+=("$a"); else pairs+=("$a"); fi ;; esac
 done
 if [[ $manifest_only == 0 && ${#pairs[@]} -eq 0 && ${#reverses[@]} -eq 0 ]]; then
-  for f in "$RAW"/*.mp4; do [[ -f "$f" && "$f" != *.old.mp4 ]] && pairs+=("$(basename "${f%.mp4}")"); done  # *.old.mp4 = retired takes
+  for f in "$RAW"/*.mp4; do b="$(basename "$f" .mp4)"; [[ -f "$f" && "$b" != *.* ]] && pairs+=("$b"); done  # <pair>.<tag>.mp4 (old, old2, pano…) = alternate takes, skipped
 fi
 
 # ledger row for a real clip: model and request id
-ledger_of() { awk -F'\t' -v p="$1" '$2 == p { m = $3; r = $5 } END { printf "%s\t%s", m, r }' "$LEDGER" 2>/dev/null; }
+ledger_of() {
+  # provenance: raw/<pair>.request (model, request id — written by cutscene-gen.sh, or by hand when an older take is restored),
+  # else the ledger's last row for the pair
+  if [[ -f "$RAW/$1.request" ]]; then awk -F'\t' '{ printf "%s\t%s", $2, $3 }' "$RAW/$1.request"; return; fi
+  awk -F'\t' -v p="$1" '$2 == p { m = $3; r = $5 } END { printf "%s\t%s", m, r }' "$LEDGER" 2>/dev/null
+}
 
 # encode <pair> <source-pair> <reverse:0|1>
 encode() {

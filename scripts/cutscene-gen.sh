@@ -70,7 +70,7 @@ if [[ ! -f "$PROMPT" ]]; then
   mkdir -p "$PROMPTS"
   ROUTE="The camera lifts away from $(vantage "$FROM"), glides $(heading "$FROM" "$TO") over the wet rooftops through the rain, then descends and settles on $(vantage "$TO")."
   cat > "$PROMPT" <<PROMPT_EOF
-Cinematic drone shot through a rain-soaked cyberpunk city at night. Start exactly on @Image1 and end exactly on @Image2. $ROUTE Cyan, magenta and yellow neon, wet asphalt reflections, light rain, thin haze, hover cars with light trails, holographic billboards. One continuous smooth camera move, no cuts, steady speed, gentle banking. No text, no readable letters or logos, no faces, no people near the camera, no camera shake, no flicker.
+Cinematic drone shot through a rain-soaked cyberpunk city at night. Start exactly on @Image1 and end exactly on @Image2. $ROUTE Navy-blue night sky with a thin teal haze, megatower river banks all around the bay, cyan, magenta and yellow neon, wet asphalt reflections, light rain, hover cars with light trails, holographic billboards. One continuous smooth camera move, no cuts, steady speed, gentle banking. No text, no readable letters or logos, no faces, no people near the camera, no camera shake, no flicker.
 PROMPT_EOF
   echo "wrote $PROMPT"
 fi
@@ -87,4 +87,5 @@ OUT="$RAW/$PAIR.mp4"
 LOG="$(scripts/fal-run.sh "$MODEL" "$PRICE" "night/cutscene/$PAIR" "$INPUT" "$OUT" '.video.url' | tee /dev/stderr)"
 REQ="$(sed -n 's/^queued: //p' <<<"$LOG" | head -1)"
 printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$PAIR" "$MODEL" "$DUR" "${REQ:-?}" "$PROMPT_SHA" >> "$LEDGER"
+printf '%s\t%s\t%s\t%s\n' "$PAIR" "$MODEL" "${REQ:-?}" "$PROMPT_SHA" > "$RAW/$PAIR.request" # provenance sidecar for cutscene-encode.sh
 echo "$OUT · request ${REQ:-?} · ledger $LEDGER"
