@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { lightBeamGeometry, aimLightBeam } from '../light-beam';
 import { time, color, uv, smoothstep, mix, positionLocal, hash, floor, fract, step, glowMaterial, beamMaterial } from '../tsl';
 import { PAL, rng } from '../palette';
 import { ANCHORS } from '../journey';
@@ -48,11 +49,9 @@ function lighthouse(tint: number) {
   // wedge read as a solid white shape from the pier.
   // Apex at the lamp, widening 90 u out along −z (it was rotated the other way: wide at the lamp). v flipped so the
   // beam shader (bright at uv.y 0) is brightest at the lamp.
-  const beamGeo = new THREE.ConeGeometry(3.2, 90, 16, 1, true).rotateX(Math.PI / 2).translate(0, 0, -45);
-  const bu = beamGeo.attributes.uv;
-  for (let i = 0; i < bu.count; i++) bu.setY(i, 1 - bu.getY(i));
-  const beam = new THREE.Mesh(beamGeo, beamMaterial(tint, 0.14, 0.25, 0.9));
-  beam.position.y = 15.1;
+  const beamGeo = lightBeamGeometry(3.2, 90);
+  const beam = new THREE.Mesh(beamGeo, beamMaterial(tint, 0.045, 0.04, 0.9));
+  aimLightBeam(beam, new THREE.Vector3(0, 15.1, 0), new THREE.Vector3(0, 15.1, -90));
   const pivot = new THREE.Group();
   pivot.add(beam);
   pivot.position.y = 0;
@@ -185,7 +184,7 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
   for (const [dx, txt, col] of [[-5.4, 'LINKEDIN', '#00e5ff'], [5.4, 'GITHUB', '#ff2bd6']] as const) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 10.6, 6).translate(0, 5.3, 0), poleMat);
     pole.position.set(p.x + dx, DECK_Y, zEnd - 1.5);
-    const s = neonText(txt, col, 7);
+    const s = neonText(txt, col, 5.2, { gain: 1.15 });
     s.position.set(p.x + dx, DECK_Y + 10.2, zEnd - 1.5);
     s.rotation.y = Math.PI; // faces the pier (camera comes from the quay side)
     group.add(pole, s);
@@ -197,7 +196,7 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
     { kind: 'fence', x: x0 + 20, z: zStart - 10, yaw: Math.PI / 2 }, { kind: 'cone', x: x0 - 3, z: zStart - 3, yaw: 0, s: 0.8 },
   ];
   const lights: DistrictBuild['lights'] = [
-    [p.x, DECK_Y + 5, p.z, PAL.yellow, 700, 40], [x0 - 12, 7, zStart - 4, T.primary, 500], [x0, DECK_Y + 4, zStart + 18, T.warm, 500, 40],
+    [p.x, DECK_Y + 5, p.z, T.warm, 160, 24], [x0 - 12, 7, zStart - 4, T.primary, 500], [x0, DECK_Y + 4, zStart + 18, T.warm, 180, 30],
   ];
   const update = (t: number) => {
     lh.pivot.rotation.y = t * 0.6;

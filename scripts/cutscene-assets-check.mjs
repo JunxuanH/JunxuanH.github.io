@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+const { clips } = JSON.parse(readFileSync('public/night/cutscenes/manifest.json', 'utf8'));
+const ids = ['city', 'education', 'work', 'projects', 'contact'];
+assert.equal(Object.keys(clips).length, 20);
+const ff = '/opt/homebrew/bin/ffmpeg', fp = '/opt/homebrew/bin/ffprobe';
+const pixels = (file, end = false) => execFileSync(ff, ['-v', 'error', ...(end ? ['-sseof', '-0.08'] : []), '-i', file, '-vf', 'scale=320:180,format=rgb24', '-frames:v', '1', '-f', 'rawvideo', 'pipe:1']);
+let worst = 0, bytes = 0;
+for (const from of ids) for (const to of ids) {
+  if (from === to) continue;
+  const pair = `${from}-${to}`, m = clips[pair];
+  assert(m, `${pair} missing`); assert.equal(m.reverseOf, null, `${pair} reversed`);
+  assert.equal(m.model, 'fal-ai/kling-video/v3/pro/image-to-video');
+  const file = `public${m.src}`, size = statSync(file).size;
+  assert.equal(size, m.bytes); assert(size <= 2500000);
+  assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 8), m.sha);
+  const info = JSON.parse(execFileSync(fp, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { encoding: 'utf8' }));
+  const video = info.streams.find(s => s.codec_type === 'video');
+  assert.equal(video.codec_name, 'h264'); assert.equal(video.width, 1280); assert.equal(video.height, 720);
+  assert(!info.streams.some(s => s.codec_type === 'audio'));
+  assert(Math.abs(Number(info.format.duration) - m.duration) < .01);
+  const actual = pixels(file, true), expected = pixels(`design/night/cutscenes/refresh-2026-09-14/frames/${to}.jpg`);
+  assert.equal(actual.length, expected.length);
+  let error = 0; for (let i = 0; i < actual.length; i++) error += (actual[i] - expected[i]) ** 2;
+  const rmse = Math.sqrt(error / actual.length) / 255;
+  assert(rmse < .035, `${pair}: ending differs from renderer (${rmse})`);
+  worst = Math.max(worst, rmse); bytes += size;
+  console.log(`PASS ${pair}: ${m.duration}s, ${(size / 1024).toFixed(0)} KB, ending RMSE ${(rmse * 100).toFixed(2)}%`);
+}
+console.log(`PASS all 20 forward routes; ${(bytes / 1048576).toFixed(1)} MB; worst ending RMSE ${(worst * 100).toFixed(2)}%`);

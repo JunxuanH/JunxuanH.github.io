@@ -47,7 +47,7 @@ export function glowMaterial(tint: THREE.ColorRepresentation, gain = 1, opts: Gl
 const beamCache = new Map<string, THREE.MeshBasicNodeMaterial>();
 /**
  * Additive light cone / beam on an open cone geometry whose uv.y runs 0 at the bright end to 1 at the tip:
- * opacity `(1 − uv.y) · gain · smoothstep(0, fadeIn, uv.y)`, colour `tint × colorGain`. All uniforms.
+ * opacity `(1 − uv.y)² · gain · smoothstep(0, fadeIn, uv.y)`, colour `tint × colorGain`. All uniforms.
  */
 export function beamMaterial(tint: THREE.ColorRepresentation, gain: number, fadeIn: number, colorGain = 1) {
   const c = new THREE.Color(tint);
@@ -55,8 +55,9 @@ export function beamMaterial(tint: THREE.ColorRepresentation, gain: number, fade
   let m = beamCache.get(key);
   if (!m) {
     m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    m.fog = false; // additive haze must not add the scene fog colour as a solid cone
     m.colorNode = TSL.uniform(c).mul(TSL.uniform(colorGain));
-    m.opacityNode = TSL.float(1).sub(TSL.uv().y).mul(TSL.uniform(gain)).mul(TSL.smoothstep(0.0, TSL.uniform(fadeIn), TSL.uv().y));
+    m.opacityNode = TSL.float(1).sub(TSL.uv().y).pow(2).mul(TSL.uniform(gain)).mul(TSL.smoothstep(0.0, TSL.uniform(fadeIn), TSL.uv().y));
     beamCache.set(key, m);
   }
   return m;

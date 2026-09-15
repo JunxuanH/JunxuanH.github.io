@@ -5,7 +5,7 @@ import { landing } from './landing';
 import { dedupeMaterials } from './districts/shared';
 import { createLightPool } from './lights';
 
-import { PAL, params, reducedMotion, loader, type Tier } from './palette';
+import { PAL, params, reducedMotion, setReducedMotion, loader, type Tier } from './palette';
 import { createSky, createHaze } from './sky';
 import { createPost } from './post';
 import { createBackdrop } from './backdrop';
@@ -69,6 +69,15 @@ export function askTilt(): Promise<boolean> {
  * `?nobloom ?noca ?nosharp ?norain ?novideo ?kenney ?nokit ?noglb ?nowater ?debug`.
  */
 export async function start(root: HTMLElement) {
+  // Reproducible, UI-free establishing stills for Fal first/last-frame clips.
+  // This is a public render mode, not an automation hook into private scene state.
+  const capture = params.get('capture') as SectionId | null;
+  if (capture && Object.hasOwn(ESTABLISH, capture)) {
+    params.set('p', String(ESTABLISH[capture]));
+    params.set('nocine', '1');
+    setReducedMotion(true);
+    document.documentElement.classList.add('capture-frame');
+  }
   const narrow = matchMedia('(max-width: 760px)').matches;
   const renderer = new THREE.WebGPURenderer({ antialias: false, powerPreference: 'high-performance' });
   await renderer.init();

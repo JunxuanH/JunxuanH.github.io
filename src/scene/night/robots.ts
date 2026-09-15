@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { lightBeamGeometry, aimLightBeam } from './light-beam';
 import { uv, float, smoothstep, color, sin, time, fract, step, hash } from './tsl';
 import { instantiate, strideOf, type CharacterAsset, type SkinOptions } from './characters';
 import type { PathDef } from './paths';
@@ -39,7 +40,8 @@ function coneMaterial(tint: THREE.ColorRepresentation) {
   const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
   m.colorNode = color(tint);
   // Fades toward the wide end and at the rim of the cone.
-  m.opacityNode = float(1).sub(uv().y).mul(0.22).mul(smoothstep(0.0, 0.15, uv().y));
+  m.opacityNode = float(1).sub(uv().y).pow(2).mul(0.045).mul(smoothstep(0.0, 0.04, uv().y));
+  m.fog = false;
   return m;
 }
 
@@ -69,12 +71,9 @@ export function createRobots(opts: RobotsOptions) {
       light.target.position.set(0.35, 0, 6);
       inst.root.add(light, light.target);
       // Apex at the head, wide end forward and down; v flipped so the cone is bright at the lamp (see drones.ts).
-      const coneGeo = new THREE.ConeGeometry(2.2, 9, 20, 1, true);
-      const cu = coneGeo.attributes.uv;
-      for (let i = 0; i < cu.count; i++) cu.setY(i, 1 - cu.getY(i));
-      const cone = new THREE.Mesh(coneGeo, coneMaterial(accent));
-      cone.rotation.x = -Math.PI / 2 + 0.28;
-      cone.position.set(0.35, inst.height * 0.82, 4.4);
+      const distance = light.position.distanceTo(light.target.position);
+      const cone = new THREE.Mesh(lightBeamGeometry(Math.tan(light.angle) * distance, distance), coneMaterial(accent));
+      aimLightBeam(cone, light.position, light.target.position);
       inst.root.add(cone);
       cone.visible = false;
       r.light = light; r.cone = cone;

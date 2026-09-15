@@ -1,0 +1,402 @@
+[
+  {
+    "pair": "contact-city",
+    "status": "submitted",
+    "request_id": "01a0a318-998b-7b11-977a-4dd87e7cc603",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a318-998b-7b11-977a-4dd87e7cc603/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a318-998b-7b11-977a-4dd87e7cc603",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a318-998b-7b11-977a-4dd87e7cc603/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7909/9Vf3OQ8AK6jFTDoIUhhtL_contact.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa790a/rtphSQimEZf646awznIwA_city.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous cinematic camera flight in this exact stylized 3D cyberpunk harbor at night. The first frame is a wooden pier facing out toward a lighthouse, a parked silver hovercar and contact sign. Pull the CAMERA backward and crane upward away from the pier, arc smoothly left out over the open bay, turn to face the city skyline, then settle into the exact final wide view of the twin cyan cable bridge and city across the water. The pier recedes naturally behind the camera, never turns into the bridge. No flying through signs or structures. Preserve geometry, scale, materials and restrained neon lighting. Keep the lighthouse rooted in place and car parked. Water waves and distant traffic move naturally forward in time. Smooth ease-in and ease-out, stable horizon, no cuts or zoom-morph. Match the supplied first and last frames exactly. No added objects, logos, characters or new text.",
+      "negative_prompt": "morphing buildings, melting pier, warped bridge, reverse rain, reversed traffic, object transformation, spinning camera, spotlight facing backwards, giant light cones, overexposure, black halos, new text, jump cuts"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "city-education",
+    "status": "submitted",
+    "request_id": "01a0a31b-3510-78e0-9e92-0f92d167371d",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-3510-78e0-9e92-0f92d167371d/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-3510-78e0-9e92-0f92d167371d",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-3510-78e0-9e92-0f92d167371d/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "A single continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Fly forward across the water toward the skyline, clear the bridge without touching its cables, then descend into the Berkeley plaza with its terminal kiosk and lanterns. Move the camera through space, never transform one place into another. Preserve the buildings, road layout, props, sign shapes and lighting of both reference locations. Stay above obstacles while travelling; never pass through walls or signs. Maintain the same stylized rendered materials and restrained cyan/magenta neon throughout. All rain, traffic and pedestrians move forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. Do not add new text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "city-work",
+    "status": "submitted",
+    "request_id": "01a0a31b-487d-7c62-b77c-1cbe1aa065a4",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-487d-7c62-b77c-1cbe1aa065a4/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-487d-7c62-b77c-1cbe1aa065a4",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-487d-7c62-b77c-1cbe1aa065a4/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "A single continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Fly forward across the water toward the skyline, clear the bridge without touching its cables, then descend into the neon downtown avenue beside its bus shelter. Move the camera through space, never transform one place into another. Preserve the buildings, road layout, props, sign shapes and lighting of both reference locations. Stay above obstacles while travelling; never pass through walls or signs. Maintain the same stylized rendered materials and restrained cyan/magenta neon throughout. All rain, traffic and pedestrians move forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. Do not add new text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "city-projects",
+    "status": "submitted",
+    "request_id": "01a0a31b-5578-72f0-8f8b-a2a4e569734c",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-5578-72f0-8f8b-a2a4e569734c/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-5578-72f0-8f8b-a2a4e569734c",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-5578-72f0-8f8b-a2a4e569734c/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "A single continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Fly forward across the water toward the skyline, clear the bridge without touching its cables, then descend into the lantern-lined night market with its projects stall. Move the camera through space, never transform one place into another. Preserve the buildings, road layout, props, sign shapes and lighting of both reference locations. Stay above obstacles while travelling; never pass through walls or signs. Maintain the same stylized rendered materials and restrained cyan/magenta neon throughout. All rain, traffic and pedestrians move forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. Do not add new text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "city-contact",
+    "status": "submitted",
+    "request_id": "01a0a31b-663a-70f0-9c5d-c16c02fd2545",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-663a-70f0-9c5d-c16c02fd2545/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-663a-70f0-9c5d-c16c02fd2545",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31b-663a-70f0-9c5d-c16c02fd2545/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "A single continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Fly forward across the water toward the skyline, clear the bridge without touching its cables, then descend into the wooden harbor pier with its striped lighthouse, parked silver hovercar and departures board. Move the camera through space, never transform one place into another. Preserve the buildings, road layout, props, sign shapes and lighting of both reference locations. Stay above obstacles while travelling; never pass through walls or signs. Maintain the same stylized rendered materials and restrained cyan/magenta neon throughout. All rain, traffic and pedestrians move forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. Do not add new text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "education-city",
+    "status": "submitted",
+    "request_id": "01a0a31c-3ec8-7f50-b248-aaf9779c248a",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-3ec8-7f50-b248-aaf9779c248a/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-3ec8-7f50-b248-aaf9779c248a",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-3ec8-7f50-b248-aaf9779c248a/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift away from the Berkeley plaza with its terminal kiosk and lanterns, travel south toward the waterfront, clear the bridge, arc out above the open bay and turn to face the exact final skyline vista. The bridge remains fixed in space. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "education-work",
+    "status": "submitted",
+    "request_id": "01a0a31c-4971-79d2-94fa-a9e511028db1",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-4971-79d2-94fa-a9e511028db1/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-4971-79d2-94fa-a9e511028db1",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-4971-79d2-94fa-a9e511028db1/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the Berkeley plaza with its terminal kiosk and lanterns, travel northeast above streets and rooftops, then descend into the neon downtown avenue beside its bus shelter. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "education-projects",
+    "status": "submitted",
+    "request_id": "01a0a31c-56cd-7903-8688-19141bf64f12",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-56cd-7903-8688-19141bf64f12/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-56cd-7903-8688-19141bf64f12",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-56cd-7903-8688-19141bf64f12/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the Berkeley plaza with its terminal kiosk and lanterns, travel northeast above streets and rooftops, then descend into the lantern-lined night market with its projects stall. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "education-contact",
+    "status": "submitted",
+    "request_id": "01a0a31c-6a79-7eb1-a966-a1e2b0924393",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-6a79-7eb1-a966-a1e2b0924393/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-6a79-7eb1-a966-a1e2b0924393",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-6a79-7eb1-a966-a1e2b0924393/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the Berkeley plaza with its terminal kiosk and lanterns, travel southeast above streets and rooftops, then descend from the quay side onto the wooden harbor pier. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "work-city",
+    "status": "submitted",
+    "request_id": "01a0a31c-754d-7b90-9989-a46ac838677b",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-754d-7b90-9989-a46ac838677b/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-754d-7b90-9989-a46ac838677b",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-754d-7b90-9989-a46ac838677b/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift away from the neon downtown avenue beside its bus shelter, travel south toward the waterfront, clear the bridge, arc out above the open bay and turn to face the exact final skyline vista. The bridge remains fixed in space. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "work-education",
+    "status": "submitted",
+    "request_id": "01a0a31c-85cc-76d0-8e28-3f16568fb569",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-85cc-76d0-8e28-3f16568fb569/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-85cc-76d0-8e28-3f16568fb569",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-85cc-76d0-8e28-3f16568fb569/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the neon downtown avenue beside its bus shelter, travel southwest above streets and rooftops, then descend into the Berkeley plaza with its terminal kiosk and lanterns. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "work-projects",
+    "status": "submitted",
+    "request_id": "01a0a31c-9344-7c11-a626-8076d9ee4390",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9344-7c11-a626-8076d9ee4390/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9344-7c11-a626-8076d9ee4390",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9344-7c11-a626-8076d9ee4390/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the neon downtown avenue beside its bus shelter, travel northeast above streets and rooftops, then descend into the lantern-lined night market with its projects stall. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "work-contact",
+    "status": "submitted",
+    "request_id": "01a0a31c-9ec7-71d3-b2cb-d0204d9d4487",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9ec7-71d3-b2cb-d0204d9d4487/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9ec7-71d3-b2cb-d0204d9d4487",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-9ec7-71d3-b2cb-d0204d9d4487/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the neon downtown avenue beside its bus shelter, travel southeast above streets and rooftops, then descend from the quay side onto the wooden harbor pier. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "projects-city",
+    "status": "submitted",
+    "request_id": "01a0a31c-aa34-7e81-8e53-ac3c636d29c7",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-aa34-7e81-8e53-ac3c636d29c7/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-aa34-7e81-8e53-ac3c636d29c7",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-aa34-7e81-8e53-ac3c636d29c7/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/G2OKnwJGh96QXwsQ_MHZM_city.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift away from the lantern-lined night market with its projects stall, travel south toward the waterfront, clear the bridge, arc out above the open bay and turn to face the exact final skyline vista. The bridge remains fixed in space. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "projects-education",
+    "status": "submitted",
+    "request_id": "01a0a31c-b9e8-7002-a6c2-f38bb5f29684",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-b9e8-7002-a6c2-f38bb5f29684/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-b9e8-7002-a6c2-f38bb5f29684",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-b9e8-7002-a6c2-f38bb5f29684/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the lantern-lined night market with its projects stall, travel southwest above streets and rooftops, then descend into the Berkeley plaza with its terminal kiosk and lanterns. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "projects-work",
+    "status": "submitted",
+    "request_id": "01a0a31c-cd81-7b50-9453-3708c751d2d3",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-cd81-7b50-9453-3708c751d2d3/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-cd81-7b50-9453-3708c751d2d3",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-cd81-7b50-9453-3708c751d2d3/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the lantern-lined night market with its projects stall, travel southwest above streets and rooftops, then descend into the neon downtown avenue beside its bus shelter. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "projects-contact",
+    "status": "submitted",
+    "request_id": "01a0a31c-ede0-76f2-b42d-089aa7083335",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-ede0-76f2-b42d-089aa7083335/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-ede0-76f2-b42d-089aa7083335",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31c-ede0-76f2-b42d-089aa7083335/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the lantern-lined night market with its projects stall, travel southeast above streets and rooftops, then descend from the quay side onto the wooden harbor pier. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "contact-education",
+    "status": "submitted",
+    "request_id": "01a0a31d-029e-78b0-ade1-c141b94630d6",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-029e-78b0-ade1-c141b94630d6/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-029e-78b0-ade1-c141b94630d6",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-029e-78b0-ade1-c141b94630d6/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7918/fT5CykFOVr_juDiX92ZVu_education.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the wooden harbor pier with its striped lighthouse, parked silver hovercar and departures board, travel northwest away from the pier toward the city, across the waterfront and over the streets, then descend into the Berkeley plaza with its terminal kiosk and lanterns. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "contact-work",
+    "status": "submitted",
+    "request_id": "01a0a31d-0ed6-7232-a273-20f65d33b810",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-0ed6-7232-a273-20f65d33b810/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-0ed6-7232-a273-20f65d33b810",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-0ed6-7232-a273-20f65d33b810/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/fOO8JmFRP6IAAROh4dRZy_work.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the wooden harbor pier with its striped lighthouse, parked silver hovercar and departures board, travel northwest away from the pier toward the city, across the waterfront and over the streets, then descend into the neon downtown avenue beside its bus shelter. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "contact-projects",
+    "status": "submitted",
+    "request_id": "01a0a31d-2544-7ac3-b2f9-ca0f3507fa8c",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-2544-7ac3-b2f9-ca0f3507fa8c/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-2544-7ac3-b2f9-ca0f3507fa8c",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-2544-7ac3-b2f9-ca0f3507fa8c/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7918/KL_nYDGOPeOf6RTaKjtSu_contact.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa7919/BW7fUmTPfGIL_SehM1fuw_projects.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "One continuous smooth camera flight through this exact stylized Three.js cyberpunk city at night. Start exactly at the supplied first frame and settle exactly at the supplied final frame. Lift clear of the wooden harbor pier with its striped lighthouse, parked silver hovercar and departures board, travel northwest away from the pier toward the city, across the waterfront and over the streets, then descend into the lantern-lined night market with its projects stall. Move the camera through space, never transform one place into another. Preserve all reference buildings, road layout, props, sign shapes and restrained cyan/magenta lighting. Stay above obstacles while travelling; never pass through walls or signs. Match the stylized rendered materials throughout. All rain, traffic and pedestrians move naturally forward in time. Stable horizon, gentle acceleration and deceleration, no hard cuts. No added text, characters or landmarks.",
+      "negative_prompt": "morphing architecture, melting buildings, backward rain, reversed traffic, new text, giant spotlights, warped bridge, camera spins, camera through walls, daylight, photorealistic style change, jump cut"
+    },
+    "estimatedUSD": 0.7
+  },
+  {
+    "pair": "contact-city",
+    "take": 2,
+    "status": "submitted",
+    "request_id": "01a0a31d-b5b5-7ab2-a1e2-542d315fb888",
+    "endpoint_id": "fal-ai/kling-video/v3/pro/image-to-video",
+    "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-b5b5-7ab2-a1e2-542d315fb888/status",
+    "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-b5b5-7ab2-a1e2-542d315fb888",
+    "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/01a0a31d-b5b5-7ab2-a1e2-542d315fb888/cancel",
+    "hint": "Job submitted. Use check_job with status_url to check status, then get_job_result with response_url when it completes.",
+    "input": {
+      "start_image_url": "https://v3b.fal.media/files/b/0aaa7909/9Vf3OQ8AK6jFTDoIUhhtL_contact.png",
+      "end_image_url": "https://v3b.fal.media/files/b/0aaa790a/rtphSQimEZf646awznIwA_city.png",
+      "duration": "5",
+      "generate_audio": false,
+      "prompt": "A TWO-SHOT cinematic travel transition, with ONE deliberate clean editorial HARD CUT at 2 seconds. Match the supplied starting and ending images. SHOT ONE, seconds 0-2: Start exactly at the first image, this stylized 3D wooden harbor pier with a striped lighthouse and parked silver car. Camera cranes gently UP and FORWARD above the end of the pier. Keep all harbor geometry completely rigid and unchanged, the city is BEHIND the camera and must not materialize behind the pier. At exactly 2 seconds, HARD CUT to SHOT TWO, a separately filmed reverse-angle bay vista. SHOT TWO, seconds 2-5: The camera is now out over open water looking BACK toward the city, as seen in the supplied final frame. Slow stabilized aerial glide, gently settling into the exact final frame of the twin cable bridge with the skyline behind. The two shots are different viewpoints connected by an intentional edit, NOT an impossible continuous transformation. Same restrained neon night palette and stylized game-rendered materials throughout. Natural forward-time water ripples. No added buildings, no text changes. No cross-dissolve, no morph, no blending of geometry between shots. Keep first and last frames exact.",
+      "negative_prompt": "morphing pier into bridge, skyline growing from water, buildings materializing, melting geometry, continuous transformation, backward rain, backwards spotlight, giant white beams, zoom morph, spinning camera, new signs, daytime"
+    },
+    "estimatedUSD": 0.7
+  }
+]

@@ -11,4 +11,7 @@
 @media (prefers-reduced-motion: reduce) { #cine { display: none; } }
 /* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
 html.reduce-motion #cine { display: none; }
-
+/* Deterministic cutscene asset capture; scene itself remains the production renderer. */
+.capture-frame .nav, .capture-frame #hud, .capture-frame #hero-copy,
+.capture-frame .sheet, .capture-frame .contact, .capture-frame .skip,
+.capture-frame .css3d, .capture-frame #cine { display: none !important; }

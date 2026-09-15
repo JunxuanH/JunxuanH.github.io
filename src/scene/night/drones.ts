@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { lightBeamGeometry, aimLightBeam } from './light-beam';
 import { color, step, fract, time, float, uv, beamMaterial } from './tsl';
 import { gltfLoader, applySkin } from './characters';
 import type { DroneLane } from './paths';
@@ -118,12 +119,9 @@ export async function createDrones(opts: DronesOptions) {
         root.add(light, light.target);
         // Apex at the drone, wide end on the ground ahead (tilted 16°). The beam shader is bright at uv.y 0, so v is
         // flipped: brightest at the lamp, fading toward the pool of light. (Was rotated by π: wide at the drone.)
-        const beamGeo = new THREE.ConeGeometry(3.2, 18, 20, 1, true);
-        const bu = beamGeo.attributes.uv;
-        for (let i = 0; i < bu.count; i++) bu.setY(i, 1 - bu.getY(i));
-        const cone = new THREE.Mesh(beamGeo, beamMaterial(0xdff2ff, 0.18, 0.1));
-        cone.rotation.x = -0.28;
-        cone.position.set(0, -9, 2.6);
+        const distance = light.position.distanceTo(light.target.position);
+        const cone = new THREE.Mesh(lightBeamGeometry(Math.tan(light.angle) * distance, distance), beamMaterial(0xdff2ff, 0.035, 0.04));
+        aimLightBeam(cone, light.position, light.target.position);
         root.add(cone);
       }
     } else {

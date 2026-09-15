@@ -35,7 +35,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const frame = new THREE.Mesh(new THREE.BoxGeometry(10.6, FRAME_H, 0.35), dark);
   const bezel = new THREE.Mesh(new THREE.BoxGeometry(10.8, FRAME_H + 0.2, 0.2), yellow);
   const cap = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.5, 0.4), dark);
-  const header = neonText('PIER 9 · DEPARTURES', T.signGlow, 6, { gain: 2 });
+  const header = neonText('PIER 9 · DEPARTURES', T.signGlow, 6, { gain: 1.1 });
   header.rotation.y = Math.PI;
   const mount = new THREE.Object3D();
   mount.rotation.y = Math.PI; // local +z → world −z, toward the quay
@@ -76,7 +76,7 @@ export function create(ctx: CarrierCtx): Carrier {
 
   return {
     group, mount, width: 10, px: 640, style: 'flap-board', node: 'PIER 9 DEPARTURES', range: [0.8, 1.01],
-    lights: [[140, 6.5, 30.5, 0xffb000, 350, 14]],
+    lights: [[140, 5.0, 28, 0xffb000, 45, 10]],
     fit: place,
     update(_t, dt) {
       if (!shuffleTicks || !shuffleBoard) return;
