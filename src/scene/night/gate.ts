@@ -27,6 +27,7 @@ const enabled = !!el && (el.dataset.state === 'open' || !!early);
 w.__gateModule = true;
 
 let chosen: GateChoice | null = null;
+let unmountCar: (() => void) | null = null;
 let resolveChoice: (c: GateChoice) => void = () => {};
 const choice = new Promise<GateChoice>((r) => { resolveChoice = r; });
 const times: Record<string, number> = { moduleReady: Math.round(performance.now()) };
@@ -44,6 +45,10 @@ function choose(c: GateChoice, gesture: boolean) {
   }
   landing.begin(c === 'full');
   boot.begin();
+  const car = el.querySelector<HTMLElement>('.gate-car');
+  const media = document.querySelector('.boot-media');
+  if (car && media) { media.append(car); if (unmountCar) landing.attachCar(unmountCar); }
+  unmountCar = null;
   for (const n of inertEls) n.inert = false;
   el.dataset.state = 'closing';
   setTimeout(() => el.remove(), 350);
@@ -59,6 +64,7 @@ function prefetchScene() {
     lite('/night/facades/facade-mix.jpg'), lite('/night/facades/storefronts.jpg'), lite('/night/ads/screens-atlas.jpg'),
     ...['a', 'b', 'c', 'd'].map((t) => lite(`/night/models/tower-${t}.glb`)),
     ...['01', '02', '03', '04', '05', '06'].map((t) => `/night/models/tower-${t}.glb`),
+    '/night/models/landing-hovercar.glb',
     '/night/characters/soldier/meta.json', '/night/characters/soldier/rigged.glb',
   ];
   let i = 0, live = 0;
@@ -73,6 +79,14 @@ function prefetchScene() {
 }
 
 if (el && enabled) {
+  const carHost = el.querySelector<HTMLElement>('.gate-car');
+  // Keep the gate's first interactive paint small; the isolated WebGL renderer arrives as a separate chunk.
+  if (carHost) void import('./landing-car').then(({ mountLandingCar }) => {
+    if (carHost.isConnected) {
+      const dispose = mountLandingCar(carHost, () => !(document.getElementById('gate-reduce') as HTMLInputElement | null)?.checked && !reducedMotion);
+      if (chosen) landing.attachCar(dispose); else unmountCar = dispose;
+    }
+  }).catch((error) => { console.warn('[landing] car renderer unavailable', error); });
   if (early) choose(early, false);
   else {
     // Everything behind the gate is out of the tab order while it is open.

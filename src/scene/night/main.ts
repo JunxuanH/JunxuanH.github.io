@@ -9,6 +9,7 @@ import { PAL, params, reducedMotion, loader, type Tier } from './palette';
 import { createSky, createHaze } from './sky';
 import { createPost } from './post';
 import { createBackdrop } from './backdrop';
+import { createLandingFlyby } from './landing-flyby';
 import { createStreets, loadGroundTextures, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z } from './streets';
 import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
@@ -93,6 +94,7 @@ export async function start(root: HTMLElement) {
   }
 
   const scene = new THREE.Scene();
+  const landingFlyby = landing.enabled ? createLandingFlyby(scene) : null;
   // Default: the night gradient sky + the aerial skyline plate (Ivan preferred it). `?pano=1` shows the 360° river-city
   // panorama (scripts/pano-build.sh), `?pano=<url>` another equirect.
   const panoParam = params.get('pano');
@@ -556,7 +558,10 @@ export async function start(root: HTMLElement) {
 
   // ---------- warp landing (landing.ts): the overlay's tap asks for tilt; its crossfade lands on the vista's establishing pose
   landing.configure({
-    onLand: () => { if (nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && journey.p !== ESTABLISH.city) { journey.p = ESTABLISH.city; rig.reset(); } },
+    onLand: () => {
+      if (!reducedMotion) landingFlyby?.launch(camera);
+      if (nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && journey.p !== ESTABLISH.city) { journey.p = ESTABLISH.city; rig.reset(); }
+    },
   });
   const baseFov = camera.fov;
   let lensK = landing.covering ? 1 : 0; // 1 = the clip's lens (phones: fov 50; wider than 16:9: zoomed to its crop), eased to 0 after landing
@@ -647,6 +652,7 @@ export async function start(root: HTMLElement) {
     if (water) water.visible = walkSec ? walkSec === 'contact' : p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
     timed('traffic', () => traffic.update(dt, t, camera.position));
+    landingFlyby?.update(dt);
     timed('ads', () => ads.update(t));
     timed('life', () => { for (const l of life) l.update(dt, camera); });
     dialogue.glance(); // after the mixers: the resident being talked to looks at the player

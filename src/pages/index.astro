@@ -28,25 +28,13 @@ const win = (k: string) => WINDOWS[k].join(',');
     <meta property="og:description" content={profile.summary} />
     <meta property="og:image" content="/og.jpg" />
     <link rel="icon" href="/logo.ico" />
-    <script is:inline>
-      // Hover still (the gate's backdrop, the launch clip's first frame and the reduced-motion overlay): preload the breakpoint's image unless the landing is off. Inserted
-      // by script so ?flat / ?nolanding / ?p= never fetch anything from /night/landing/.
-      (function () {
-        var q = new URLSearchParams(location.search);
-        if (q.has('flat') || q.has('nolanding') || q.has('p') || !('WebGLRenderingContext' in window)) return;
-        [['/night/landing/hover.jpg', '(min-width: 761px)'], ['/night/landing/hover-p.jpg', '(max-width: 760px)']].forEach(function (x) {
-          var l = document.createElement('link');
-          l.rel = 'preload'; l.as = 'image'; l.href = x[0]; l.media = x[1];
-          document.head.appendChild(l);
-        });
-      })();
-    </script>
   </head>
   <body>
     <a class="skip" href="#education">Skip to content</a>
-    <!-- Landing gate (scene/night/gate.ts): static on first paint, nothing 3D runs behind it. Enter starts the load. -->
+    <!-- The lightweight car renders on the gate; Enter starts building the city. -->
     <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" aria-describedby="gate-notice">
       <div class="gate-bg" aria-hidden="true"></div>
+      <div class="gate-car" aria-hidden="true"></div>
       <header class="gate-top">
         <p class="gate-kicker">Interactive résumé</p>
         <h2 id="gate-h" class="gate-name">{profile.name}</h2>
@@ -67,15 +55,9 @@ const win = (k: string) => WINDOWS[k].join(',');
         </nav>
       </div>
     </div>
-    </div>
-    <!-- Boot + warp landing (scene/night/boot.ts, landing.ts): after Enter, the light-speed loop while the city builds (or
-         the poster for reduced motion); when the first frame is up the arrival clip plays and fades onto the live vista. -->
+    <!-- The gate's live car canvas moves into this overlay while the city builds. -->
     <div id="boot" class="boot" aria-busy="true">
       <div class="boot-media" aria-hidden="true">
-        <div class="boot-warp"><i></i><i></i><i></i></div>
-        <video class="warp-loop" muted playsinline loop disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true"></video>
-        <video class="warp-launch" muted playsinline disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true"></video>
-        <video class="warp-arrival" muted playsinline disablepictureinpicture preload="auto" tabindex="-1" aria-hidden="true"></video>
       </div>
       <div class="boot-top">
         <p class="boot-wordmark" data-text="IVAN HE">IVAN HE</p>

@@ -190,6 +190,8 @@ html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; 
   background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px),
     radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.45)); }
 .boot-media { position: absolute; inset: 0; }
+.boot[data-landing='live'] .boot-media { background: radial-gradient(ellipse at 50% 48%, #122333, #050509 70%); }
+.boot[data-landing='live'] .gate-car { top: 48%; }
 .boot[data-landing='poster'] .boot-media, .boot[data-landing='video'] .boot-media { background: #050509 url(/night/landing/warp-poster.jpg) center / cover no-repeat; }
 /* After Enter the overlay starts on the hover still (the gate's backdrop = the launch's first frame); the warp poster only
    when the clips can't play (data-poster="warp", with the CSS warp). */
@@ -276,12 +278,17 @@ html.reduce-motion .neon-btn { transition: none; }
   padding: max(28px, calc(env(safe-area-inset-top) + 20px)) clamp(20px, 7vw, 96px) max(24px, calc(env(safe-area-inset-bottom) + 16px)); background: #050509; color: var(--ink); }
 .gate[data-state='open'], .gate[data-state='closing'] { display: flex; }
 .gate[data-state='closing'] { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-.gate-bg { position: fixed; inset: 0; background: #050509 url(/night/landing/hover.jpg) center / cover no-repeat; filter: brightness(0.8);
-  transform: translateY(-11vh); } /* the car sits above the Enter button; on Enter it settles to the launch clip's framing */
+.gate-bg { position: fixed; inset: 0; background:
+  radial-gradient(ellipse 48% 34% at 50% 54%, rgb(20 72 88 / 0.52), transparent 72%),
+  radial-gradient(ellipse 42% 30% at 62% 63%, rgb(88 14 82 / 0.30), transparent 78%),
+  radial-gradient(ellipse 95% 76% at 50% 48%, #0b1020 0%, #050509 68%); filter: none;
+  transform: translateY(-11vh); } /* the live car sits above the Enter button; on Enter it settles toward the city */
 .gate[data-state='closing'] .gate-bg { transform: none; transition: transform 0.3s ease-out; }
 .gate-bg::after { content: ''; position: absolute; inset: 0;
   background: linear-gradient(180deg, rgb(5 5 9 / 0.85) 0%, rgb(5 5 9 / 0.2) 30%, rgb(5 5 9 / 0.15) 55%, rgb(5 5 9 / 0.9) 100%); }
-.gate-top, .gate-bottom { position: relative; width: min(560px, 100%); }
+.gate-car { position: absolute; z-index: 1; left: 50%; top: 47%; width: min(680px, 100vw); height: min(440px, 48vh); transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: screen; filter: drop-shadow(0 18px 28px rgb(0 0 0 / 0.55)); }
+.gate-car canvas { display: block; width: 100%; height: 100%; }
+.gate-top, .gate-bottom { position: relative; z-index: 2; width: min(560px, 100%); }
 .gate-kicker { margin: 0 0 10px; font: 500 12px var(--mono); letter-spacing: 0.3em; text-transform: uppercase; color: rgb(0 229 255 / 0.85); }
 .gate-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(48px, 11vw, 88px); line-height: 0.95; letter-spacing: 0.03em; text-transform: uppercase;
   text-shadow: 0 2px 24px rgb(0 0 0 / 0.6); }
@@ -304,7 +311,8 @@ html.reduce-motion .neon-btn { transition: none; }
 .gate-links a:hover { text-shadow: 0 0 10px var(--cyan); color: #fff; }
 .gate-links a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 @media (max-width: 760px) {
-  .gate-bg { background-image: url(/night/landing/hover-p.jpg); transform: translateY(-19vh); }
+  .gate-bg { transform: translateY(-19vh); }
+  .gate-car { top: 48%; width: 122vw; height: 42vh; }
 }
 @media (prefers-reduced-motion: reduce) { .gate[data-state='closing'], .gate[data-state='closing'] .gate-bg, .gate-switch, .gate-switch::after { transition: none; } }
 
