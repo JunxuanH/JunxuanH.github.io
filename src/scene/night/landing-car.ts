@@ -6,6 +6,7 @@ import * as THREE from 'three/webgpu';
 import { WebGLRenderer } from 'three/src/renderers/WebGLRenderer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { createLandingBay } from './landing-bay';
 
 export function mountLandingCar(host: HTMLElement, motion = () => !document.documentElement.classList.contains('reduce-motion')) {
   const renderer = new WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -13,6 +14,7 @@ export function mountLandingCar(host: HTMLElement, motion = () => !document.docu
   renderer.setClearAlpha(0);
   host.append(renderer.domElement);
   const scene = new THREE.Scene();
+  const bay = createLandingBay(); scene.add(bay.group);
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
   camera.position.set(0, 0.2, 9);
   const rig = new THREE.Group(); scene.add(rig);
@@ -76,7 +78,8 @@ export function mountLandingCar(host: HTMLElement, motion = () => !document.docu
     const dt = Math.min(.05, lastTime ? t - lastTime : 0); lastTime = t;
     const moving = motion(), boot = host.closest('#boot');
     if (boot && !launchedAt) launchedAt = t;
-    const launch = moving && launchedAt ? THREE.MathUtils.smoothstep(t - launchedAt, 0, 1.7) : 0;
+    const launch = moving && launchedAt ? THREE.MathUtils.smoothstep(t - launchedAt, 1.2, 2.8) : 0;
+    bay.update(launchedAt ? t - launchedAt : 0, moving, !!boot);
     const emerging = boot?.classList.contains('is-arriving');
     if (emerging && !emergedAt) emergedAt = t;
     const exit = emergedAt ? THREE.MathUtils.smoothstep(t - emergedAt, 0, .5) : 0;

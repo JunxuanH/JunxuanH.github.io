@@ -290,7 +290,8 @@ html.reduce-motion .neon-btn { transition: none; }
 .gate[data-state='closing'] .gate-bg { transform: none; transition: transform 0.3s ease-out; }
 .gate-bg::after { content: ''; position: absolute; inset: 0;
   background: linear-gradient(180deg, rgb(5 5 9 / 0.85) 0%, rgb(5 5 9 / 0.2) 30%, rgb(5 5 9 / 0.15) 55%, rgb(5 5 9 / 0.9) 100%); }
-.gate-car { position: absolute; z-index: 1; left: 50%; top: 47%; width: min(680px, 100vw); height: min(440px, 48vh); transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: screen; filter: drop-shadow(0 18px 28px rgb(0 0 0 / 0.55)); }
+.gate-car { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 64%, transparent 88%); }
 .gate-car canvas { display: block; width: 100%; height: 100%; }
 .gate-top, .gate-bottom { position: relative; z-index: 2; width: min(560px, 100%); }
 .gate-kicker { margin: 0 0 10px; font: 500 12px var(--mono); letter-spacing: 0.3em; text-transform: uppercase; color: rgb(0 229 255 / 0.85); }
@@ -316,7 +317,7 @@ html.reduce-motion .neon-btn { transition: none; }
 .gate-links a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 @media (max-width: 760px) {
   .gate-bg { transform: translateY(-19vh); }
-  .gate-car { top: 48%; width: 122vw; height: 42vh; }
+  .gate-car { inset: 0; width: 100%; height: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .gate[data-state='closing'], .gate[data-state='closing'] .gate-bg, .gate-switch, .gate-switch::after { transition: none; } }
 
