@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { texture, uv, vec3, smoothstep, float, uniform, mix, color } from './tsl';
 import { loadSRGB } from './palette';
+import { croppedPlateGeometry } from './plate-geometry';
 
 /**
  * Far skyline: flat Fal aerial plates (nano-banana-pro), fading to the sky dome
@@ -19,18 +20,18 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
   // `bottom` = [start, end] of a fade over the plate's lower part (uv.y): the side plates' foreground rooftops dissolve into
   // haze instead of sitting on the water like a cut-out. Uniforms, so every plate keeps the same program.
   const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean, bottom: [number, number] = [0, 0.0001], side = false) => {
-    const geo = new THREE.PlaneGeometry(W, H);
+    const margin = side ? 0.18 : 0.08;
+    const geo = croppedPlateGeometry(W, H, margin, mirror);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
     mat.fog = false;
-    const u = mirror ? float(1).sub(uv().x) : uv().x;
-    const tuv = vec3(u, uv().y, 0).xy;
+    const tuv = uv(1);
     // A distant painted skyline must stay planar: depth-image discontinuities stretch building silhouettes when
     // viewed from the side. Real foreground towers already provide the parallax.
     const fadeB = smoothstep(uniform(bottom[0]), uniform(bottom[1]), uv().y);
     // Toward the faded bottom the plate also takes the street haze's navy, so what remains reads as mist, not a cut edge.
-    // The side plates are seen at grazing angles: discard the outer strips instead of leaving
-    // stretched, half-transparent window columns. Keep the central artwork and all north joins intact.
-    const edgeStart = uniform(side ? 0.12 : 0.035), edgeEnd = uniform(side ? 0.28 : 0.18);
+    // Distorted source margins are physically absent, not merely dimmed. Feather only the new
+    // cut boundary; UV0 spans the retained geometry while UV1 excludes the source's outer strips.
+    const edgeStart = uniform(0), edgeEnd = uniform(0.06);
     const fadeX = smoothstep(edgeStart, edgeEnd, uv().x).mul(smoothstep(edgeStart, edgeEnd, float(1).sub(uv().x)));
     const plateColor = texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
     // Suppress bright windows before the margin dissolves, so bloom cannot leave glowing strips.
@@ -38,7 +39,9 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
     // Ascending smoothstep edges are defined on both WebGL and WebGPU.
     const fadeY = float(1).sub(smoothstep(0.72, 1.0, uv().y));
     mat.opacityNode = fadeX.mul(fadeY).mul(fadeB);
-    return new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData.sourceCrop = [margin, 1 - margin];
+    return mesh;
   };
   const load = (name: string) => loadSRGB(`/night/backdrop/${name}.webp`);
 
