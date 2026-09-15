@@ -1,12 +1,12 @@
 import * as THREE from 'three/webgpu';
 import {
-  positionLocal, normalize, mix, color, smoothstep, step, hash, floor, float, uv, texture, vec3,
+  positionLocal, normalize, mix, color, smoothstep, float, uv, texture, vec3,
   fog, densityFogFactor, positionWorld, equirectUV, vec2,
 } from './tsl';
 import { PAL, loadSRGB, loader } from './palette';
 
 /**
- * Night sky. Default: gradient dome (plum horizon → near-black zenith), a star field, a low cloud band lit from below by
+ * Night sky. Default: gradient dome (plum horizon → near-black zenith), a low cloud band lit from below by
  * the city, and a small moon. `?pano=1`: the 360° river-city panorama instead (see `pano` below).
  * Everything is `fog: false`; the scene fog handles the haze between towers.
  */
@@ -50,10 +50,9 @@ export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; de
   const grad = mix(color(PAL.plum), color(0x08070f), up);
   // Warm city glow just above the horizon, strongest toward -z (the skyline).
   const glow = smoothstep(0.25, 0.0, dir.y).mul(smoothstep(-0.3, -1.0, dir.z).mul(0.5).add(0.5));
-  const cell = floor(dir.mul(900.0));
-  const starHash = hash(cell.x.mul(1.3).add(cell.y.mul(7.7)).add(cell.z.mul(13.1)));
-  const stars = step(0.9985, starHash).mul(smoothstep(0.1, 0.4, dir.y)).mul(hash(cell.x.add(cell.z)).mul(0.6).add(0.4));
-  mat.colorNode = grad.add(color(0x5a2a3c).mul(glow).mul(0.6)).add(stars.mul(0.9));
+  // The old quantized-direction star hash formed diagonal dotted bands near the side panels.
+  // Keep this rainy, light-polluted sky clean; clouds, moon and the original skyline remain.
+  mat.colorNode = grad.add(color(0x5a2a3c).mul(glow).mul(0.6));
   group.add(dome);
 
   // Moon

@@ -18,7 +18,7 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
   const H0 = 520, D0 = 560, Y0 = 150;
   // `bottom` = [start, end] of a fade over the plate's lower part (uv.y): the side plates' foreground rooftops dissolve into
   // haze instead of sitting on the water like a cut-out. Uniforms, so every plate keeps the same program.
-  const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean, bottom: [number, number] = [0, 0.0001]) => {
+  const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean, bottom: [number, number] = [0, 0.0001], side = false) => {
     const geo = new THREE.PlaneGeometry(W, H);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
     mat.fog = false;
@@ -28,9 +28,15 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
     // viewed from the side. Real foreground towers already provide the parallax.
     const fadeB = smoothstep(uniform(bottom[0]), uniform(bottom[1]), uv().y);
     // Toward the faded bottom the plate also takes the street haze's navy, so what remains reads as mist, not a cut edge.
-    mat.colorNode = mix(color(0x0b0d1c), texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1), fadeB.mul(0.6).add(0.4));
-    const fadeX = smoothstep(0.035, 0.18, uv().x).mul(smoothstep(0.965, 0.82, uv().x));
-    const fadeY = smoothstep(1.0, 0.72, uv().y);
+    // The side plates are seen at grazing angles: discard the outer strips instead of leaving
+    // stretched, half-transparent window columns. Keep the central artwork and all north joins intact.
+    const edgeStart = uniform(side ? 0.12 : 0.035), edgeEnd = uniform(side ? 0.28 : 0.18);
+    const fadeX = smoothstep(edgeStart, edgeEnd, uv().x).mul(smoothstep(edgeStart, edgeEnd, float(1).sub(uv().x)));
+    const plateColor = texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
+    // Suppress bright windows before the margin dissolves, so bloom cannot leave glowing strips.
+    mat.colorNode = mix(color(0x0b0d1c), plateColor, fadeB.mul(0.6).add(0.4)).mul(mix(float(1), fadeX, uniform(side ? 1 : 0)));
+    // Ascending smoothstep edges are defined on both WebGL and WebGPU.
+    const fadeY = float(1).sub(smoothstep(0.72, 1.0, uv().y));
     mat.opacityNode = fadeX.mul(fadeY).mul(fadeB);
     return new THREE.Mesh(geo, mat);
   };
@@ -62,7 +68,7 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
     sides.forEach(([, x, z, yaw, bottom], i) => {
       const t = loaded[i];
       if (!t) return;
-      const m = make(t, H * (t.image.width / t.image.height), H, false, bottom);
+      const m = make(t, H * (t.image.width / t.image.height), H, false, bottom, true);
       m.position.set(x, Y0 * k, z);
       m.rotation.y = yaw;
       group.add(m);
