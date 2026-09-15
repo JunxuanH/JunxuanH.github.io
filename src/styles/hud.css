@@ -77,6 +77,7 @@ html.no-3d #hud { display: none; }
 /* On: fades in a second into the move (the delay is the "it's a cutscene" grace period), and only then takes taps. */
 .hud-skip.is-on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.4s ease 1s, visibility 0s linear 1s; }
 .hud-skip:hover { color: #fff; text-shadow: 0 0 8px var(--cyan); }
+.hud-skip:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
 .hud-fade { inset: 0; z-index: 3; background: #000; opacity: 0; transition: opacity 0.3s linear; }
 .hud-fade.is-on { opacity: 1; }
 /* The nav floats over the top bar, dimmed, and stays clickable (a click mid-cutscene redirects the move). */
@@ -210,4 +211,3 @@ html[data-cutscene] .nav:hover { opacity: 1; }
 html.reduce-motion .hud-prompt.is-on, html.reduce-motion .hud-hint.is-on, html.reduce-motion .hud-toast.is-on, html.reduce-motion .hud-elabel.is-on, html.reduce-motion .hud-btn-e.is-hot { animation: none; }
 html.reduce-motion .hud-prompt, html.reduce-motion .hud-hint, html.reduce-motion .hud-toast, html.reduce-motion .stick, html.reduce-motion .hud-bar, html.reduce-motion .nav { transition: none; }
 html.reduce-motion .hud-skip { display: none; }
-

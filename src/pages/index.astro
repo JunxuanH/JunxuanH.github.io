@@ -122,7 +122,7 @@ const win = (k: string) => WINDOWS[k].join(',');
       })();
     </script>
     <nav class="nav" aria-label="Primary">
-      {sections.map((s) => <a href={`#${s.id}`} data-section={s.id}>{s.name}{s.label && <small>{s.label}</small>}</a>)}
+      {sections.map((s) => <a href={`#${s.id}`} data-section={s.id} aria-label={s.label ? `${s.name} — ${s.label}` : s.name}>{s.name}{s.label && <small>{s.label}</small>}</a>)}
       <button class="audio-toggle" type="button" aria-pressed="false" aria-label="Unmute ambient sound"><span class="on">♪</span><span class="off">♪̸</span></button>
     </nav>
 
@@ -248,7 +248,7 @@ const win = (k: string) => WINDOWS[k].join(',');
     <div id="hud" class="hud" data-mode="ride">
       <!-- Transition cutscene (scene/night/nav.ts beats → hud.cutscene): letterbox bars, the skip chip, the reduced-motion fade. -->
       <div class="hud-bars" aria-hidden="true"><i class="hud-bar top"></i><i class="hud-bar bottom"></i></div>
-      <button class="hud-skip" type="button" tabindex="-1">Skip <span>▸</span></button>
+      <button class="hud-skip" type="button" aria-label="Skip scene transition">Skip <span aria-hidden="true">▸</span></button>
       <div class="hud-fade" aria-hidden="true"></div>
       <div class="hud-toast" hidden aria-live="polite"><span class="hud-toast-name"></span><small class="hud-toast-sub"></small></div>
       <div class="hud-prompt" hidden aria-live="polite"><kbd>E</kbd><span class="hud-prompt-label"></span></div>
@@ -292,6 +292,7 @@ const win = (k: string) => WINDOWS[k].join(',');
     </footer>
 
     <script>
+      import '../scene/night/resume-overlay';
       import { start } from '../scene/night/main';
       import { boot } from '../scene/night/boot';
       import { gate } from '../scene/night/gate';

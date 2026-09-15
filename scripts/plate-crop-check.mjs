@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { croppedPlateGeometry } from '../src/scene/night/plate-geometry.ts';
-for (const margin of [.08, .18]) for (const mirror of [false, true]) {
+for (const margin of [.08, .28]) for (const mirror of [false, true]) {
   const g = croppedPlateGeometry(1000, 500, margin, mirror);
   g.computeBoundingBox();
   assert(Math.abs(g.boundingBox.max.x - g.boundingBox.min.x - 1000 * (1 - 2 * margin)) < .001);

@@ -16,6 +16,24 @@ import { profile, education, jobs, projects } from '../content';
     <link rel="icon" href="/logo.ico" />
   </head>
   <body>
+    <script is:inline define:vars={{ site: profile.links.site }}>
+      if (window.parent !== window && new URLSearchParams(location.search).has('embedded')) {
+        document.documentElement.classList.add('resume-embedded');
+        addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') { e.preventDefault(); parent.postMessage('close-resume', location.origin); }
+        });
+        document.addEventListener('click', function (e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (!a) return;
+          var url = new URL(a.href);
+          if (url.pathname === '/' && (url.origin === location.origin || url.origin === new URL(site).origin)) {
+            e.preventDefault(); parent.postMessage('close-resume', location.origin);
+          } else if (url.origin !== location.origin) {
+            a.target = '_blank'; a.rel = 'noopener';
+          }
+        });
+      }
+    </script>
     <nav class="bar">
       <a href="/">← Back to the city</a>
       <a class="dl" href="/Ivan-He-Resume.pdf" download>Download PDF</a>

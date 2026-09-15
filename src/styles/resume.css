@@ -12,6 +12,8 @@ a { color: var(--cyan); }
 
 .bar { max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 15px; }
 .bar a { text-decoration: none; }
+.resume-embedded .bar > a:first-child { display: none; }
+.resume-embedded .bar { justify-content: flex-end; }
 .bar .dl { padding: 8px 18px; border-radius: 999px; background: var(--yellow); color: #101008; font-weight: 700; box-shadow: 0 0 18px rgb(242 255 61 / 0.45); }
 
 .paper { max-width: 860px; margin: 0 auto; padding: 40px 44px 48px; background: rgb(8 10 20 / 0.7); border: 1px solid rgb(0 229 255 / 0.4); box-shadow: 0 0 30px rgb(0 229 255 / 0.12); }

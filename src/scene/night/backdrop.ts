@@ -20,7 +20,7 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
   // `bottom` = [start, end] of a fade over the plate's lower part (uv.y): the side plates' foreground rooftops dissolve into
   // haze instead of sitting on the water like a cut-out. Uniforms, so every plate keeps the same program.
   const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean, bottom: [number, number] = [0, 0.0001], side = false) => {
-    const margin = side ? 0.18 : 0.08;
+    const margin = side ? 0.28 : 0.08;
     const geo = croppedPlateGeometry(W, H, margin, mirror);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
     mat.fog = false;
@@ -31,11 +31,12 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
     // Toward the faded bottom the plate also takes the street haze's navy, so what remains reads as mist, not a cut edge.
     // Distorted source margins are physically absent, not merely dimmed. Feather only the new
     // cut boundary; UV0 spans the retained geometry while UV1 excludes the source's outer strips.
-    const edgeStart = uniform(0), edgeEnd = uniform(0.06);
+    // Side plates need a crisp crop: the old wide fade smeared partial buildings into the sky.
+    const edgeStart = uniform(0), edgeEnd = uniform(side ? 0.008 : 0.06);
     const fadeX = smoothstep(edgeStart, edgeEnd, uv().x).mul(smoothstep(edgeStart, edgeEnd, float(1).sub(uv().x)));
     const plateColor = texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
-    // Suppress bright windows before the margin dissolves, so bloom cannot leave glowing strips.
-    mat.colorNode = mix(color(0x0b0d1c), plateColor, fadeB.mul(0.6).add(0.4)).mul(mix(float(1), fadeX, uniform(side ? 1 : 0)));
+    // Fade coverage only. Darkening RGB as well produced a dark fringe along the cut buildings.
+    mat.colorNode = mix(color(0x0b0d1c), plateColor, fadeB.mul(0.6).add(0.4));
     // Ascending smoothstep edges are defined on both WebGL and WebGPU.
     const fadeY = float(1).sub(smoothstep(0.72, 1.0, uv().y));
     mat.opacityNode = fadeX.mul(fadeY).mul(fadeB);

@@ -114,7 +114,8 @@ export function createHud() {
     skipBtn?.classList.toggle('is-on', !reducedMotion && (beat === 'establish' || beat === 'cover' || beat === 'depart' || beat === 'travel'));
     fadeEl?.classList.toggle('is-on', beat === 'fade');
   }
-  const onSkip = (cb: () => void) => skipBtn?.addEventListener('pointerdown', (e) => { e.preventDefault(); cb(); });
+  // Native click covers touch, mouse, Enter, Space, and assistive-technology activation.
+  const onSkip = (cb: () => void) => skipBtn?.addEventListener('click', cb);
 
   // ---- phone layout: the sheet's height (chips / Back sit on its top edge) and the nav's bottom edge (toast / hint stack under it)
   if (el && 'ResizeObserver' in window) {

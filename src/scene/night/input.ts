@@ -176,6 +176,7 @@ export function createInput(opts: InputOptions) {
   /** The frame's input; edge flags and drag deltas reset. */
   let lastPoll = 0;
   function poll(): InputState {
+    if (document.documentElement.classList.contains('resume-open')) clear();
     const now = performance.now(), dt = lastPoll ? Math.min((now - lastPoll) / 1000, 0.05) : 0; lastPoll = now;
     if (held.has('KeyQ')) orbitX -= KEY_ORBIT_PX * dt;
     if (held.has('KeyE')) orbitX += KEY_ORBIT_PX * dt;

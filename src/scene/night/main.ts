@@ -341,7 +341,10 @@ export async function start(root: HTMLElement) {
     cover: cine.cover,
     onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
     onSection: (id) => {
-      navLinks.forEach((a) => a.toggleAttribute('aria-current', a.dataset.section === id));
+      navLinks.forEach((a) => {
+        if (a.dataset.section === id) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+      });
       if (id !== 'city') document.documentElement.classList.add('has-entered'); // the nav appears once the visitor enters
     },
     onEnterWalk: (id) => {
@@ -671,6 +674,8 @@ export async function start(root: HTMLElement) {
     heroAlpha += ((heroOn ? 1 : 0) - heroAlpha) * Math.min(1, dt * 6);
     heroCopy.style.opacity = heroAlpha.toFixed(3);
     heroCopy.style.pointerEvents = heroAlpha > 0.5 ? 'auto' : 'none';
+    // Opacity does not remove invisible links from keyboard navigation or the accessibility tree.
+    heroCopy.inert = !heroOn;
     heroCopy.style.transform = innerWidth <= 760 ? 'none' : `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
     if (water) water.visible = walkSec ? walkSec === 'contact' : p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
