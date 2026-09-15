@@ -1,0 +1,93 @@
+{
+  "provider": "fal.ai",
+  "endpoint": "fal-ai/nano-banana-2",
+  "estimatedCostUsd": 0.32,
+  "referenceArt": [
+    "ad-1.webp",
+    "ad-2.webp",
+    "ad-3.webp",
+    "ad-4.webp"
+  ],
+  "assets": [
+    {
+      "file": "product-headphones-v1.webp",
+      "prompt": "Photorealistic premium consumer electronics advertising key visual: premium over-ear wireless headphones, two earcups with soft leather cushions connected by a believable metal headband, brushed titanium and graphite, subtle cyan light ring, magenta rim light. A physically plausible desirable product photographed for a futuristic cyberpunk brand, not a cartoon or illustration. Single hero object fully visible, centered in the middle 65 percent of the frame, floating just above a glossy dark studio platform. Bright softbox key lighting reveals real material detail, sharp specular highlights, crisp silhouette, bright cyan and magenta neon accents with tiny acid-yellow details. Deep midnight-blue background with very subtle defocused city lights. Match the art direction of neon cyberpunk street advertisements: commanding product silhouette, premium studio product photography, intense but controlled light. Leave dark negative space at bottom 18 percent for a separately rendered headline. No words, no letters, no logos, no watermarks, no humans, no robot heads, no invented illegible lettering. Landscape 4:3 image.",
+      "status": "completed",
+      "endpoint_id": "fal-ai/nano-banana-2",
+      "request_id": "01a0a3b3-75fc-7551-8735-c9efae998ae5",
+      "result": {
+        "images": [
+          {
+            "url": "https://v3b.fal.media/files/b/0aaa7d04/m98_oGhak_XzAEA19tEHF_BfHgwzJ7.webp",
+            "content_type": "image/webp",
+            "file_name": "m98_oGhak_XzAEA19tEHF_BfHgwzJ7.webp",
+            "file_size": null,
+            "width": 1200,
+            "height": 896
+          }
+        ],
+        "description": ""
+      }
+    },
+    {
+      "file": "product-computer-v1.webp",
+      "prompt": "Photorealistic premium consumer electronics advertising key visual: a compact desktop computer, machined aluminum cube with perforated ventilation and a smoked glass side exposing densely packed electronics, amber status lights and cyan accents. A physically plausible desirable product photographed for a futuristic cyberpunk brand, not a cartoon or illustration. Single hero object fully visible, centered in the middle 65 percent of the frame, floating just above a glossy dark studio platform. Bright softbox key lighting reveals real material detail, sharp specular highlights, crisp silhouette, bright cyan and magenta neon accents with tiny acid-yellow details. Deep midnight-blue background with very subtle defocused city lights. Match the art direction of neon cyberpunk street advertisements: commanding product silhouette, premium studio product photography, intense but controlled light. Leave dark negative space at bottom 18 percent for a separately rendered headline. No words, no letters, no logos, no watermarks, no humans, no robot heads, no invented illegible lettering. Landscape 4:3 image.",
+      "status": "completed",
+      "endpoint_id": "fal-ai/nano-banana-2",
+      "request_id": "01a0a3b3-8359-7292-bd26-9337d906fffc",
+      "result": {
+        "images": [
+          {
+            "url": "https://v3b.fal.media/files/b/0aaa7d04/Hd9bL9gD7tSlA2WrMMoMP_oi0absOp.webp",
+            "content_type": "image/webp",
+            "file_name": "Hd9bL9gD7tSlA2WrMMoMP_oi0absOp.webp",
+            "file_size": null,
+            "width": 1200,
+            "height": 896
+          }
+        ],
+        "description": ""
+      }
+    },
+    {
+      "file": "product-console-v1.webp",
+      "prompt": "Photorealistic premium consumer electronics advertising key visual: a realistic portable handheld gaming console, wide landscape screen, two analog thumbsticks and tactile buttons, translucent smoky purple housing, cyan edge light, abstract neon racing scene on screen. A physically plausible desirable product photographed for a futuristic cyberpunk brand, not a cartoon or illustration. Single hero object fully visible, centered in the middle 65 percent of the frame, floating just above a glossy dark studio platform. Bright softbox key lighting reveals real material detail, sharp specular highlights, crisp silhouette, bright cyan and magenta neon accents with tiny acid-yellow details. Deep midnight-blue background with very subtle defocused city lights. Match the art direction of neon cyberpunk street advertisements: commanding product silhouette, premium studio product photography, intense but controlled light. Leave dark negative space at bottom 18 percent for a separately rendered headline. No words, no letters, no logos, no watermarks, no humans, no robot heads, no invented illegible lettering. Landscape 4:3 image.",
+      "status": "completed",
+      "endpoint_id": "fal-ai/nano-banana-2",
+      "request_id": "01a0a3b3-90c5-7d72-b5b7-4ea672b12c14",
+      "result": {
+        "images": [
+          {
+            "url": "https://v3b.fal.media/files/b/0aaa7d04/JNFrCjtk-9wfbatGpP-c2_UMhLsS7n.webp",
+            "content_type": "image/webp",
+            "file_name": "JNFrCjtk-9wfbatGpP-c2_UMhLsS7n.webp",
+            "file_size": null,
+            "width": 1200,
+            "height": 896
+          }
+        ],
+        "description": ""
+      }
+    },
+    {
+      "file": "product-camera-v1.webp",
+      "prompt": "Photorealistic premium consumer electronics advertising key visual: a premium mirrorless digital camera with a large realistic photographic lens, titanium body, knurled dials, subtle cyan and magenta reflections in the lens glass. A physically plausible desirable product photographed for a futuristic cyberpunk brand, not a cartoon or illustration. Single hero object fully visible, centered in the middle 65 percent of the frame, floating just above a glossy dark studio platform. Bright softbox key lighting reveals real material detail, sharp specular highlights, crisp silhouette, bright cyan and magenta neon accents with tiny acid-yellow details. Deep midnight-blue background with very subtle defocused city lights. Match the art direction of neon cyberpunk street advertisements: commanding product silhouette, premium studio product photography, intense but controlled light. Leave dark negative space at bottom 18 percent for a separately rendered headline. No words, no letters, no logos, no watermarks, no humans, no robot heads, no invented illegible lettering. Landscape 4:3 image.",
+      "status": "completed",
+      "endpoint_id": "fal-ai/nano-banana-2",
+      "request_id": "01a0a3b3-9c27-7d41-84de-e36c9355fbc3",
+      "result": {
+        "images": [
+          {
+            "url": "https://v3b.fal.media/files/b/0aaa7d05/u6efTLDkdH9VOzAtVCklw_ag3A307g.webp",
+            "content_type": "image/webp",
+            "file_name": "u6efTLDkdH9VOzAtVCklw_ag3A307g.webp",
+            "file_size": null,
+            "width": 1200,
+            "height": 896
+          }
+        ],
+        "description": ""
+      }
+    }
+  ]
+}

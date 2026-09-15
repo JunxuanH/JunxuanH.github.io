@@ -58,7 +58,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const buzz = mix(float(1), hash(floor(time.mul(24))), step(0.92, hash(floor(time.mul(0.6)))));
   coneMat.colorNode = color(T.secondary);
   coneMat.opacityNode = smoothstep(0, 1, uv().y).mul(0.2).mul(buzz);
-  const cone = new THREE.Mesh(new THREE.ConeGeometry(3.6, coneH, 40, 1, true).rotateX(Math.PI).translate(0, coneH / 2, 0), coneMat);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(1.9, coneH, 40, 1, true).rotateX(Math.PI).translate(0, coneH / 2, 0), coneMat);
   cone.position.y = 1.55;
   cone.scale.y = 0.001;
   group.add(puck, ring, cone);
@@ -119,7 +119,7 @@ export function create(ctx: CarrierCtx): Carrier {
   const actions: DockActions = { up: () => move(-1), down: () => move(1), left: () => { if (detail) { closeDetail(); sfx.select(); } }, confirm };
 
   return {
-    group, mount, width: 10, px: 720, style: '', node: 'HOLO STALL',
+    group, mount, width: 4.8, px: 720, style: '', node: 'HOLO STALL',
     range: [0.55, 0.95],
     lights: [[72, 3.5, -226, T.secondary, 500, 16]],
     rise,
