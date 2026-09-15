@@ -3,11 +3,11 @@ import {
   positionLocal, normalize, mix, color, smoothstep, float, uv, texture, vec3,
   fog, densityFogFactor, positionWorld, equirectUV, vec2,
 } from './tsl';
-import { PAL, loadSRGB, loader } from './palette';
+import { PAL, loader } from './palette';
 
 /**
- * Night sky. Default: gradient dome (plum horizon → near-black zenith), a low cloud band lit from below by
- * the city, and a small moon. `?pano=1`: the 360° river-city panorama instead (see `pano` below).
+ * Night sky. Default: gradient dome (plum horizon → near-black zenith) and a small moon.
+ * The city haze provides atmosphere without opaque cloud cutouts.
  * Everything is `fog: false`; the scene fog handles the haze between towers.
  */
 export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; depth?: string; depthScale?: number; rotation?: number; gain?: number }) {
@@ -51,7 +51,7 @@ export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; de
   // Warm city glow just above the horizon, strongest toward -z (the skyline).
   const glow = smoothstep(0.25, 0.0, dir.y).mul(smoothstep(-0.3, -1.0, dir.z).mul(0.5).add(0.5));
   // The old quantized-direction star hash formed diagonal dotted bands near the side panels.
-  // Keep this rainy, light-polluted sky clean; clouds, moon and the original skyline remain.
+  // Keep this rainy, light-polluted sky clean; moon and the original skyline remain.
   mat.colorNode = grad.add(color(0x5a2a3c).mul(glow).mul(0.6));
   group.add(dome);
 
@@ -65,29 +65,6 @@ export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; de
   moon.position.set(-620, 520, -1100);
   moon.scale.setScalar(70);
   group.add(moon);
-
-  // Low cloud band: cumulus cutouts lit from below by the city.
-  const cloudLayout: [number, number, number, number][] = [
-    // azimuth (deg from -z), elevation (deg), width, texture index
-    [-38, 9, 420, 2], [22, 7, 380, 4], [-70, 11, 300, 3], [58, 10, 340, 1], [0, 13, 260, 2],
-  ];
-  const count = tier === 'low' ? 3 : cloudLayout.length;
-  for (const [az, el, w, idx] of cloudLayout.slice(0, count)) {
-    loadSRGB(`/clouds/cloud-${idx}.webp`).then((tex) => {
-      const m = new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false });
-      m.fog = false;
-      const s = texture(tex, uv());
-      // Dark plum tops, warm underside lit by the city.
-      m.colorNode = mix(color(0x7a3a2a), color(0x2a0f2a), uv().y).mul(s.r.mul(0.6).add(0.4));
-      m.opacityNode = s.a.mul(0.85);
-      const sp = new THREE.Sprite(m);
-      const R = 1200;
-      const a = THREE.MathUtils.degToRad(az), e = THREE.MathUtils.degToRad(el);
-      sp.position.set(Math.sin(a) * R * Math.cos(e), Math.sin(e) * R, -Math.cos(a) * R * Math.cos(e));
-      sp.scale.set(w, w * 0.68, 1);
-      group.add(sp);
-    }).catch(() => {});
-  }
 
   return group;
 }
