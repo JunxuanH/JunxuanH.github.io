@@ -24,6 +24,8 @@ export interface CharacterAsset {
   meta?: Record<string, any>;
   /** Constant translation/scale tracks dropped at load (fewer property mixers per action). */
   strippedTracks?: number;
+  /** Exported whole-skeleton unit scale removed per clip (also applies to audited grounding offsets). */
+  clipUnitScales?: Map<string, number>;
 }
 
 let loader: GLTFLoader | null = null;
@@ -77,6 +79,29 @@ export function redundantTrackFilter(root: THREE.Object3D) {
   };
 }
 
+/** Meshy sometimes exports idle at 1.17647× the other clips. Undo only a constant, uniform
+ * root-bone scale; retain intentional animated/nonuniform scaling and every joint rotation.
+ * Root translation uses the same units, so it must be divided too or the feet would float. */
+export function normalizeClipUnits(root: THREE.Object3D, clip: THREE.AnimationClip): number {
+  for (const track of clip.tracks) {
+    const { nodeName, propertyName } = THREE.PropertyBinding.parseTrackName(track.name);
+    const bone = THREE.PropertyBinding.findNode(root, nodeName) as THREE.Bone | null;
+    if (propertyName !== 'scale' || !bone?.isBone || (bone.parent as THREE.Bone)?.isBone || track.getValueSize() !== 3) continue;
+    const rest = bone.scale.toArray(), factor = track.values[0] / rest[0];
+    if (!Number.isFinite(factor) || factor <= 0 || Math.abs(factor - 1) < .001) continue;
+    if (!Array.from(track.values).every((v, i) => Math.abs(v / rest[i % 3] - factor) < .0001)) continue;
+    const position = clip.tracks.find((t) => {
+      const binding = THREE.PropertyBinding.parseTrackName(t.name);
+      return binding.nodeName === nodeName && binding.propertyName === 'position';
+    });
+    if (!position || position.getValueSize() !== 3) continue;
+    for (let i = 0; i < position.values.length; i++) position.values[i] /= factor;
+    for (let i = 0; i < track.values.length; i++) track.values[i] = rest[i % 3];
+    return factor;
+  }
+  return 1;
+}
+
 /** Load a fal character (rigged.glb + clip GLBs listed in meta.json). Falls back to model.glb when unrigged. */
 export function loadCharacter(name: string, base = '/night/characters'): Promise<CharacterAsset> {
   const key = `${base}/${name}`;
@@ -99,15 +124,17 @@ export function loadCharacter(name: string, base = '/night/characters'): Promise
       }
       // Drop the constant translation/scale tracks (see redundantTrackFilter): ~2/3 of every Meshy clip.
       const filter = redundantTrackFilter(g.scene);
+      const clipUnitScales = new Map<string, number>();
       let stripped = 0;
-      for (const clip of clips.values()) {
+      for (const [label, clip] of clips) {
+        clipUnitScales.set(label, normalizeClipUnits(g.scene, clip));
         const before = clip.tracks.length;
         clip.tracks = clip.tracks.filter((t) => filter(t) !== 'redundant');
         stripped += before - clip.tracks.length;
       }
       // Meshy normalises the bind pose to meta.height_meters; measure anyway (unrigged model.glb fallback).
       const height = bboxHeight(g.scene) || 1.75;
-      return { name, scene: g.scene, clips, height, meta, strippedTracks: stripped };
+      return { name, scene: g.scene, clips, height, meta, strippedTracks: stripped, clipUnitScales };
     })());
   }
   return cache.get(key)!;
@@ -259,9 +286,10 @@ export function instantiate(asset: CharacterAsset, opts: InstantiateOptions = {}
   if (opts.skin !== false) applySkin(model, opts);
   const height = opts.height ?? meta.height;
   const s = height / asset.height;
+  const grounded = (clip: string) => groundOffsetFor(meta, clip) * s / (asset.clipUnitScales?.get(clip) ?? 1);
   model.scale.setScalar(s);
   model.rotation.y = meta.yaw;
-  model.position.y = groundOffsetFor(meta, 'idle') * s;
+  model.position.y = grounded('idle');
   const root = new THREE.Group();
   root.name = `rig:${asset.name}`;
   root.add(model);
@@ -279,7 +307,7 @@ export function instantiate(asset: CharacterAsset, opts: InstantiateOptions = {}
       next.reset().setEffectiveWeight(1).fadeIn(fade).play();
       if (prev) prev.fadeOut(fade);
       inst.current = [...actions.entries()].find(([, a]) => a === next)?.[0] ?? name;
-      model.position.y = groundOffsetFor(meta, inst.current) * s; // the planted foot dips deeper in walk/run than idle
+      model.position.y = grounded(inst.current); // keep audited offsets in the normalized clip's units
       return next;
     },
   };
