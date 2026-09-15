@@ -26,7 +26,8 @@ function paint() {
   if (!bar || !pct) return;
   // Creep toward the next milestone using the loader's item count so the bar never sits still.
   const within = total > 0 ? loaded / total : 0;
-  const goal = finished ? 1 : Math.min(target + 0.03 + within * 0.1, 0.985); // the loader ratio carries the bar through network waits
+  // Asset completion is not shader completion. Reserve the final portion for actual warm-up milestones.
+  const goal = finished ? 1 : target >= .86 ? target : Math.min(target + 0.03 + within * 0.1, .85);
   shown = Math.max(shown, Math.min(goal, shown + (goal - shown) * (reducedMotion ? 1 : 0.06)));
   bar.style.width = `${(shown * 100).toFixed(1)}%`;
   pct.textContent = `${Math.round(shown * 100).toString().padStart(2, '0')}%`;
@@ -64,6 +65,8 @@ export const boot = {
     }
     if (sr) sr.textContent = `Loading Neon Harbor: ${label}`;
   },
+  /** Within-stage progress without repeating announcements to screen readers. */
+  progress(f: number) { target = Math.max(target, Math.min(.97, f)); },
   /** First frame is on screen: fill the bar; the landing takes the overlay from here (or it glitches out and goes). */
   done() {
     if (!el || finished) return;

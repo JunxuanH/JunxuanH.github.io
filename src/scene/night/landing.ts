@@ -25,7 +25,14 @@ export const landing = {
     times.choice = full ? 'full' : 'reduced';
     el.dataset.landing = 'live';
   },
-  breathe(): Promise<void> { return new Promise((resolve) => setTimeout(resolve, 16)); },
+  breathe(): Promise<void> {
+    // A timer alone can resume before the car's next animation frame has painted.
+    // Use a timer fallback in background tabs, where animation frames are suspended.
+    return new Promise((resolve) => {
+      const fallback = setTimeout(resolve, 100);
+      requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(fallback); resolve(); }));
+    });
+  },
   ready() {
     if (!enabled || !el || leaving || readyRequested) return;
     readyRequested = true;

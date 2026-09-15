@@ -476,7 +476,7 @@ export async function start(root: HTMLElement) {
     // reveals its not-yet-compiled materials a few at a time (everything else hidden, so a render compiles only that
     // chunk), yields until the loop has presented new frames, then renders the whole pose once for the combinations.
     // Visibility only toggles meshes; lights stay put, so program keys are unchanged.
-    const CHUNK = narrow || tier === 'low' ? 3 : 8;
+    const CHUNK = narrow || tier === 'low' ? 1 : 4;
     const seen = new Set<string>();
     const keyOf = (o: any) => {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -506,13 +506,20 @@ export async function start(root: HTMLElement) {
           const batch = fresh.slice(c, c + CHUNK);
           for (const o of batch) o.visible = true;
           const tc = performance.now();
+          // Compile against the actual post-process target/MRT, not the canvas target.
+          // Async node builds and GPU pipeline creation yield instead of blocking the live car.
+          await scenePass.compileAsync(renderer);
+          await landing.breathe();
           pipeline.render();
           if (params.has('prof') && performance.now() - tc > 150) console.info('[night] pre-warm chunk', Math.round(performance.now() - tc), 'ms', batch.map((o: any) => `${o.name || o.type}/${(Array.isArray(o.material) ? o.material[0] : o.material)?.type}`).join(', '));
           for (const o of batch) o.visible = false;
+          boot.progress(.86 + .1 * (i + .9 * Math.min(1, (c + CHUNK) / fresh.length)) / poses.length);
           await landing.breathe();
         }
         for (const o of shown) o.visible = true;
       }
+      await scenePass.compileAsync(renderer);
+      await landing.breathe();
       pipeline.render();
       if (params.has('prof')) console.info('[night] pre-warm pose', pp, Math.round(performance.now() - tp), 'ms', fresh.length, 'new');
     }
