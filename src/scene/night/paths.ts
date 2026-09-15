@@ -123,6 +123,6 @@ export const DISTRICT_CROWDS = [
   { path: WORK_WALK_RIGHT, assets: ['corpo', 'idol', 'patrol-bot', 'mech-pilot', 'salaryman', 'medic', 'bouncer-android', 'yakuza-boss'], count: { high: 8, med: 4, low: 1 } },
   { path: AVENUE_WALK_LEFT, assets: ['netrunner', 'cat-courier', 'salaryman', 'punk', 'dj', 'tagger', 'yakuza-boss', 'delivery-rider'], count: { high: 9, med: 5, low: 1 } },
   { path: AVENUE_WALK_RIGHT, assets: ['corpo', 'medic', 'idol', 'patrol-bot', 'mech-pilot', 'salaryman', 'tagger', 'bouncer-android', 'exo-courier'], count: { high: 9, med: 5, low: 1 } },
-  { path: PROJECTS_MARKET, assets: ['skater', 'cat-courier', 'maid-bot', 'punk', 'delivery-rider', 'exo-courier', 'ronin'], count: { high: 8, med: 6, low: 4 } },
+  { path: PROJECTS_MARKET, assets: ['skater', 'cat-courier', 'maid-bot', 'punk', 'delivery-rider', 'exo-courier', 'ronin'], count: { high: 12, med: 8, low: 6 } },
   { path: CONTACT_PAD, assets: ['nomad', 'cat-courier', 'medic', 'mech-pilot', 'dock-worker', 'exo-courier'], count: { high: 6, med: 3, low: 1 } },
 ] as const;

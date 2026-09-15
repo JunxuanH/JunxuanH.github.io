@@ -5,12 +5,12 @@ import { CURB_H } from '../streets';
 import { MARKET_STALLS, MARKET_BOLLARDS } from '../market-layout';
 import { loader } from '../palette';
 
-/** A compact pedestrian electronics / food bazaar. No stand or vehicle occupies its central lane. */
+/** Pedestrian bazaar around a central public terminal, with clear circulation on both sides. */
 export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const group = new THREE.Group();
   group.name = 'Afterhours pedestrian market';
   const metal = new THREE.MeshStandardNodeMaterial({ color: 0x17202d, roughness: .65, metalness: .35 });
-  const panel = new THREE.MeshStandardNodeMaterial({ color: 0x27303e, roughness: .85 });
+  const panel = new THREE.MeshStandardNodeMaterial({ color: 0x27303e, emissive: 0x27303e, emissiveIntensity: .25, roughness: .85 });
   const rubber = new THREE.MeshStandardNodeMaterial({ color: 0x0b101a, roughness: .9 });
   const ceramic = new THREE.MeshStandardNodeMaterial({ color: 0xc2bcb0, roughness: .65 });
   const yellow = new THREE.MeshBasicNodeMaterial({ color: 0xb9ae45 });
@@ -58,11 +58,32 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
     box(p,metal,.7,1.15,.45,2.5,2.8,-1.45);
     for(let k=0;k<4;k++) box(p,trim,.32,.04,.03,2.5,2.45+k*.16,-1.2);
     const sign=label(s.name,['HOT FOOD / NIGHT SHIFT','DIAGNOSTICS / PARTS','PLAY / TRADE / REPAIR','LISTEN / CONNECT','STREETWEAR / AUGMENTS','COLD DRINKS / RECHARGE'][i],s.accent,5.5);
-    sign.position.set(0,3.02,1.75); p.add(sign);
+    sign.position.set(0,4.35,1.75); p.add(sign);
+    for(const x of [-2.4,2.4]) box(p,metal,.07,.65,.07,x,3.98,1.75);
     if(s.kind==='audio'||s.kind==='repair') {
       const art=poster(s.kind==='audio'?'product-headphones-v2.webp':'product-computer-v2.webp',2.4);
       art.position.set(-1.25,2.55,-1.67); p.add(art);
     }
+    // Human-scale illuminated product panels, not giant floating advertisements.
+    const newArt = ({food:'market-ramen.webp',drinks:'market-drinks.webp',wear:'market-wear.webp'} as Record<string,string>)[s.kind];
+    if(newArt) {
+      const art=poster(newArt,2.4);
+      art.position.set(0,2.05,1.64); p.add(art);
+    }
+    // Stock shelving and packaged goods fill the previously empty counter ends.
+    for(const side of [-1,1]) {
+      box(p,metal,.85,1.45,.55,side*2.45,1.87,-1.35);
+      for(let shelf=0;shelf<3;shelf++) {
+        box(p,trim,.78,.035,.5,side*2.45,1.35+shelf*.45,-1.04);
+        for(let item=0;item<3;item++) {
+          box(p,item%2?ceramic:panel,.18,.28,.22,side*2.45-.25+item*.25,1.51+shelf*.45,-1.16);
+          box(p,trim,.12,.055,.025,side*2.45-.25+item*.25,1.53+shelf*.45,-1.035);
+        }
+      }
+    }
+    // Backlit counter slats and alternating fabric panels give each shop a distinct rhythm.
+    for(let k=0;k<8;k++) box(p,k%2?panel:metal,.62,.7,.025,-2.45+k*.7,.48,1.565);
+    for(let k=0;k<5;k++) box(p,trim,.18,.035,3.8,-2.4+k*1.2,3.77,0,-.10);
     if(s.kind==='food') {
       for(let k=0;k<5;k++) {
         add(new THREE.CylinderGeometry(.24,.13,.14,12),ceramic,p,-2+k,1.2,1.05);
@@ -103,6 +124,20 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
       if(s.kind==='repair') for(let k=0;k<4;k++) box(p,ceramic,.08,.48,.06,.5+k*.3,2.3,-1.65);
     }
     lights.push([s.x,3.2,s.z+Math.cos(s.yaw)*2.2,s.accent,140,9]);
+  }
+  // A compact directory crown makes the centre legible from across the market.
+  // Supports sit within the terminal's existing collision footprint.
+  const directory=label('AFTERHOURS','MARKET / PROJECT TERMINAL',0xffbb70,4.1);
+  directory.position.set(52,4.35,-228); group.add(directory);
+  for(const x of [50.5,53.5]) box(group,metal,.10,4.6,.10,x,2.52,-228.35);
+  box(group,metal,4.4,.12,1.1,52,4.98,-228.3);
+  // Flush floor markings designate the arrival without creating a raised obstacle.
+  for(const x of [49.6,54.4]) box(group,yellow,.055,.012,4.2,x,CURB_H+.012,-225.5);
+  for(const z of [-223.4,-227.6]) box(group,yellow,4.8,.012,.055,52,CURB_H+.012,z);
+  // Hanging pennants bridge the gaps between booths, above pedestrian head height.
+  for(const z of [-237,-219]) for(const x of [40,43,46,58,61,64]) {
+    const flag=label(x<50?'NIGHT SHIFT':'OPEN LATE','FOOD / TECH / GEAR',z<-228?0x65e0ed:0xdb67ca,1.7);
+    flag.position.set(x,4.35,z); flag.rotation.y=z<-228?0:Math.PI; group.add(flag);
   }
   // Lanterns and exposed catenary cables; high enough to keep every sign readable.
   for(const x of [28,46,64,80]) {

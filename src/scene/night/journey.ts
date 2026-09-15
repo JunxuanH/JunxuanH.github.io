@@ -83,8 +83,8 @@ export const KEYS: Key[] = [
   { p: 0.68, pos: [9, 3.2, -186], look: [18.6, 5.15, -196] },
   // Market: enter the pedestrian lane and frame its shops, not the removed road-centre stall.
   { p: 0.74, pos: [22, 5, -224], look: [52, 4, -228] },
-  { p: 0.79, pos: [25, 4.2, -228], look: [62, 2.8, -228] },
-  { p: 0.86, pos: [25, 4.2, -228], look: [62, 2.8, -228] },
+  { p: 0.79, pos: [52, 3.2, -221.8], look: [52, 2.05, -228] },
+  { p: 0.86, pos: [52, 3.2, -221.8], look: [52, 2.05, -228] },
   // Harbor: climb out of the market, cruise high over the rooftops, drop onto the pier from the quay side.
   { p: 0.88, pos: [56, 38, -226], look: [90, 30, -160] },
   { p: 0.90, pos: [96, 78, -150], look: [136, 20, -10] },

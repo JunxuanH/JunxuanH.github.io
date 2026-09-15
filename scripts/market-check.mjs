@@ -29,10 +29,12 @@ for(const b of MARKET_BOLLARDS) {
   const prev=new Vector3(b.x-1,.22,b.z), next=new Vector3(b.x,.22,b.z);
   assert(resolve(area,next,prev),'visible bollards have collision');
 }
-let p=new Vector3(19,.22,-228);
+for(const z of [-231,-225]) {
+let p=new Vector3(19,.22,z);
 for(let i=0;i<330;i++) {
   const prev=p.clone(); p.x+=.2;
-  assert(!resolve(area,p,prev),'central lane stays open all the way through');
+  assert(!resolve(area,p,prev),'both sides of the central terminal stay open');
+}
 }
 const curve=new CatmullRomCurve3(PROJECTS_MARKET.points.map(p=>new Vector3(...p)),true,'centripetal');
 for(let i=0;i<500;i++) {
@@ -41,7 +43,12 @@ for(let i=0;i<500;i++) {
   assert(Math.abs(p.y-groundY(area,p.x,p.z))<.01,'customers stand on the paving');
 }
 assert(PROJECTS_MARKET.oneWay,'one-way browsing circulation avoids head-on walkers');
-assert(TERMINALS.projects.pos[0]<30,'reader is at the entrance, not in the middle');
+assert.deepEqual([...TERMINALS.projects.pos],[52,.22,-228],'reader is in the market centre');
+assert.equal(TERMINALS.projects.yaw,0,'screen faces the arrival');
+for(let z=-224;z>-227;z-=.1) {
+  const p=new Vector3(52,.22,z);
+  assert(!resolve(area,p,p.clone()),'terminal approach is clear');
+}
 const main=readFileSync('src/scene/night/main.ts','utf8');
 assert(!main.includes('[300, 0.1, -224]')&&!main.includes('[-300, 0.1, -232]'),'no market vehicle lanes');
 console.log('PASS six shops, physical counters/bollards, open through-route, customer clearance, ground heights and traffic exclusion');
