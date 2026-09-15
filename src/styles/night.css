@@ -323,4 +323,11 @@ html.reduce-motion .neon-btn { transition: none; }
 }
 @media (max-width: 760px) {
   .hero-copy.is-fixed { left: 16px; right: 16px; bottom: max(24px, env(safe-area-inset-bottom)); width: auto; transform-origin: center bottom; }
+  .hero-copy.is-fixed .role { font-size: 14px; line-height: 1.5; margin: 10px 0 20px; }
+  .hero-copy.is-fixed .actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+  .hero-copy.is-fixed .neon-btn { padding: 12px 16px; font-size: 18px; letter-spacing: .06em; text-align: center; white-space: nowrap; }
+}
+@media (max-width: 350px) {
+  .hero-copy.is-fixed { padding: 18px 16px; }
+  .hero-copy.is-fixed .neon-btn { font-size: 16px; padding-inline: 12px; }
 }

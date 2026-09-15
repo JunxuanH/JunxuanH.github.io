@@ -407,7 +407,7 @@ export async function start(root: HTMLElement) {
   const heroCopy = document.getElementById('hero-copy')!;
   document.body.appendChild(heroCopy);
   heroCopy.classList.add('is-fixed');
-  const heroScale = () => { heroCopy.style.setProperty('--hero-scale', String(THREE.MathUtils.clamp(innerWidth / 1800, 0.55, 1))); };
+  const heroScale = () => { heroCopy.style.setProperty('--hero-scale', String(innerWidth <= 760 ? 1 : THREE.MathUtils.clamp(innerWidth / 1800, 0.55, 1))); };
   heroScale();
 
   // ---------- post
@@ -651,7 +651,7 @@ export async function start(root: HTMLElement) {
     heroAlpha += ((heroOn ? 1 : 0) - heroAlpha) * Math.min(1, dt * 6);
     heroCopy.style.opacity = heroAlpha.toFixed(3);
     heroCopy.style.pointerEvents = heroAlpha > 0.5 ? 'auto' : 'none';
-    heroCopy.style.transform = `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
+    heroCopy.style.transform = innerWidth <= 760 ? 'none' : `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
     if (water) water.visible = walkSec ? walkSec === 'contact' : p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
     timed('traffic', () => traffic.update(dt, t, camera.position));

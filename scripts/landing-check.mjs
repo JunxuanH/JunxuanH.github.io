@@ -54,6 +54,13 @@ try {
         writeFileSync(`${out}/${name}-flight.json`, JSON.stringify(flight));
       } else if (name === 'reduced') assert.equal(await page.evaluate(() => window.__flightSamples.length), 0);
       await page.screenshot({ path: `${out}/${name}-city.png` });
+      if (phone) {
+        const panel = await page.locator('#hero-copy').boundingBox();
+        assert.ok(panel && panel.width > 350 && panel.x >= 12 && panel.x + panel.width <= 381, 'phone hero fills the width with safe margins');
+        const buttons = await page.locator('#hero-copy .actions a').evaluateAll(items => items.map(el => { const r=el.getBoundingClientRect(); return {top:r.top,height:r.height,right:r.right}; }));
+        assert.ok(buttons.every(b => b.height >= 44 && b.right <= 381), 'hero buttons remain readable and tappable');
+        assert.ok(Math.abs(buttons[0].top-buttons[1].top)<2, 'hero actions share one row');
+      }
       if (['desktop', 'phone'].includes(name)) {
         await page.locator('#hero-copy .neon-btn.primary').click();
         await page.waitForFunction(() => window.__nav.mode === 'walk', null, { timeout: 30000 });

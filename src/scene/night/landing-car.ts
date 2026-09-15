@@ -21,19 +21,29 @@ export function mountLandingCar(host: HTMLElement, motion = () => !document.docu
   const cyan = new THREE.PointLight(0x00e5ff, 16, 18); cyan.position.set(-4, 3, 4); scene.add(cyan);
   const magenta = new THREE.PointLight(0xff2bd6, 18, 16); magenta.position.set(4, -1, 3); scene.add(magenta);
 
-  // Real geometry, not a movie: radial lanes race past the chase camera on Enter.
-  const count = 420, positions = new Float32Array(count * 6), colors = new Float32Array(count * 6);
+  // A straight skyway: fixed banks of lights pass on either side, never a rotating/radial star tunnel.
+  const count = 96, positions = new Float32Array(count * 6), colors = new Float32Array(count * 6);
   const lanes = Array.from({ length: count }, (_, i) => {
-    const angle = i * 2.399963, radius = 5 + ((i * 37) % 130) / 10;
-    const tint = new THREE.Color(i % 5 ? 0x62dcff : 0xdc5aff);
+    const side = i % 2 ? 1 : -1;
+    const tint = new THREE.Color(i % 8 ? 0x62dcff : 0xdc5aff);
     tint.toArray(colors, i * 6); tint.clone().multiplyScalar(.08).toArray(colors, i * 6 + 3);
-    return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, z: -((i * 17) % 100) };
+    return { x: side * (5.5 + (Math.floor(i / 2) % 4) * 2.5), y: -2.2 + (Math.floor(i / 8) % 3) * 3, z: -((i * 19) % 100) };
   });
   const starGeo = new THREE.BufferGeometry();
   starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
   starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   const starMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   const stars = new THREE.LineSegments(starGeo, starMat); stars.frustumCulled = false; scene.add(stars);
+  const glowCanvas = document.createElement('canvas'); glowCanvas.width = glowCanvas.height = 64;
+  const ctx = glowCanvas.getContext('2d')!;
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, '#e9ffff'); gradient.addColorStop(.2, '#42dcff'); gradient.addColorStop(1, 'rgba(0,140,255,0)');
+  ctx.fillStyle = gradient; ctx.fillRect(0, 0, 64, 64);
+  const glowTexture = new THREE.CanvasTexture(glowCanvas);
+  const engineMat = new THREE.SpriteMaterial({ map: glowTexture, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  for (const x of [-1.3, 1.3]) {
+    const engine = new THREE.Sprite(engineMat); engine.position.set(x, -.7, 2.3); engine.scale.set(1.8, .7, 1); rig.add(engine);
+  }
   let launchedAt = 0, emergedAt = 0, lastTime = 0, baseFov = 34;
 
   let live = true, model: THREE.Object3D | null = null;
@@ -73,14 +83,15 @@ export function mountLandingCar(host: HTMLElement, motion = () => !document.docu
     const thrust = launch * (1 - exit);
     host.dataset.phase = !moving ? 'still' : boot ? emerging ? 'emerging' : 'hyperspace' : 'hover';
     if (model && moving) {
-      rig.position.set(Math.sin(t * .6) * thrust * .18, Math.sin(t * 1.4) * .12, -thrust * 5);
-      rig.rotation.set(-thrust * .055, Math.sin(t * .42) * .11 * (1 - launch), Math.sin(t * .9) * thrust * .025);
+      rig.position.set(0, Math.sin(t * 1.4) * .12 * (1 - launch), -thrust * 3);
+      rig.rotation.set(-thrust * .045, Math.sin(t * .42) * .11 * (1 - launch), 0);
     } else { rig.position.set(0, 0, 0); rig.rotation.set(0, 0, 0); }
     starMat.opacity = moving && boot ? thrust * .85 : 0;
+    engineMat.opacity = moving && boot ? thrust * .7 : 0;
     for (let i = 0; i < count; i++) {
       const lane = lanes[i]; lane.z += dt * (8 + thrust * 85);
       if (lane.z > 8) lane.z -= 108;
-      positions.set([lane.x, lane.y, lane.z, lane.x, lane.y, lane.z - .2 - launch * 15], i * 6);
+      positions.set([lane.x, lane.y, lane.z, lane.x, lane.y, lane.z - .2 - launch * 9], i * 6);
     }
     starGeo.attributes.position.needsUpdate = true;
     camera.fov = baseFov + thrust * 9; camera.updateProjectionMatrix();
@@ -92,6 +103,7 @@ export function mountLandingCar(host: HTMLElement, motion = () => !document.docu
   return () => {
     live = false; ro.disconnect(); draco.dispose();
     starGeo.dispose(); starMat.dispose();
+    engineMat.dispose(); glowTexture.dispose();
     scene.traverse((o: any) => { if (!o.isMesh) return; o.geometry.dispose();
       for (const m of (Array.isArray(o.material) ? o.material : [o.material])) {
         for (const value of Object.values(m)) if ((value as any)?.isTexture) (value as THREE.Texture).dispose();
