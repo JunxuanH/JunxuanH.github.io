@@ -1,0 +1,75 @@
+{
+  "provider": "fal",
+  "endpoint": "fal-ai/nano-banana-2/edit",
+  "estimatedCostUsd": 0.32,
+  "assets": [
+    {
+      "key": "headphones",
+      "path": "public/night/ads/product-headphones-v2.webp",
+      "input": {
+        "prompt": "Create one LANDSCAPE 3:2 cyberpunk consumer product advertisement. Both input images are STYLE REFERENCES from the same existing campaign, not edit targets. Match their illustrated cel-shaded graphic rendering, electric cyan outlines, magenta offset shadows, acid-yellow stripes, angular oversized custom techno lettering, subtle scanlines and deep navy background. Subject: recognizable over-ear headphones with a headband and two earcups, believable consumer electronics but drawn in the same neon comic/anime commercial style as the references, NOT photographic, NOT a studio product photo. Make a complete designed poster: exact large headline \"SYNAPSE\" across the upper quarter; dynamic hero product in the middle, exact small tagline \"TUNE OUT THE CITY\" along the bottom. Angular cyan border and sparse circuit details. Keep lettering and whole product inside a 10% safe margin for slight billboard cropping. Bold clean readable typography. No extra copy, no watermarks. Saturated luminous color, retain dark fills and crisp inked contours. Output only the finished flat ad, no billboard mockup.",
+        "image_urls": [
+          "https://junxuanh.github.io/night/ads/ad-1.webp",
+          "https://junxuanh.github.io/night/ads/ad-2.webp"
+        ],
+        "aspect_ratio": "3:2",
+        "resolution": "1K",
+        "output_format": "webp",
+        "num_images": 1
+      },
+      "requestId": "01a0a3ba-8fb1-7b13-b036-017e67f754c0",
+      "url": "https://v3b.fal.media/files/b/0aaa7d32/OW3b-cV1423pbTOfW7UaE_ZCnVLOZo.webp"
+    },
+    {
+      "key": "computer",
+      "path": "public/night/ads/product-computer-v2.webp",
+      "input": {
+        "prompt": "Create one LANDSCAPE 3:2 cyberpunk consumer product advertisement. Both input images are STYLE REFERENCES from the same existing campaign, not edit targets. Match their illustrated cel-shaded graphic rendering, electric cyan outlines, magenta offset shadows, acid-yellow stripes, angular oversized custom techno lettering, subtle scanlines and deep navy background. Subject: a compact desktop computer with angular chassis and visible circuit boards, believable consumer electronics but drawn in the same neon comic/anime commercial style as the references, NOT photographic, NOT a studio product photo. Make a complete designed poster: exact large headline \"VECTOR / ONE\" across the upper quarter; dynamic hero product in the middle, exact small tagline \"SMALL SIZE. BIG POWER.\" along the bottom. Angular cyan border and sparse circuit details. Keep lettering and whole product inside a 10% safe margin for slight billboard cropping. Bold clean readable typography. No extra copy, no watermarks. Saturated luminous color, retain dark fills and crisp inked contours. Output only the finished flat ad, no billboard mockup.",
+        "image_urls": [
+          "https://junxuanh.github.io/night/ads/ad-1.webp",
+          "https://junxuanh.github.io/night/ads/ad-2.webp"
+        ],
+        "aspect_ratio": "3:2",
+        "resolution": "1K",
+        "output_format": "webp",
+        "num_images": 1
+      },
+      "requestId": "01a0a3ba-9d75-7b93-955f-5fd70b26d512",
+      "url": "https://v3b.fal.media/files/b/0aaa7d33/87ERankNgk29pjVAKRqTB_9wm7cJBw.webp"
+    },
+    {
+      "key": "console",
+      "path": "public/night/ads/product-console-v2.webp",
+      "input": {
+        "prompt": "Create one LANDSCAPE 3:2 cyberpunk consumer product advertisement. Both input images are STYLE REFERENCES from the same existing campaign, not edit targets. Match their illustrated cel-shaded graphic rendering, electric cyan outlines, magenta offset shadows, acid-yellow stripes, angular oversized custom techno lettering, subtle scanlines and deep navy background. Subject: a handheld gaming console with screen, dual thumbsticks and buttons, believable consumer electronics but drawn in the same neon comic/anime commercial style as the references, NOT photographic, NOT a studio product photo. Make a complete designed poster: exact large headline \"NEON DECK\" across the upper quarter; dynamic hero product in the middle, exact small tagline \"TAKE THE NIGHT WITH YOU\" along the bottom. Angular cyan border and sparse circuit details. Keep lettering and whole product inside a 10% safe margin for slight billboard cropping. Bold clean readable typography. No extra copy, no watermarks. Saturated luminous color, retain dark fills and crisp inked contours. Output only the finished flat ad, no billboard mockup.",
+        "image_urls": [
+          "https://junxuanh.github.io/night/ads/ad-1.webp",
+          "https://junxuanh.github.io/night/ads/ad-2.webp"
+        ],
+        "aspect_ratio": "3:2",
+        "resolution": "1K",
+        "output_format": "webp",
+        "num_images": 1
+      },
+      "requestId": "01a0a3ba-c00d-7b72-adc6-f1c329e7c791",
+      "url": "https://v3b.fal.media/files/b/0aaa7d34/4is5GPGJppjRw1NvAAiRZ_YeFdsllm.webp"
+    },
+    {
+      "key": "camera",
+      "path": "public/night/ads/product-camera-v2.webp",
+      "input": {
+        "prompt": "Create one LANDSCAPE 3:2 cyberpunk consumer product advertisement. Both input images are STYLE REFERENCES from the same existing campaign, not edit targets. Match their illustrated cel-shaded graphic rendering, electric cyan outlines, magenta offset shadows, acid-yellow stripes, angular oversized custom techno lettering, subtle scanlines and deep navy background. Subject: a compact mirrorless camera with a large lens, believable consumer electronics but drawn in the same neon comic/anime commercial style as the references, NOT photographic, NOT a studio product photo. Make a complete designed poster: exact large headline \"OPTIK / 01\" across the upper quarter; dynamic hero product in the middle, exact small tagline \"CAPTURE THE AFTER HOURS\" along the bottom. Angular cyan border and sparse circuit details. Keep lettering and whole product inside a 10% safe margin for slight billboard cropping. Bold clean readable typography. No extra copy, no watermarks. Saturated luminous color, retain dark fills and crisp inked contours. Output only the finished flat ad, no billboard mockup.",
+        "image_urls": [
+          "https://junxuanh.github.io/night/ads/ad-1.webp",
+          "https://junxuanh.github.io/night/ads/ad-2.webp"
+        ],
+        "aspect_ratio": "3:2",
+        "resolution": "1K",
+        "output_format": "webp",
+        "num_images": 1
+      },
+      "requestId": "01a0a3ba-b3bf-7011-aa2f-5cfca803a56f",
+      "url": "https://v3b.fal.media/files/b/0aaa7d33/g7ATvyiFOuo8dr2kfujP0_QN4w98B8.webp"
+    }
+  ]
+}

@@ -1,44 +1,37 @@
 import * as THREE from 'three/webgpu';
 import { TERMINALS, type TerminalId } from './terminal-layout';
 
-const ADS: Record<string, [string, string, string]> = {
-  education: ['headphones', 'SYNAPSE AUDIO', 'TUNE OUT THE CITY'],
-  'amd-intern': ['headphones', 'SYNAPSE AUDIO', 'TUNE OUT THE CITY'],
-  kioxia: ['computer', 'VECTOR / ONE', 'DESKTOP POWER. SMALL FOOTPRINT.'],
-  'amd-dc': ['console', 'NEON DECK', 'TAKE THE NIGHT WITH YOU'],
-  apple: ['camera', 'OPTIK / 01', 'CAPTURE THE AFTER HOURS'],
-  projects: ['console', 'NEON DECK', 'TAKE THE NIGHT WITH YOU'],
-  contact: ['camera', 'OPTIK / 01', 'CAPTURE THE AFTER HOURS'],
+const ADS: Record<string, string> = {
+  education: 'headphones',
+  'amd-intern': 'headphones',
+  kioxia: 'computer',
+  'amd-dc': 'console',
+  apple: 'camera',
+  projects: 'console',
+  contact: 'camera',
 };
 
-/** Static, bounded-brightness art. Text stays code-rendered; no extra video or shader animation. */
+/** Complete illustrated posters; preserve their lettering without an extra caption overlay. */
 export function adCanvas(id: string, aspect = 0.65) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024; canvas.height = Math.max(256, Math.round(1024 * aspect));
   const ctx = canvas.getContext('2d')!;
-  const [asset, title, subtitle] = ADS[id] ?? ADS.contact;
+  const asset = ADS[id] ?? ADS.contact;
   let image: HTMLImageElement | undefined;
   const paint = () => {
     const { width: w, height: h } = canvas;
     ctx.fillStyle = '#09111e'; ctx.fillRect(0, 0, w, h);
     if (image) {
-      const k = Math.max(w / image.width, h / image.height);
+      // Keep the complete border and typography on differently proportioned carriers.
+      const k = Math.min(w / image.width, h / image.height);
       ctx.drawImage(image, (w - image.width * k) / 2, (h - image.height * k) / 2, image.width * k, image.height * k);
     }
-    // Shade only the caption area; the old gradient darkened most of the illustration.
-    const gradient = ctx.createLinearGradient(0, h * 0.72, 0, h);
-    gradient.addColorStop(0, 'transparent'); gradient.addColorStop(1, 'rgba(5, 11, 24, 0.78)');
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, w, h);
-    ctx.font = 'italic 900 66px sans-serif';
-    ctx.fillStyle = '#d332ae'; ctx.fillText(title, 47, h - 69);
-    ctx.fillStyle = '#b7faff'; ctx.fillText(title, 44, h - 72);
-    ctx.fillStyle = '#82d6da'; ctx.font = '22px monospace'; ctx.fillText(subtitle, 48, h - 32);
   };
   paint();
   return { canvas, load(onLoad: () => void) {
     const img = new Image();
     img.onload = () => { image = img; paint(); onLoad(); };
-    img.src = `/night/ads/product-${asset}-v1.webp`;
+    img.src = `/night/ads/product-${asset}-v2.webp`;
   } };
 }
 
