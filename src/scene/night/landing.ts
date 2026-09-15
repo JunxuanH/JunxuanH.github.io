@@ -17,7 +17,6 @@ export const landing = {
   get arriving() { return arriving; },
   configure(o: { onLand?: () => void }) { onLand = o.onLand; },
   attachCar(dispose: () => void) { cleanup = dispose; },
-  warm() {},
   begin(full: boolean) {
     if (!enabled || !el || begun) return;
     begun = true;

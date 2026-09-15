@@ -1,5 +1,5 @@
 /**
- * The protagonist (the `agent` rig by default — main.ts picks it) and the third-person camera that follows
+ * The protagonist (main.ts picks the rig: `ronin-player`, `soldier` as the fallback) and the third-person camera that follows
  * it. Movement is camera-relative (yaw of the follow camera), walk 1.8 / run 4.8 u/s with 12 u/s²
  * acceleration, the heading slerps toward the move direction, and idle / walk / run are chosen by speed.
  * Ground height and collisions come from walkable.ts. The camera hangs 5.5 u behind and 2.4 u above the

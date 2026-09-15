@@ -12,7 +12,7 @@ try {
     const errors = [], forbidden = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('request', r => { if (/backdrop\/.*(pano|depth)/.test(r.url())) forbidden.push(r.url()); });
-    await page.goto(base + '?nolanding&nocine');
+    await page.goto(base + '?nolanding');
     await page.waitForFunction(() => window.__player && document.documentElement.classList.contains('is-landed'), null, { timeout: 120000 });
     await page.screenshot({ path: `${out}/${name}-vista.png` });
     await page.locator('#hero-copy .neon-btn.primary').click(); await page.keyboard.press('Escape');
@@ -21,14 +21,14 @@ try {
       await page.evaluate(a => window.__player.teleport(-96, .22, -78, a), angle);
       await page.waitForTimeout(2500);
       assert.ok(await page.evaluate(() => {
-        const panels = window.__scene.children.find(c => c.userData.ring);
-        return panels?.children.length === 5 && panels.children.every(m => m.geometry.type === 'PlaneGeometry' && !m.material.positionNode);
-      }), 'keep all five original flat panels');
+        const panels = window.__scene.getObjectByName('backdrop');
+        return panels?.children.length === 3 && panels.children.every(m => m.geometry.type === 'PlaneGeometry' && !m.material.positionNode && m.position.z <= -560);
+      }), 'keep the three flat north panels');
       await page.screenshot({ path: `${out}/${name}-${label}.png` });
     }
     assert.deepEqual(forbidden, [], 'no panorama or depth displacement');
     assert.deepEqual(errors, []);
-    console.log(`PASS ${name}: original panels, no panorama/depth, side-angle screenshots, no runtime errors`);
+    console.log(`PASS ${name}: three flat north panels, no panorama/depth, side-angle screenshots, no runtime errors`);
     await page.close();
   }
 } finally { await browser.close(); }

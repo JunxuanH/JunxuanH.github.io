@@ -49,12 +49,13 @@ try {
     const revealDestination=nav.section;
     for(let i=0;i<12;i++) nav.tick(1/30);
     setReducedMotion(false);
-    nav.panTo('work'); nav.skip();
-    for(let i=0;i<55;i++) nav.tick(1/30);
-    const handoff=nav.cutscene?.beat;
+    nav.panTo('work');
+    for(let i=0;i<4;i++) nav.tick(1/30);
     nav.dock('amd-intern');
     const blockedDock=nav.mode;
-    return {cameraBoom:pivot.distanceTo(boom),upright,resumeStep,routeHits,fadeSource,revealDestination,handoff,blockedDock};
+    for(let i=0;i<55;i++) nav.tick(1/30);
+    const settled={beat:nav.cutscene?.beat??null,mode:nav.mode,section:nav.section};
+    return {cameraBoom:pivot.distanceTo(boom),upright,resumeStep,routeHits,fadeSource,revealDestination,settled,blockedDock};
   });
   console.log(JSON.stringify({...checks,routeHits:checks.routeHits.length,examples:checks.routeHits.filter((_,i)=>i%30===0)},null,2));
   writeFileSync(`${out}/geometry.json`,JSON.stringify(checks,null,2));
@@ -65,8 +66,8 @@ try {
     assert.equal(checks.routeHits.length,0,'district crowd routes must clear static obstacles');
     assert.equal(checks.fadeSource,'city','reduced motion retains source district until black');
     assert.equal(checks.revealDestination,'education','destination appears during reveal');
-    assert.equal(checks.handoff,'handoff');
-    assert.equal(checks.blockedDock,'walk','interactions must not interrupt handoff');
+    assert.deepEqual(checks.settled,{beat:null,mode:'walk',section:'work'},'every location change ends walking the destination');
+    assert.equal(checks.blockedDock,'walk','interactions must not interrupt the fade');
   }
   await page.close();
 } finally { await browser.close(); }

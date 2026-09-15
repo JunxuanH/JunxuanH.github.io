@@ -3,8 +3,7 @@
  * camera, Esc = back), pointer drag on the stage = orbit, and for coarse pointers a virtual joystick (any touch on
  * the left half of the HUD's stick zone) plus the interact button. Pointer events only, no touch API. `poll()` returns
  * the frame's snapshot and clears the edge flags and drag deltas. Keys are never intercepted while the
- * focus is in a form field, link or button, so the nav stays keyboard-usable. `skip` (Esc / Enter / Space,
- * or a tap / click on the stage without a drag) lets nav.ts cut a transition cutscene short.
+ * focus is in a form field, link or button, so the nav stays keyboard-usable.
  */
 import * as THREE from 'three/webgpu';
 
@@ -18,8 +17,6 @@ export interface InputState {
   /** Orbit drag accumulated since the last poll (CSS pixels). */
   orbitX: number;
   orbitY: number;
-  /** Edge: Esc / Enter / Space, or a tap / click on the stage (no drag) — skips a transition cutscene. */
-  skip: boolean;
   /** A deliberate walk input (WASD or the joystick, not arrows) — used to leave dock mode. */
   walkIntent: boolean;
   /** The joystick is being held. */
@@ -63,11 +60,11 @@ function inField(el: EventTarget | null): boolean {
 export function createInput(opts: InputOptions) {
   const held = new Set<string>();
   let run = false, runBtn = false;
-  let interact = false, back = false, skip = false;
+  let interact = false, back = false;
   let orbitX = 0, orbitY = 0;
   const stickV = new THREE.Vector2();
   let stickOn = false, stickRun = false;
-  const state: InputState = { move: new THREE.Vector2(), run: false, interact: false, back: false, skip: false, orbitX: 0, orbitY: 0, walkIntent: false, stick: false };
+  const state: InputState = { move: new THREE.Vector2(), run: false, interact: false, back: false, orbitX: 0, orbitY: 0, walkIntent: false, stick: false };
   const enabled = () => opts.enabled?.() ?? true;
 
   // ---- keyboard
@@ -79,9 +76,9 @@ export function createInput(opts: InputOptions) {
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { run = true; return; }
     if (e.repeat) return;
     if (e.code === 'KeyQ' || e.code === 'KeyE') { held.add(e.code); if (enabled()) e.preventDefault(); return; } // turn the camera
-    if (e.code === 'KeyF' || e.code === 'Enter') { interact = true; if (e.code === 'Enter') skip = true; e.preventDefault(); return; }
-    if (e.code === 'Escape') { back = true; skip = true; return; }
-    if (e.code === 'Space') { skip = true; e.preventDefault(); return; }
+    if (e.code === 'KeyF' || e.code === 'Enter') { interact = true; e.preventDefault(); return; }
+    if (e.code === 'Escape') { back = true; return; }
+    if (e.code === 'Space') { e.preventDefault(); return; }
   };
   const onKeyUp = (e: KeyboardEvent) => {
     held.delete(e.code);
@@ -93,12 +90,12 @@ export function createInput(opts: InputOptions) {
   addEventListener('blur', clear);
 
   // ---- orbit drag on the stage (mouse or the right-hand side of a touch screen; the stick zone captures its own pointers)
-  let dragId: number | null = null, lastX = 0, lastY = 0, downX = 0, downY = 0, downT = 0;
+  let dragId: number | null = null, lastX = 0, lastY = 0;
   const stage = opts.stage;
   stage.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || dragId !== null) return;
     if (inField(document.activeElement)) (document.activeElement as HTMLElement).blur(); // a clicked nav link keeps focus otherwise
-    dragId = e.pointerId; lastX = downX = e.clientX; lastY = downY = e.clientY; downT = e.timeStamp;
+    dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY;
     try { stage.setPointerCapture(e.pointerId); } catch { /* synthetic or already-released pointer */ }
   });
   stage.addEventListener('pointermove', (e) => {
@@ -107,11 +104,7 @@ export function createInput(opts: InputOptions) {
     lastX = e.clientX; lastY = e.clientY;
   });
   const endDrag = (e: PointerEvent) => { if (e.pointerId === dragId) dragId = null; };
-  stage.addEventListener('pointerup', (e) => {
-    // A tap / click (no drag, under 600 ms) is a skip; nav.ts ignores it outside a cutscene.
-    if (e.pointerId === dragId && Math.hypot(e.clientX - downX, e.clientY - downY) < 10 && e.timeStamp - downT < 600) skip = true;
-    endDrag(e);
-  });
+  stage.addEventListener('pointerup', endDrag);
   stage.addEventListener('pointercancel', endDrag);
 
   // ---- virtual joystick: the stick appears where the finger lands and follows it within STICK_R
@@ -181,16 +174,16 @@ export function createInput(opts: InputOptions) {
       if (m.lengthSq() > 1) m.normalize();
     }
     state.run = run || runBtn || (stickOn && stickRun);
-    state.interact = interact; state.back = back; state.skip = skip;
+    state.interact = interact; state.back = back;
     state.orbitX = orbitX; state.orbitY = orbitY;
     state.walkIntent = wasd && m.lengthSq() > 0.01;
     state.stick = stickOn;
-    interact = back = skip = false; orbitX = orbitY = 0;
+    interact = back = false; orbitX = orbitY = 0;
     return state;
   }
 
   /** Programmatic edge (HUD chips, tests). */
-  const press = (what: 'interact' | 'back' | 'skip') => { if (what === 'interact') interact = true; else if (what === 'back') back = true; else skip = true; };
+  const press = (what: 'interact' | 'back') => { if (what === 'interact') interact = true; else back = true; };
 
   return {
     poll, press,

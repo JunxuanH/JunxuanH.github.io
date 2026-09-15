@@ -1,6 +1,6 @@
 /**
  * Content carriers: the in-world objects that hold the résumé sections. Each carrier's content surface is a canvas
- * "terminal board" painted by content.ts (slabcanvas.ts) onto a plane on the carrier's `mount`; docking opens the
+ * board painted by content.ts (district-art.ts) onto a plane on the carrier's `mount`; docking opens the
  * section in the 2D terminal session overlay (session.ts) and routes keys to the carrier's `interact` block.
  * One module per carrier; each builds its geometry, exposes a `mount` (board centre, local +Z = screen normal),
  * the board size, and optional per-frame behaviour. main.ts adds the groups, lights and props; districts-style

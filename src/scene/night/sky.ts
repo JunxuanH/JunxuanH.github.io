@@ -1,46 +1,17 @@
 import * as THREE from 'three/webgpu';
 import {
-  positionLocal, normalize, mix, color, smoothstep, float, uv, texture, vec3,
-  fog, densityFogFactor, positionWorld, equirectUV, vec2,
+  positionLocal, normalize, mix, color, smoothstep, float, uv,
+  fog, densityFogFactor, positionWorld,
 } from './tsl';
-import { PAL, loader } from './palette';
+import { PAL } from './palette';
 
 /**
- * Night sky. Default: gradient dome (plum horizon → near-black zenith) and a small moon.
+ * Night sky: gradient dome (plum horizon → near-black zenith) and a small moon.
  * The city haze provides atmosphere without opaque cloud cutouts.
  * Everything is `fog: false`; the scene fog handles the haze between towers.
  */
-export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; depth?: string; depthScale?: number; rotation?: number; gain?: number }) {
+export function createSky(_tier: 'high' | 'med' | 'low') {
   const group = new THREE.Group();
-  if (pano) {
-    // 360° backdrop: a HunyuanWorld equirectangular panorama (scripts/pano-build.sh) on the dome replaces the old gradient,
-    // stars, moon and clouds. u = 0.5 faces +x, so its river runs east–west through the bay and the megatower banks rise
-    // behind the city (−z) and across the water (+z). 2.5D: above the horizon the dome is pulled in by the depth map
-    // (bright = near), so the bank towers sit ~40 % closer than the far skyline and shift against it as the camera moves.
-    // Textures are handed to the material before they load (one program, no rebuild when the images arrive).
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(1500, 256, 128), new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide }));
-    const mat = dome.material as THREE.MeshBasicNodeMaterial;
-    mat.fog = false;
-    mat.depthWrite = false;
-    dome.rotation.y = THREE.MathUtils.degToRad(pano.rotation ?? 0);
-    dome.frustumCulled = false;
-    const tex = loader.load(pano.url, undefined, undefined, () => console.warn('[night] pano image failed', pano.url));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.anisotropy = 8;
-    const dir = normalize(positionLocal);
-    const puv = equirectUV(dir);
-    if (pano.depth) {
-      const dtex = loader.load(pano.depth);
-      dtex.wrapS = THREE.RepeatWrapping;
-      const near = texture(dtex, puv).r.mul(smoothstep(-0.02, 0.03, dir.y)); // only the banks and skyline, never the water
-      mat.positionNode = positionLocal.mul(float(1).sub(near.mul(pano.depthScale ?? 0.42)));
-    }
-    mat.colorNode = texture(tex, puv).rgb.mul(pano.gain ?? 1.15);
-    group.add(dome);
-    return group;
-  }
-
   const dome = new THREE.Mesh(new THREE.SphereGeometry(1500, 48, 24), new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide }));
   const mat = dome.material as THREE.MeshBasicNodeMaterial;
   mat.fog = false;
@@ -70,11 +41,8 @@ export function createSky(tier: 'high' | 'med' | 'low', pano?: { url: string; de
 }
 
 /** Height-tinted haze: magenta/orange near the streets, navy up high. */
-export function createHaze(density = 0.0032, cool = false) {
-  // `cool` (panorama preview): navy up high, teal at street level, matching the panorama's horizon haze.
-  const c = mix(color(PAL.navy), color(cool ? 0x10303a : PAL.plum), smoothstep(40.0, 0.0, positionWorld.y));
+export function createHaze(density = 0.0032) {
+  const c = mix(color(PAL.navy), color(PAL.plum), smoothstep(40.0, 0.0, positionWorld.y));
   return fog(c, densityFogFactor(density));
 }
 
-export const HAZE_COLOR = new THREE.Color(PAL.navy);
-export const _v3 = vec3;

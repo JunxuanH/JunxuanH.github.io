@@ -1,9 +1,9 @@
 /**
- * Things the protagonist can use: the seven résumé carriers (anchor = mount, or a viewing spot for the LED
- * wall and a telescope for the blimp), the four taxi pads that pan to the next stop, and the landed hover
- * car at the pier (the ride back to the vista). Each frame the nearest one in range drives the HUD prompt and
- * a flicker on the carrier's neon (interact.ts's `attachHot` on its emissive materials); `E` runs its action,
- * taxi pads also fire when stepped on. The pads, the telescope and the viewing rings are built here.
+ * Things the protagonist can use: the four résumé terminals (carriers/index.ts TERMINALS; anchor = the kiosk's
+ * mount), the four taxi pads that pan to the next stop, and the landed hover car at the pier (the ride back to the
+ * vista). Each frame the nearest one in range drives the HUD prompt and a flicker on its neon (interact.ts's
+ * `attachHot` on the emissive materials); `F` runs its action, taxi pads also fire when stepped on. The pads are
+ * built here.
  */
 import * as THREE from 'three/webgpu';
 import gsap from 'gsap';
@@ -13,7 +13,7 @@ import { attachHot } from './interact';
 import { PAL, reducedMotion } from './palette';
 import { THEMES } from './theme';
 import { EXITS, type Nav, type DockId } from './nav';
-import type { Carrier, CarrierId } from './carriers/index';
+import { CARRIER_SECTION, type Carrier, type CarrierId } from './carriers/index';
 import type { WalkSection } from './walkable';
 
 export interface Interactable {
@@ -37,18 +37,6 @@ export interface InteractablesOptions {
   landingCar?: THREE.Object3D | null;
 }
 
-const CARRIER_SECTION: Record<CarrierId, WalkSection> = {
-  education: 'education', 'amd-intern': 'work', kioxia: 'work', 'amd-dc': 'work', apple: 'work', projects: 'projects', contact: 'contact',
-};
-const LABELS: Record<CarrierId, string> = {
-  education: 'Read the terminal', 'amd-intern': 'Read the poster', kioxia: 'Watch the wall', 'amd-dc': 'Use the telescope',
-  apple: 'Inspect the hologram', projects: 'Browse the stall', contact: 'Check departures',
-};
-/** Ground anchors that are not the carrier's mount: the LED-wall viewing spot and the blimp telescope. */
-const GROUND_ANCHOR: Partial<Record<CarrierId, [number, number, number]>> = {
-  kioxia: [-15, 0.22, -112],
-  'amd-dc': [-15.5, 0.22, -160],
-};
 
 const glow = (tint: number, gain: number) => { const m = new THREE.MeshBasicNodeMaterial(); m.colorNode = color(tint).mul(gain); return m; };
 const noReflect = (o: THREE.Object3D) => o.traverse((c) => c.layers.set(1));
@@ -82,28 +70,6 @@ function taxiPad(label: string, yaw: number) {
   return g;
 }
 
-/** Coin telescope on a post, aimed at the blimp's home pose; cyan trim ring on the tube. */
-function telescope(aimAt: THREE.Vector3, at: THREE.Vector3) {
-  const g = new THREE.Group();
-  const metal = new THREE.MeshStandardNodeMaterial({ color: 0x1a1e2c, roughness: 0.45, metalness: 0.7 });
-  const base = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.5).translate(0, 0.04, 0), metal);
-  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.25, 10).translate(0, 0.08 + 0.625, 0), metal);
-  const yoke = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2).translate(0, 1.42, 0), metal);
-  const head = new THREE.Group();
-  head.position.y = 1.42;
-  const d = aimAt.clone().sub(at);
-  head.rotation.y = Math.atan2(d.x, d.z);
-  head.rotation.x = -Math.atan2(d.y, Math.hypot(d.x, d.z));
-  const tube = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.7).translate(0, 0, 0.2), metal);
-  const trim = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.02, 6, 20), glow(PAL.cyan, 2.2));
-  trim.position.z = 0.55;
-  const slot = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.02, 0.1), glow(PAL.cyan, 1.6));
-  slot.position.set(0, 0.09, -0.1);
-  head.add(tube, trim, slot);
-  g.add(base, pillar, yoke, head);
-  return g;
-}
-
 /** Emissive (MeshBasicNodeMaterial with a colorNode) meshes of a carrier: the neon that flickers when it's the target. */
 function neonOf(root: THREE.Object3D): { value: number }[] {
   const out: { value: number }[] = [];
@@ -124,27 +90,14 @@ export function createInteractables(opts: InteractablesOptions) {
   const items: Interactable[] = [];
   const tmp = new THREE.Vector3();
 
-  // ---- carriers
+  // ---- terminals
   for (const [key, c] of Object.entries(opts.carriers) as [CarrierId, Carrier][]) {
     if (!c?.terminal) continue;
-    const ga = GROUND_ANCHOR[key];
     const anchor = new THREE.Vector3();
-    if (ga) anchor.fromArray(ga); else { c.mount.updateWorldMatrix(true, false); c.mount.getWorldPosition(anchor); }
-    let hot = neonOf(c.group);
-    if (key === 'amd-dc') {
-      const scope = telescope(new THREE.Vector3(-2.5, 40, -158), anchor);
-      scope.position.copy(anchor);
-      group.add(scope);
-      hot = neonOf(scope);
-    } else if (key === 'kioxia') {
-      const spot = ring(PAL.cyan, 0.9);
-      spot.position.copy(anchor);
-      group.add(spot);
-      hot = [...neonOf(spot), ...hot];
-    }
+    c.mount.updateWorldMatrix(true, false); c.mount.getWorldPosition(anchor);
     items.push({
-      id: key, section: CARRIER_SECTION[key], anchor, radius: key === 'education' ? 12 : 6,
-      label: `Open ${c.node?.replace(' TERMINAL', '').toLowerCase()} terminal`, hot,
+      id: key, section: CARRIER_SECTION[key] as WalkSection, anchor, radius: key === 'education' ? 12 : 6,
+      label: `Open ${c.node?.replace(' TERMINAL', '').toLowerCase()} terminal`, hot: neonOf(c.group),
       action: () => nav.dock(key as DockId),
     });
   }

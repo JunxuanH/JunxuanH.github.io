@@ -61,27 +61,10 @@ html.no-3d #hud { display: none; }
 .hud-toast-sub { display: block; margin-top: 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--yellow); }
 .hud-toast-sub::before { content: '· '; color: var(--cyan); }
 
-/* Transition cutscene (scene/night/nav.ts beats → hud.cutscene): letterbox bars, the skip chip, the reduced-motion fade.
-   The bars are the first children of #hud so the toast paints over them; the fade overlay sits above everything. */
-.hud-bars { inset: 0; overflow: hidden; }
-.hud-bar { position: absolute; left: 0; right: 0; top: 0; height: 9vh; background: #000; transform: translateY(-101%); transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1); }
-.hud-bar.bottom { top: auto; bottom: 0; transform: translateY(101%); }
-.hud-bars.is-on .hud-bar { transform: none; }
-.hud-skip {
-  right: 24px; bottom: calc(9vh + 18px); padding: 8px 16px; border-radius: 999px; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
-  background: var(--holo); border: 1px solid rgb(0 229 255 / 0.55); color: var(--cyan);
-  box-shadow: 0 0 18px rgb(0 229 255 / 0.22), inset 0 0 0 1px rgb(0 229 255 / 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  font: 600 13px var(--font-display); letter-spacing: 0.22em; text-transform: uppercase; white-space: nowrap;
-  opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.25s ease, visibility 0s linear 0.25s;
-}
-.hud-skip span { color: var(--yellow); }
-/* On: fades in a second into the move (the delay is the "it's a cutscene" grace period), and only then takes taps. */
-.hud-skip.is-on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.4s ease 1s, visibility 0s linear 1s; }
-.hud-skip:hover { color: #fff; text-shadow: 0 0 8px var(--cyan); }
-.hud-skip:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+/* Location change (scene/night/nav.ts fade beats → hud.cutscene): a black overlay above the rest of the HUD. */
 .hud-fade { inset: 0; z-index: 3; background: #000; opacity: 0; transition: opacity 0.3s linear; }
 .hud-fade.is-on { opacity: 1; }
-/* The nav floats over the top bar, dimmed, and stays clickable (a click mid-cutscene redirects the move). */
+/* The nav floats over the top bar, dimmed, and stays clickable (a click mid-fade redirects it). */
 .nav { transition: opacity 0.4s ease; }
 html[data-cutscene] .nav { z-index: 7; opacity: 0.55; }
 html[data-cutscene] .nav:hover { opacity: 1; }
@@ -155,7 +138,6 @@ html[data-cutscene] .nav:hover { opacity: 1; }
 .hud-chip-ok.is-held, .hud-chip-ok:active { background: #fff; }
 
 @media (pointer: coarse) {
-  .hud-skip { right: 16px; bottom: calc(9vh + 16px + env(safe-area-inset-bottom)); padding: 12px 20px; font-size: 14px; }
   #hud[data-mode="walk"] .hud-touch, #hud[data-mode="dock"] .hud-touch { display: block; }
   /* Docked: no joystick / E / run (the chip bar and Back take over); the sheet keeps native scrolling (no touch-action on it). */
   #hud[data-mode="dock"] .stick-zone, #hud[data-mode="dock"] .hud-btns { display: none; }
@@ -205,10 +187,12 @@ html[data-cutscene] .nav:hover { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hud-prompt.is-on, .hud-hint.is-on, .hud-toast.is-on, .hud-elabel.is-on, .hud-btn-e.is-hot { animation: none; }
-  .hud-prompt, .hud-hint, .hud-toast, .stick, .hud-bar, .nav { transition: none; }
-  .hud-skip { display: none; }
+  .hud-prompt, .hud-hint, .hud-toast, .stick, .nav { transition: none; }
 }
 /* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
 html.reduce-motion .hud-prompt.is-on, html.reduce-motion .hud-hint.is-on, html.reduce-motion .hud-toast.is-on, html.reduce-motion .hud-elabel.is-on, html.reduce-motion .hud-btn-e.is-hot { animation: none; }
-html.reduce-motion .hud-prompt, html.reduce-motion .hud-hint, html.reduce-motion .hud-toast, html.reduce-motion .stick, html.reduce-motion .hud-bar, html.reduce-motion .nav { transition: none; }
-html.reduce-motion .hud-skip { display: none; }
+html.reduce-motion .hud-prompt, html.reduce-motion .hud-hint, html.reduce-motion .hud-toast, html.reduce-motion .stick, html.reduce-motion .nav { transition: none; }
+/* `?capture=<section>` (main.ts): UI-free establishing stills; the scene itself is the production renderer. */
+.capture-frame .nav, .capture-frame #hud, .capture-frame #hero-copy,
+.capture-frame .sheet, .capture-frame .contact, .capture-frame .skip,
+.capture-frame .css3d { display: none !important; }

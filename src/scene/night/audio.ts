@@ -14,15 +14,15 @@ export interface NightAudio {
   readonly ready: boolean;
   /** RMS of the mixed output (0..1); non-zero once something plays. */
   level(): number;
-  /** Split-flap clacks: `count` short filtered noise bursts `interval` s apart (no-op while muted). */
+  /** Split-flap clacks: up to 3 short filtered noise bursts, `interval` (≥ 0.1) s apart (no-op while muted). */
   clack(count?: number, interval?: number): void;
-  /** Footstep: a soft 120 Hz thump, 40 ms, very quiet (player.ts calls it on each stride). */
+  /** Footstep: a soft 120 → 70 Hz thump, 50 ms, very quiet (player.ts calls it on each stride). */
   step(): void;
   /** Quiet solid-contact cue, throttled by the player's collision response. */
   bump(): void;
-  /** Menu cursor move: 1.2 kHz, 30 ms. */
+  /** Menu cursor move: 750 Hz, 45 ms. */
   select(): void;
-  /** Confirm: two blips, 900 → 1400 Hz. */
+  /** Confirm: two blips, 660 then 990 Hz. */
   confirm(): void;
   /** Channel change: 80 ms of band-passed noise. */
   static(): void;
@@ -197,7 +197,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     src.onended = () => { src.disconnect(); filter?.disconnect(); g.disconnect(); activeBursts--; };
     bursts++;
   }
-  /** Split-flap clacks: `count` bursts `interval` s apart, each a random 1.4–2 kHz bandpassed tick. */
+  /** Split-flap clacks: up to 3 bursts at least 0.1 s apart, each a random 0.9–1.2 kHz bandpassed tick. */
   function clack(count = 1, interval = 0.07) {
     for (let k = 0; k < Math.min(3, count); k++) burst({ freq: 900 + Math.random() * 300, q: 2, gain: 0.08, dur: 0.05, noise: true, at: k * Math.max(.1, interval) });
   }

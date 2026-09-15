@@ -1,8 +1,8 @@
 /**
  * Boot screen: the `#boot` overlay in index.astro is visible from first paint; main.ts reports
  * milestones (`phase`) while it builds the city, three's DefaultLoadingManager nudges the bar
- * between them, and `done()` hands the overlay to the warp landing (landing.ts: the buttons over the loop, the arrival
- * clip) after the first rendered frame — or, with the landing off (`?nolanding`, `?p=`), glitches it away as before.
+ * between them, and `done()` hands the overlay to the landing (landing.ts: the hovercar crossfades onto the live vista)
+ * after the first rendered frame — or, with the landing off (`?nolanding`, `?p=`), glitches it away.
  * Every method is a no-op when the overlay is absent (lab pages, flat page).
  */
 import * as THREE from 'three/webgpu';
@@ -42,14 +42,12 @@ if (el) {
 let begun = false;
 
 export const boot = {
-  /** The load starts (right away with the landing off, on the gate's Enter otherwise): run the bar, arm the skip link. */
+  /** The load starts (right away with the landing off, on the gate's Enter otherwise): run the bar. */
   begin() {
     if (!el || begun) return;
     begun = true;
     shown = bar ? parseFloat(bar.style.width || '0') / 100 : 0;
     raf = requestAnimationFrame(paint);
-    // The escape hatch shows itself after a few seconds; on phones it is on from the start.
-    setTimeout(() => el.classList.add('is-slow'), 6000);
   },
   /** A milestone: `label` is what is being built now, `f` the overall fraction reached. */
   phase(label: string, f: number) {
@@ -72,7 +70,7 @@ export const boot = {
     if (!el || finished) return;
     finished = true;
     log?.lastElementChild?.classList.remove('is-live');
-    document.documentElement.classList.add('is-booted'); // cine preload and every probe wait for this
+    document.documentElement.classList.add('is-booted'); // the inline boot-bar script and probes wait for this
     el.setAttribute('aria-busy', 'false');
     if (landing.enabled) { landing.ready(); return; }
     el.classList.add('is-done');
@@ -88,8 +86,6 @@ export const boot = {
     if (m) m.textContent = `${message} — loading the text version`;
     setTimeout(() => { el.remove(); cancelAnimationFrame(raf); }, 1200);
   },
-  /** Show the skip link now (the shader pre-warm can hold the main thread for seconds at a time). */
-  allowSkip() { el?.classList.add('is-slow'); },
   /** Flat page / no scene: drop the overlay immediately. */
   hide() {
     el?.remove();

@@ -190,10 +190,9 @@ html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; 
   html.no-3d .cols { grid-template-columns: 1fr; }
 }
 
-/* ---------- Boot screen + warp landing (boot.ts, landing.ts). From first paint: the light-speed loop (or its poster + a
-   CSS warp), the wordmark top-left and a slim loading HUD at the bottom; when the city is ready the HUD gives way to
-   Enter the city; the tap plays the arrival and the whole overlay fades onto the live vista. data-landing: video |
-   poster | off (the plain boot screen: ?flat, ?nolanding, ?p=). */
+/* ---------- Boot screen + landing (boot.ts, landing.ts). After the gate's Enter: the live hovercar canvas (moved here from
+   the gate), the wordmark top-left and a slim loading HUD at the bottom; when the city is ready the whole overlay fades
+   onto the live vista. data-landing: pending (under the gate) | live | off (the plain boot screen: ?flat, ?nolanding, ?p=). */
 .boot { position: fixed; inset: 0; z-index: 30; background: #050509; color: var(--ink); font-family: var(--mono); overflow: hidden; }
 .boot::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px),
@@ -201,26 +200,6 @@ html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; 
 .boot-media { position: absolute; inset: 0; }
 .boot[data-landing='live'] .boot-media { background: radial-gradient(ellipse at 50% 48%, #122333, #050509 70%); }
 .boot[data-landing='live'] .gate-car { top: 0; left: 0; width: 100%; height: 100%; transform: none; filter: none; }
-.boot[data-landing='poster'] .boot-media, .boot[data-landing='video'] .boot-media { background: #050509 url(/night/landing/warp-poster.jpg) center / cover no-repeat; }
-/* After Enter the overlay starts on the hover still (the gate's backdrop = the launch's first frame); the warp poster only
-   when the clips can't play (data-poster="warp", with the CSS warp). */
-.boot[data-poster='hover'] .boot-media { background-image: url(/night/landing/hover.jpg); }
-.boot .warp-launch.is-on { opacity: 1; }
-.boot-media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; }
-.boot[data-landing='video'] .warp-loop { opacity: 1; transition: opacity 0.2s linear; }
-.boot .warp-arrival.is-on { opacity: 1; transition: opacity 0.25s linear; }
-.boot .warp-arrival.is-cut { transition: none; }
-/* CSS warp over the poster: compositor-only (transform / opacity), so it keeps moving while the pre-warm holds the main thread. */
-.boot-warp { position: absolute; inset: 0; overflow: hidden; display: none; mix-blend-mode: screen;
-  --car: radial-gradient(ellipse 14vw 17vh at 50% 66%, transparent 75%, #000 100%); -webkit-mask: var(--car); mask: var(--car); } /* no streaks across the car */
-.boot[data-landing='poster'][data-poster='warp'] .boot-warp { display: block; }
-.boot-warp i { position: absolute; left: 50%; top: 50%; width: 180vmax; height: 180vmax; margin: -90vmax 0 0 -90vmax; border-radius: 50%; opacity: 0; will-change: transform, opacity;
-  background: repeating-conic-gradient(transparent 0deg 4.6deg, rgb(0 229 255 / 0.7) 4.6deg 5deg, transparent 5deg 9.4deg, rgb(255 43 214 / 0.55) 9.4deg 9.7deg, transparent 9.7deg 13.1deg, rgb(242 255 61 / 0.45) 13.1deg 13.3deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 9%, #000 26%, #000 40%, transparent 62%); mask: radial-gradient(circle, transparent 0 9%, #000 26%, #000 40%, transparent 62%);
-  animation: warp-zoom 1.1s linear infinite; }
-.boot-warp i:nth-child(2) { rotate: 3.1deg; animation-delay: -0.37s; }
-.boot-warp i:nth-child(3) { rotate: 6.7deg; animation-delay: -0.73s; }
-@keyframes warp-zoom { 0% { transform: scale(0.35); opacity: 0; } 35% { opacity: 0.85; } 100% { transform: scale(1.6); opacity: 0; } }
 
 .boot-top { position: absolute; z-index: 2; left: clamp(16px, 4vw, 48px); top: max(18px, env(safe-area-inset-top)); transition: opacity 0.3s ease; }
 .boot-wordmark { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: 0.1em; text-transform: uppercase; position: relative;
@@ -258,26 +237,21 @@ html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; 
 /* The tilt chip waits until the landing is gone (the landing's own tap asks for motion access). */
 html:not(.is-landed) .hero-tilt { display: none !important; }
 @media (max-width: 760px) {
-  .boot[data-landing='poster'] .boot-media, .boot[data-landing='video'] .boot-media { background-image: url(/night/landing/warp-poster-p.jpg); }
-  .boot[data-poster='hover'] .boot-media { background-image: url(/night/landing/hover-p.jpg); }
-  .boot-warp { --car: radial-gradient(ellipse 50vw 18vh at 50% 67%, transparent 75%, #000 100%); }
   .boot-wordmark { font-size: 22px; }
   .boot-row { gap: 10px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .boot-wordmark::before, .boot-wordmark::after, .boot-bar i, .boot-log li.is-live::after { animation: none; }
-  .boot[data-landing='poster'] .boot-warp { display: none; }
   .boot.is-done { animation: none; display: none; }
 }
 
 /* Session reduced motion (the gate's "Enter with reduced motion"; palette.ts setReducedMotion adds html.reduce-motion). */
 html.reduce-motion .boot-wordmark::before, html.reduce-motion .boot-wordmark::after, html.reduce-motion .boot-bar i, html.reduce-motion .boot-log li.is-live::after { animation: none; }
-html.reduce-motion .boot[data-landing='poster'] .boot-warp { display: none; }
 html.reduce-motion .boot.is-done { animation: none; display: none; }
 html.reduce-motion .neon-btn { transition: none; }
 
-/* ---------- Landing gate (gate.ts): static, over everything, until Enter. Name at the top, the way in at the bottom
-   (the thumb zone), over a sharp but darkened still of the warp. */
+/* ---------- Landing gate (gate.ts): over everything until Enter. Name at the top, the way in at the bottom (the thumb
+   zone), the live hovercar in between. */
 .gate { position: fixed; inset: 0; z-index: 31; display: none; flex-direction: column; justify-content: space-between; overflow-y: auto; overscroll-behavior: contain;
   padding: max(28px, calc(env(safe-area-inset-top) + 20px)) clamp(20px, 7vw, 96px) max(24px, calc(env(safe-area-inset-bottom) + 16px)); background: #050509; color: var(--ink); }
 .gate[data-state='open'], .gate[data-state='closing'] { display: flex; }

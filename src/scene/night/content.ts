@@ -1,6 +1,6 @@
 /**
  * Résumé content in the scene. Every section (index.astro `[data-slab]`: education, four jobs, the project cards,
- * contact) is painted as a terminal board (slabcanvas.ts) on its carrier's mount (carriers/*: kiosk, bus stop,
+ * contact) gets a canvas board (district-art.ts `adCanvas`) on its carrier's mount (carriers/*: kiosk, bus stop,
  * LED wall, blimp banner, hologram, holo stall, departures board) — real geometry, so the boards depth-test against
  * the character. In ride mode each board has a p window (data-window="a,b") during which it is visible; on foot it
  * fades by proximity to its carrier, and in dock mode only the docked board shows. Docking opens the section's DOM

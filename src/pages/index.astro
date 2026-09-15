@@ -6,7 +6,6 @@ import '@fontsource/rajdhani/600.css';
 import '@fontsource/rajdhani/700.css';
 import '../styles/night.css';
 import '../styles/hud.css';
-import '../styles/cine.css';
 import { profile, education, jobs, projects, WINDOWS } from '../content';
 // Terminal session styles (terminal-ui: overlay chrome; terminal: the look; interact: dock-mode states).
 import.meta.glob('../styles/carriers/*.css', { eager: true });
@@ -103,7 +102,7 @@ const win = (k: string) => WINDOWS[k].join(',');
           try { localStorage.setItem('nh-gate', c); } catch (e) {}
           if (c === 'reduced') document.documentElement.classList.add('reduce-motion');
           gate.dataset.state = 'closed';
-          boot.dataset.landing = 'poster';
+          boot.dataset.landing = 'live';
         });
       })();
     </script>
@@ -247,9 +246,7 @@ const win = (k: string) => WINDOWS[k].join(',');
 
     <!-- Walk-mode HUD (scene/night/hud.ts, styles/hud.css). data-mode: ride | walk | dock. -->
     <div id="hud" class="hud" data-mode="ride">
-      <!-- Transition cutscene (scene/night/nav.ts beats → hud.cutscene): letterbox bars, the skip chip, the reduced-motion fade. -->
-      <div class="hud-bars" aria-hidden="true"><i class="hud-bar top"></i><i class="hud-bar bottom"></i></div>
-      <button class="hud-skip" type="button" aria-label="Skip scene transition">Skip <span aria-hidden="true">▸</span></button>
+      <!-- Location change (scene/night/nav.ts fade beats → hud.cutscene): fade through black. -->
       <div class="hud-fade" aria-hidden="true"></div>
       <div class="hud-toast" hidden aria-live="polite"><span class="hud-toast-name"></span><small class="hud-toast-sub"></small></div>
       <button class="hud-prompt" type="button" hidden aria-live="polite"><kbd>F</kbd><span class="hud-prompt-label"></span></button>

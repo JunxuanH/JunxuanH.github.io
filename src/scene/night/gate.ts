@@ -1,15 +1,14 @@
 /**
- * The landing gate (`#gate` in index.astro): a static page on first paint — name and title over a still of the warp,
- * one **Enter the city** button, a one-line flashing-lights notice with a **Reduce motion** switch, the résumé link and
- * LinkedIn / GitHub icons. Nothing 3D runs behind
- * it: index.astro calls `start()` only once `wait()` resolves. Meanwhile the network warms up (the chosen variant's
- * warp clips as blobs, then the heaviest scene assets into the HTTP cache at low priority).
+ * The landing gate (`#gate` in index.astro): name and title over the live hovercar (landing-car.ts, lazy-loaded in its
+ * own small renderer), one **Enter the city** button, a one-line flashing-lights notice with a **Reduce motion** switch,
+ * the résumé link and LinkedIn / GitHub icons. The city does not build behind it: index.astro calls `start()` only once
+ * `wait()` resolves. Meanwhile the heaviest scene assets warm the HTTP cache at low priority.
  *
  * The inline script right after the markup opens it before first paint (off for `?flat`, `?nolanding`, `?p=`), picks
  * the pre-selected choice (localStorage `nh-gate`, else the OS reduced-motion preference) and catches a click that lands
  * before this module has loaded (then the tilt prompt / audio unlock are skipped; the hero's tilt chip remains).
- * The click itself — one gesture — sets the session's reduced-motion flag, asks iOS for tilt, unlocks audio, starts the
- * warp loop (landing.ts) and the boot HUD, and closes the gate.
+ * The click itself — one gesture — sets the session's reduced-motion flag, asks iOS for tilt, unlocks audio, moves the
+ * car into the loading overlay (landing.ts) and starts the boot HUD, and closes the gate.
  */
 import { setReducedMotion, reducedMotion } from './palette';
 import { askTilt } from './main';
@@ -97,10 +96,7 @@ if (el && enabled) {
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.gate-enter');
       if (b) choose(b.dataset.choice === 'reduced' ? 'reduced' : 'full', true);
     });
-    // Turning Reduce motion off behind the gate starts warming the warp clips (they were skipped when it was on).
-    document.getElementById('gate-reduce')?.addEventListener('change', (e) => { if (!(e.target as HTMLInputElement).checked) landing.warm(); });
     const conn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
-    if (el.dataset.pre === 'full') landing.warm();
     if (!conn?.saveData) {
       const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o: { timeout: number }) => void }).requestIdleCallback;
       if (ric) ric(prefetchScene, { timeout: 1500 }); else setTimeout(prefetchScene, 800);

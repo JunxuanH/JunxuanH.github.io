@@ -1,4 +1,4 @@
-/** The generated gate hovercar's last beat: after the warp overlay drops, it appears in the live bay vista and
+/** The generated gate hovercar's last beat: after the loading overlay drops, it appears in the live bay vista and
  * accelerates toward the skyline. Keeping this in the world renderer makes the handoff feel like one continuous trip. */
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';

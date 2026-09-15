@@ -1,9 +1,9 @@
 import * as THREE from 'three/webgpu';
 
 /**
- * Scroll → camera. One `.journey` element drives progress p ∈ [0,1]; sections map p to districts,
- * and `KEYS` are camera poses interpolated with dwell (a key repeated = the camera holds).
- * The hero is the bay vista; the flight lands on the avenue and stays at street level.
+ * The camera rail. Progress p ∈ [0,1] maps to districts (`SECTIONS`), and `KEYS` are camera poses interpolated
+ * with dwell (a key repeated = the camera holds). nav.ts jumps p to a section's `NAV_TARGET` behind a fade; `?p=`
+ * starts the ride anywhere. The hero is the bay vista at p = 0.
  */
 export interface Key { p: number; pos: [number, number, number]; look: [number, number, number] }
 
@@ -32,7 +32,6 @@ export const ANCHORS = {
   pad: new THREE.Vector3(140, 0, 20),
 };
 
-const S = ANCHORS.workSigns;
 /** The pose the original piecewise-smoothstep interpolation framed at p between two keys (kept bit-exact as a key). */
 function pinned(p: number, pos0: number[], look0: number[], pos1: number[], look1: number[], p0: number, p1: number) {
   const t = (p - p0) / (p1 - p0), s = t * t * (3 - 2 * t);
@@ -48,8 +47,6 @@ function backOut(pos: [number, number, number], look: [number, number, number], 
   const q = new THREE.Vector3().fromArray(pos).addScaledVector(d, -back);
   return { pos: q.toArray() as [number, number, number], look: q.clone().addScaledVector(d, aim).toArray() as [number, number, number] };
 }
-const signCam = (s: THREE.Vector3): [number, number, number] => [-Math.sign(s.x) * 2, 7, s.z + 10];
-const v = (a: THREE.Vector3, dy = 0): [number, number, number] => [a.x, a.y + dy, a.z];
 
 export const KEYS: Key[] = [
   { p: 0.00, pos: [0, 22, 250], look: [0, 45, -40] },
@@ -250,179 +247,12 @@ export function sectionAt(p: number): SectionId {
   return (SECTIONS.find((s) => p < s.end) ?? SECTIONS[SECTIONS.length - 1]).id;
 }
 
-export const sectionStart = (id: SectionId) => SECTIONS.find((s) => s.id === id)!.start;
 /** Where the nav (and the hero button) lands: the dwell of each section, not its boundary. */
 export const NAV_TARGET: Record<SectionId, number> = { city: 0, education: 0.228, work: 0.31, projects: 0.82, contact: 0.99 };
 
-/** Legacy GSAP pan timing (kept for reference; nav.ts paces every move with `planPan` / `flyover` below). */
-export const easeName = 'power3.inOut';
-/** 0.9 s next door, up to 2.6 s across the whole city (proportional to the distance in p). */
-export const panDuration = (fromP: number, toP: number) => THREE.MathUtils.clamp(0.9 + Math.abs(toP - fromP) * 2.2, 0.9, 2.6);
-export const isAdjacent = (a: SectionId, b: SectionId) => Math.abs(SECTIONS.findIndex((s) => s.id === a) - SECTIONS.findIndex((s) => s.id === b)) === 1;
-
 /**
  * Establishing shots: a wide rail pose per section where the district reads at a glance (the plaza with the kiosk,
- * the avenue with the bus shelter, the market street, the pier from the quay side). The video cutscenes (cutscene.ts)
- * park the camera here on either side of a clip, and the clips' first/last frames were generated from these exact
- * poses (scripts/cutscene-frames.mjs): changing a value means re-capturing and re-generating that section's clips.
- * (0.265 for work and 0.95 for contact frame the district a little wider, if the clips are ever redone.)
+ * the avenue with the bus shelter, the market street, the pier from the quay side). `?capture=<section>` (main.ts)
+ * renders a UI-free still from here; the landing parks the vista on `city` when the overlay lifts.
  */
 export const ESTABLISH: Record<SectionId, number> = { city: 0, education: 0.19, work: 0.275, projects: 0.74, contact: 0.96 };
-
-// ---------- cutscene pacing: every nav move is walked at a capped, even speed (nav.ts drives it with the frame's dt)
-/**
- * Speed caps for the transition cutscenes. A move is re-timed by arc length so the world never streaks: `street` u/s
- * at street level rising to `aloft` u/s once the camera is well above the roofs (over the `aloftY` height band), with
- * up to +`forward` when it moves along its own view direction (little optical flow) but never over `aloft`; heading
- * changes are held to `turn` °/s. Velocity ramps from rest over `easeIn` s, settles over `easeOut` s and is constant
- * in between; a move never takes less than `min` s. A rail pan that would take longer than `maxRail` s (a redirect
- * across several dwells) flies over the skyline instead.
- */
-export const PACE = { street: 55, aloft: 100, aloftY: [8, 40] as [number, number], forward: 0.5, turn: 100, min: 2.6, easeIn: 0.6, easeOut: 1.0, maxRail: 7 };
-
-/** A paced camera move (nav.ts advances `t` in seconds with the frame's dt). */
-export interface Move {
-  kind: 'rail' | 'flyover' | 'still';
-  /** True for a pan along the rail (journey.p carries the camera through `poseAt`); false when `pose` does. */
-  rail: boolean;
-  from: number;
-  to: number;
-  /** Seconds (Infinity for a `still`). */
-  duration: number;
-  /** Rail progress at time t (a fly-over switches from `from` to `to` at the apex, for the p-gated systems). */
-  pAt(t: number): number;
-  /** Camera pose at time t. */
-  pose(t: number, pos: THREE.Vector3, look: THREE.Vector3): void;
-  /** The speed cap (u/s) in force at time t (probes). */
-  capAt(t: number): number;
-  /** Metric length (u-equivalent, see `pace`) and the cruise speed the plan settled on. */
-  length: number;
-  speed: number;
-}
-
-const sm01 = (x: number) => { const t = THREE.MathUtils.clamp(x, 0, 1); return t * t * (3 - 2 * t); };
-/** Speed cap (u/s) for a camera at height y whose velocity makes |cos| = `along` with its view direction. */
-export function speedCap(y: number, along: number) {
-  const base = PACE.street + (PACE.aloft - PACE.street) * sm01((y - PACE.aloftY[0]) / (PACE.aloftY[1] - PACE.aloftY[0]));
-  return Math.min(PACE.aloft, base * (1 + PACE.forward * along * along));
-}
-
-/**
- * Re-time a camera path. `sample(u)` gives the pose at u ∈ [0,1] in any parameterisation; the path is measured in a
- * metric that charges distance against the local speed cap and heading change against the turn cap (Euclidean sum,
- * so each cap holds on its own), then walked at constant metric speed with smoothstep velocity ramps at both ends
- * (speed and its derivative continuous, zero at rest). Returns the timing and the inverse map t → u.
- */
-function pace(sample: (u: number, pos: THREE.Vector3, look: THREE.Vector3) => void, n = 400) {
-  const P = new THREE.Vector3(), L = new THREE.Vector3(), P0 = new THREE.Vector3(), L0 = new THREE.Vector3();
-  const d0 = new THREE.Vector3(), d1 = new THREE.Vector3(), v = new THREE.Vector3();
-  const M = new Float64Array(n + 1), cap = new Float64Array(n + 1);
-  sample(0, P0, L0); d0.subVectors(L0, P0).normalize();
-  cap[0] = speedCap(P0.y, 1);
-  for (let i = 1; i <= n; i++) {
-    sample(i / n, P, L); d1.subVectors(L, P).normalize();
-    v.subVectors(P, P0);
-    const d = v.length();
-    const along = d > 1e-6 ? Math.abs(v.divideScalar(d).dot(d1)) : 1;
-    const c = speedCap((P.y + P0.y) / 2, along);
-    const ang = THREE.MathUtils.radToDeg(d0.angleTo(d1));
-    cap[i] = c;
-    M[i] = M[i - 1] + Math.hypot((d * PACE.street) / c, (ang * PACE.street) / PACE.turn);
-    P0.copy(P); L0.copy(L); d0.copy(d1);
-  }
-  const total = M[n], a = PACE.easeIn, b = PACE.easeOut, ramps = (a + b) / 2;
-  const duration = Math.max(PACE.min, total / PACE.street + ramps);
-  const speed = total / (duration - ramps); // metric speed on the even middle (≤ PACE.street)
-  /** Metric distance covered by time t: the integral of the trapezoid profile (∫ smoothstep = x³ − x⁴/2). */
-  const sAt = (t: number) => {
-    if (t <= 0) return 0;
-    if (t >= duration) return total;
-    if (t < a) { const x = t / a; return speed * a * (x * x * x - (x * x * x * x) / 2); }
-    if (t <= duration - b) return speed * (a / 2 + t - a);
-    const y = (t - (duration - b)) / b;
-    return speed * (a / 2 + (duration - b - a) + b * (y - (y * y * y - (y * y * y * y) / 2)));
-  };
-  /** Fractional sample index at metric distance s (binary search on the cumulative metric). */
-  const iAt = (s: number) => {
-    if (s <= 0) return 0;
-    if (s >= total) return n;
-    let lo = 0, hi = n;
-    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (M[mid] <= s) lo = mid; else hi = mid; }
-    const seg = M[hi] - M[lo];
-    return lo + (seg > 0 ? (s - M[lo]) / seg : 0);
-  };
-  return {
-    duration, length: total, speed,
-    uAt: (t: number) => iAt(sAt(t)) / n,
-    capAt: (t: number) => cap[Math.min(n, Math.round(iAt(sAt(t))))],
-  };
-}
-
-/** A paced pan along the rail from `fromP` to `toP` (neighbouring sections): journey.p ← pAt(t) each frame. */
-export function planPan(fromP: number, toP: number): Move {
-  const pl = pace((u, pos, look) => poseAt(fromP + (toP - fromP) * u, pos, look));
-  const pAt = (t: number) => fromP + (toP - fromP) * pl.uAt(t);
-  return { kind: 'rail', rail: true, from: fromP, to: toP, duration: pl.duration, length: pl.length, speed: pl.speed, pAt, pose: (t, pos, look) => poseAt(pAt(t), pos, look), capAt: pl.capAt };
-}
-
-/** A parked camera: journey.p stays at `p` (for the gating) while the camera holds the rail pose at `at`. */
-export function still(p: number, at: number): Move {
-  return { kind: 'still', rail: false, from: p, to: p, duration: Infinity, length: 0, speed: 0, pAt: () => p, pose: (_t, pos, look) => poseAt(at, pos, look), capAt: () => 0 };
-}
-
-// ---------- fly-overs (non-adjacent nav jumps): climb, cruise above the skyline, settle exactly on the target pose
-/** floor: above tower-a (84) and the tallest kitbash variant (82). climb: cruise height over the higher end pose. far: aim rays. */
-const FLYOVER = { floor: 95, climb: 40, far: 30, sweepY: 14 };
-/**
- * Paced camera flight from poseAt(fromP) — or from an explicit `start` pose, for a redirect mid-air — to poseAt(toP)
- * over the city, ending bit-exact on the target pose. Position: centripetal Catmull-Rom through the departure pose,
- * two cruise points at height H (20 % / 80 % of the way), and the arrival pose. Aim: the departure ray pushed far, a
- * sweep point low over the city mid-way, the arrival ray pushed far, then the arrival look — so the heading never
- * whips near a close-up subject. Both curves are walked by `pace` (speed and turn caps, ramps at both ends).
- */
-export function flyover(fromP: number, toP: number, start?: { pos: THREE.Vector3; look: THREE.Vector3 }): Move {
-  const P0 = new THREE.Vector3(), L0 = new THREE.Vector3(), P1 = new THREE.Vector3(), L1 = new THREE.Vector3();
-  poseAt(fromP, P0, L0); poseAt(toP, P1, L1);
-  if (start) { P0.copy(start.pos); L0.copy(start.look); }
-  const stillPose = P0.distanceTo(P1) < 1e-3;
-  // Cruise height: over the roofs and above the higher end pose; a start already aloft (redirect) does not climb again.
-  const H = Math.max(FLYOVER.floor, P1.y + FLYOVER.climb, Math.min(P0.y + FLYOVER.climb, Math.max(P0.y, FLYOVER.floor)));
-  const lift = (k: number) => new THREE.Vector3().lerpVectors(P0, P1, k).setY(H);
-  const ray = (p: THREE.Vector3, l: THREE.Vector3) => { const d = new THREE.Vector3().subVectors(l, p); const n = d.length(); return n < 1e-6 ? p.clone().add(new THREE.Vector3(0, 0, -FLYOVER.far)) : p.clone().addScaledVector(d, Math.max(FLYOVER.far, n) / n); };
-  const F0 = ray(P0, L0), F1 = ray(P1, L1);
-  const posCurve = new THREE.CatmullRomCurve3([P0.clone(), lift(0.2), lift(0.8), P1.clone()], false, 'centripetal');
-  const lookCurve = new THREE.CatmullRomCurve3([L0.clone(), F0, new THREE.Vector3().lerpVectors(F0, F1, 0.5).setY(FLYOVER.sweepY), F1, L1.clone()], false, 'centripetal');
-  posCurve.arcLengthDivisions = lookCurve.arcLengthDivisions = 600;
-  const raw = (u: number, pos: THREE.Vector3, look: THREE.Vector3) => {
-    if (stillPose || u <= 0) { pos.copy(P0); look.copy(L0); return; }
-    if (u >= 1) { pos.copy(P1); look.copy(L1); return; }
-    posCurve.getPointAt(u, pos);
-    lookCurve.getPointAt(u, look);
-  };
-  const pl = pace(raw);
-  return {
-    kind: 'flyover', rail: false, from: fromP, to: toP, duration: pl.duration, length: pl.length, speed: pl.speed,
-    pAt: (t) => (pl.uAt(t) < 0.5 ? fromP : toP), // p-gated visibility (districts, slabs, water, audio) switches at the apex, where both are far below
-    pose: (t, pos, look) => raw(t >= pl.duration ? 1 : pl.uAt(t), pos, look),
-    capAt: pl.capAt,
-  };
-}
-
-const ta = new THREE.Vector3(), tb = new THREE.Vector3(), tf = new THREE.Vector3(), tg = new THREE.Vector3();
-/**
- * Total heading rotation (degrees) the camera makes along the path between two progress values. The path zigzags
- * through the districts (leaving the kiosk alone turns ~120°), so a pan that crosses several keys should be given
- * time for its turn as well as its distance, e.g. `Math.max(panDuration(a, b), pathTurn(a, b) / 150)` for ≤ 150°/s.
- */
-export function pathTurn(fromP: number, toP: number, steps = 400) {
-  const p0 = Math.min(fromP, toP), p1 = Math.max(fromP, toP);
-  let deg = 0;
-  poseAt(p0, ta, tb); tf.subVectors(tb, ta).normalize();
-  for (let i = 1; i <= steps; i++) {
-    poseAt(p0 + ((p1 - p0) * i) / steps, ta, tb);
-    tg.subVectors(tb, ta).normalize();
-    deg += THREE.MathUtils.radToDeg(tf.angleTo(tg));
-    tf.copy(tg);
-  }
-  return deg;
-}

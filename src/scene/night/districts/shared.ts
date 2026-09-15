@@ -1,8 +1,6 @@
 import * as THREE from 'three/webgpu';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { color, smoothstep, fract, mix, step, time, uv, float, pow, hash, floor, texture, luminance, vec2, normalLocal, abs, uniform, glowMaterial } from '../tsl';
-import { PAL, rng } from '../palette';
-import { neonText } from '../signs';
+import { color, smoothstep, fract, mix, uv, float, texture, luminance, vec2, normalLocal, abs, uniform, glowMaterial } from '../tsl';
+import { PAL } from '../palette';
 import type { PropPlacement } from '../props';
 import type { PathDef } from '../paths';
 
@@ -72,73 +70,6 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
     if (front === 'nx') { plane.position.x = -w / 2 - 0.06; plane.rotation.y = -Math.PI / 2; }
     group.add(plane);
   }
-  return group;
-}
-
-/** Neon flame-graph sign: rows of glowing bars on a dark backing with a bracket, label on top. */
-export function createFlameSign(label: string, rows: number, seed: number, tint: number, w = 11, h = 6.2, frameTint = tint) {
-  const group = new THREE.Group();
-  const backing = new THREE.Mesh(new THREE.BoxGeometry(w + 1.0, h + 1.0, 0.3), new THREE.MeshStandardNodeMaterial({ color: 0x05060c, roughness: 0.6 }));
-  group.add(backing);
-  // Neon rim around the backing (four bars in the backing's own depth): a full glowing box behind the backing read as a
-  // white plate from behind and washed the whole sign out under bloom from the avenue.
-  const rim = mergeGeometries([
-    new THREE.BoxGeometry(w + 1.4, 0.2, 0.3).translate(0, h / 2 + 0.6, 0), new THREE.BoxGeometry(w + 1.4, 0.2, 0.3).translate(0, -h / 2 - 0.6, 0),
-    new THREE.BoxGeometry(0.2, h + 1.0, 0.3).translate(w / 2 + 0.6, 0, 0), new THREE.BoxGeometry(0.2, h + 1.0, 0.3).translate(-w / 2 - 0.6, 0, 0),
-  ], false)!;
-  group.add(new THREE.Mesh(rim, glowMaterial(frameTint, 1.3)));
-  const r = rng(seed);
-  const barGeo = new THREE.BoxGeometry(1, 1, 0.25);
-  const cols = [PAL.cyan, tint, 0xdfe8ff];
-  const mats = cols.map((c) => {
-    const m = new THREE.MeshBasicNodeMaterial();
-    const uSeed = uniform(seed);
-    const buzz = mix(float(1), hash(floor(time.mul(24)).add(uSeed)), step(0.93, hash(floor(time.mul(0.7)).add(uSeed))));
-    m.colorNode = uniform(new THREE.Color(c)).mul(1.7).mul(buzz.mul(0.5).add(0.5)); // just over the bloom threshold
-    return m;
-  });
-  const rowH = (h - 1.2) / Math.max(rows, 3);
-  let spans = [{ x: -w / 2 + 0.5, w: w - 1.0 }];
-  for (let rIdx = 0; rIdx < rows && spans.length; rIdx++) {
-    const y = h / 2 - 0.5 - rowH * (rIdx + 0.5) - 0.8;
-    const next: typeof spans = [];
-    for (const s of spans) {
-      const bar = new THREE.Mesh(barGeo, mats[(rIdx + Math.floor(r() * 2)) % 3]);
-      bar.scale.set(s.w * 0.96, rowH * 0.38, 1);
-      bar.position.set(s.x + s.w / 2, y, 0.2);
-      group.add(bar);
-      let cx = s.x;
-      while (cx < s.x + s.w - 0.3) {
-        const cw = Math.min(s.x + s.w - cx, s.w * (0.25 + r() * 0.5));
-        if (r() < 0.7 && cw > 0.4) next.push({ x: cx, w: cw });
-        cx += cw + s.w * 0.05;
-      }
-    }
-    spans = next;
-  }
-  if (label) {
-    const lbl = neonText(label, '#ffffff', w * 0.7, { font: '"IBM Plex Mono", ui-monospace, monospace', gain: 1.5 });
-    lbl.position.set(0, h / 2 - 0.8, 0.25);
-    group.add(lbl);
-  }
-  const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 2.4), new THREE.MeshStandardNodeMaterial({ color: 0x1a1c26, roughness: 0.6, metalness: 0.5 }));
-  bracket.position.set(0, -h / 2 - 0.2, -1.2);
-  group.add(bracket);
-  return group;
-}
-
-/** Fibre conduit between signs with light pulses. */
-export function createConduit(points: THREE.Vector3[], tint: number = PAL.cyan) {
-  const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal');
-  const group = new THREE.Group();
-  const sheath = new THREE.Mesh(new THREE.TubeGeometry(curve, 200, 0.07, 6), new THREE.MeshStandardNodeMaterial({ color: 0x0c0e18, roughness: 0.4, metalness: 0.6 }));
-  group.add(sheath);
-  const coreMat = new THREE.MeshBasicNodeMaterial();
-  const s = uv().x;
-  const pulse = pow(fract(s.mul(6.0).sub(time.mul(0.25))), 20.0);
-  const uT = uniform(new THREE.Color(tint));
-  coreMat.colorNode = mix(uT.mul(0.4), uT.mul(3.5), pulse);
-  group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 200, 0.1, 6), coreMat));
   return group;
 }
 

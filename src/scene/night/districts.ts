@@ -8,7 +8,6 @@ import type { DistrictBuild, DistrictCtx } from './districts/shared';
 import type { SectionId } from './journey';
 
 export type { DistrictContent, DistrictTextures, DistrictCtx, DistrictBuild, LightSpec } from './districts/shared';
-export { facadeBlock, createFlameSign, createConduit } from './districts/shared';
 
 /**
  * Orchestrates the four themed districts (each in ./districts/*.ts) and merges what they ask for:

@@ -38,14 +38,12 @@ import { buildAreas, buildWorldArea, sectionAt as walkSectionAt, type Obstacle, 
 import { THEMES } from './theme';
 import type { PropPlacement } from './props';
 
-/** The lens of the warp landing's clips (landing.ts): the camera matches it while the overlay is up, then eases back. */
-const LANDING_FOV = 50;
 let tiltAnswer: Promise<boolean> | null = null;
 /** Phones feed device tilt into the parallax (not under reduced motion, not with `?nogyro`). */
 const tiltWanted = () => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches && !reducedMotion && !params.has('nogyro') && 'DeviceOrientationEvent' in window;
 /**
  * Ask for device-tilt access. iOS only prompts from a completed tap (click / touchend): call it synchronously inside one —
- * the landing gate's Enter does, before `start()`, so the system dialog never covers the warp clip. Resolves true when
+ * the landing gate's Enter does, before `start()`, so the system dialog never covers the launch. Resolves true when
  * tilt may be used (granted, or no permission API), false when refused or not wanted. The answer is kept; a refusal
  * WebKit makes without prompting (not a gesture it accepts) is forgotten so the next tap asks again.
  */
@@ -63,17 +61,16 @@ export function askTilt(): Promise<boolean> {
 
 /**
  * Neon Harbor. Bay vista hero → the nav pans the camera along the rail to a district, where the visitor takes
- * over the protagonist (the `soldier` rig) on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
+ * over the protagonist (the `ronin-player` rig, `soldier` if it fails to load) on foot (nav.ts / player.ts) and docks on the résumé carriers. No scrolling.
  * All lights are emissive; bloom is the light source. `?q=high|med|low`, `?p=0.4` (start the ride at that progress),
  * `?nobloom ?noca ?nosharp ?norain ?novideo ?kenney ?nokit ?noglb ?nowater ?debug`.
  */
 export async function start(root: HTMLElement) {
-  // Reproducible, UI-free establishing stills for Fal first/last-frame clips.
+  // Reproducible, UI-free establishing stills (journey.ts ESTABLISH).
   // This is a public render mode, not an automation hook into private scene state.
   const capture = params.get('capture') as SectionId | null;
   if (capture && Object.hasOwn(ESTABLISH, capture)) {
     params.set('p', String(ESTABLISH[capture]));
-    params.set('nocine', '1');
     setReducedMotion(true);
     document.documentElement.classList.add('capture-frame');
   }
@@ -103,11 +100,8 @@ export async function start(root: HTMLElement) {
 
   const scene = new THREE.Scene();
   const landingFlyby = landing.enabled ? createLandingFlyby(scene) : null;
-  // Default: the night gradient sky + the aerial skyline plate (Ivan preferred it). `?pano=1` shows the 360° river-city
-  // panorama (scripts/pano-build.sh), `?pano=<url>` another equirect.
-  const panoParam = params.get('pano');
-  const panoUrl = panoParam ? (panoParam === '1' ? '/night/backdrop/pano.webp' : panoParam) : null;
-  scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032, !!panoUrl);
+  // The night gradient sky + the aerial skyline plate (Ivan preferred it over the 360° panorama).
+  scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032);
   const camera = new THREE.PerspectiveCamera(narrow ? 62 : 50, innerWidth / innerHeight, 0.5, 2600);
   scene.add(camera);
 
@@ -136,11 +130,7 @@ export async function start(root: HTMLElement) {
       return url;
     });
   }
-  // The sky loads after the URL rewrite, so phones fetch the half-size panorama.
-  scene.add(createSky(tier, panoUrl ? {
-    url: panoUrl, depth: panoParam === '1' ? '/night/backdrop/pano-depth.png' : undefined,
-    depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
-  } : undefined));
+  scene.add(createSky(tier));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
   const PROTAGONIST = 'ronin-player'; // chosen anime Ronin; separate from the existing ronin NPC
   const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot',
@@ -155,7 +145,7 @@ export async function start(root: HTMLElement) {
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.
   // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
-  if (!panoUrl) pending.push(createBackdrop({ ring: false }).then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
+  pending.push(createBackdrop().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
@@ -327,8 +317,7 @@ export async function start(root: HTMLElement) {
     console.warn('[night] Ronin unavailable; using the previous protagonist', e);
     return loadCharacter('soldier').catch(() => null);
   });
-  const footstep = (audio as unknown as { step?: () => void }).step; // audio.ts grows `step()` with the interactions pass
-  const player = protagonist ? createPlayer({ asset: protagonist, onStep: () => footstep?.call(audio), onBump: () => audio.bump() }) : null;
+  const player = protagonist ? createPlayer({ asset: protagonist, onStep: () => audio.step(), onBump: () => audio.bump() }) : null;
   if (player) {
     scene.add(player.root);
     player.setArea(worldArea);
@@ -337,10 +326,8 @@ export async function start(root: HTMLElement) {
   const playerPos = new THREE.Vector3(); // player feet, or the spawn when there is no character (`?nopeople`)
   const dockTarget = new THREE.Vector3(), dockNormal = new THREE.Vector3();
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
-  // Generated video cutscenes over the nav transitions (desktop only; cutscene.ts decides). Clips are warmed per section.
   const nav = createNav({
     journey,
-    transition: 'fade',
     onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
     onSection: (id) => {
       navLinks.forEach((a) => {
@@ -355,9 +342,9 @@ export async function start(root: HTMLElement) {
       if (player) { player.setArea(worldArea); player.teleport(...s.pos, s.yaw); }
       hud.showHintOnce();
     },
-    // The camera has settled on the district's establishing shot (the cutscene's hold): the title card.
+    // The jump happened behind the black (the reveal starts): the title card.
     onArrive: (id) => { if (id !== 'city') { const th = THEMES[id]; hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase()); } },
-    onBeat: (s) => hud.cutscene(s), // letterbox bars, the skip chip, the reduced-motion fade
+    onBeat: (s) => hud.cutscene(s), // the fade through black
     onDock: (id) => {
       content.dock(id);
       // The character turns to the carrier: the follow camera (and the phone dock framing) look at it too.
@@ -387,7 +374,6 @@ export async function start(root: HTMLElement) {
   content.session.el?.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); nav.undock(); }
   });
-  hud.onSkip(() => nav.skip());
   const input = createInput({
     stage: root, touch: hud.touch,
     enabled: () => nav.mode === 'walk',
@@ -468,7 +454,7 @@ export async function start(root: HTMLElement) {
   // longer boot with a progress bar beats freezes while scrolling.
   // Each step gates the scene exactly as the journey will at that point (districts.update / content.update),
   // so a step builds only its own district and the boot bar visibly advances nine times; a yield before every
-  // step lets the label paint and the skip link appear. Frustum culling is off so a district's whole
+  // step lets the label paint. Frustum culling is off so a district's whole
   // content is built, not just what the pose happens to frame.
   {
     const t0 = performance.now();
@@ -476,10 +462,9 @@ export async function start(root: HTMLElement) {
     scene.traverse((o: any) => { if (o.isMesh || o.isPoints || o.isLine || o.isSprite) meshes.push(o); });
     const culled = meshes.map((o) => o.frustumCulled);
     for (const o of meshes) o.frustumCulled = false;
-    boot.allowSkip();
     const poses = [0, 0.10, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0]; // 0.10: campus appears while the water still reflects
-    // Chunked so the landing video keeps moving: one render that compiled every new program of a pose held the main
-    // thread (and on iPhones the GPU process that also presents video) for seconds, freezing the warp loop. Each pose now
+    // Chunked so the landing car keeps moving: one render that compiled every new program of a pose held the main
+    // thread (and on iPhones the GPU process) for seconds, freezing the overlay. Each pose now
     // reveals its not-yet-compiled materials a few at a time (everything else hidden, so a render compiles only that
     // chunk), yields until the loop has presented new frames, then renders the whole pose once for the combinations.
     // Visibility only toggles meshes; lights stay put, so program keys are unchanged.
@@ -492,7 +477,7 @@ export async function start(root: HTMLElement) {
     const visibleInScene = (o: THREE.Object3D) => { for (let a: THREE.Object3D | null = o; a; a = a.parent) if (!a.visible) return false; return true; };
     for (let i = 0; i < poses.length; i++) {
       boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * i) / poses.length);
-      await landing.breathe(); // paint the label, keep the video presenting
+      await landing.breathe(); // paint the label, let the landing car draw a frame
       const pp = poses[i];
       districts.update(0, pp);
       content.update(pp, 0, 0);
@@ -563,7 +548,7 @@ export async function start(root: HTMLElement) {
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE.requestPermission === 'function') {
       // iOS: the request only counts inside a completed tap (touchend / click; pointerdown and touchstart are refused
-      // without a prompt). The landing's Enter-the-city tap asks (askTilt, before the arrival clip); the hero's TILT
+      // without a prompt). The landing's Enter-the-city tap asks (askTilt, before the launch); the hero's TILT
       // chip is the explicit way in after that. With the landing off (`?nolanding`), the first tap anywhere asks, as
       // before. A refusal WebKit makes without prompting (not a gesture it accepts) is retried on the next ask.
       const chip = document.querySelector<HTMLButtonElement>('.hero-tilt');
@@ -585,15 +570,13 @@ export async function start(root: HTMLElement) {
     (window as any).__tilt = (beta: number, gamma: number) => onTilt({ beta, gamma } as DeviceOrientationEvent); // probes
   }
 
-  // ---------- warp landing (landing.ts): the overlay's tap asks for tilt; its crossfade lands on the vista's establishing pose
+  // ---------- landing (landing.ts): when the overlay lifts, the hovercar flies off and the vista sits on its establishing pose
   landing.configure({
     onLand: () => {
       if (!reducedMotion) landingFlyby?.launch(camera);
       if (nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && journey.p !== ESTABLISH.city) { journey.p = ESTABLISH.city; rig.reset(); }
     },
   });
-  const baseFov = camera.fov;
-  let lensK = landing.covering ? 1 : 0; // 1 = the clip's lens (phones: fov 50; wider than 16:9: zoomed to its crop), eased to 0 after landing
   let lastDraw = 0, wasThrottled = false;
 
   const clock = new THREE.Timer();
@@ -622,7 +605,7 @@ export async function start(root: HTMLElement) {
   // Loop order: input → nav/player (mode camera) → content (carriers, slabs) → districts/carriers with the section
   // override → lights → the rest → render.
   renderer.setAnimationLoop(() => {
-    // Under the landing overlay (compiled shaders, nothing to see) render ~4 fps so the video decode keeps the GPU / CPU.
+    // Under the landing overlay (compiled shaders, nothing to see) render ~4 fps so the landing car keeps the GPU / CPU.
     const throttled = !firstFrame && landing.covering && !landing.arriving;
     if (throttled) {
       const now = performance.now();
@@ -636,10 +619,9 @@ export async function start(root: HTMLElement) {
     const t = reducedMotion ? 0 : clock.getElapsed();
     const dt = Math.min(clock.getDelta(), 0.05);
     if (!throttled && !unthrottled) govern(dt);
-    eased.lerp(landing.covering ? ZERO2 : pointer, 0.05); // no parallax under the overlay: the crossfade lands on the clip's still
+    eased.lerp(landing.covering ? ZERO2 : pointer, 0.05); // no parallax under the overlay: the crossfade lands on a steady vista
     const inp = input.poll();
-    if (inp.skip) nav.skip(); // Esc / Enter / Space / a tap on the stage: cut the transition cutscene to its arrival
-    nav.tick(dt);             // advance the cutscene: journey.p along the paced move, the beats, the hand-over to the character
+    nav.tick(dt); // advance the location-change fade (the jump happens behind the black)
     let p = journey.p;
     const mode = nav.mode;
     let walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
@@ -653,12 +635,12 @@ export async function start(root: HTMLElement) {
       }
     }
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
-    // Residents first: a box open or a resident in reach takes E (and the prompt slot) from the carriers; never docked or mid-cutscene.
+    // Residents first: a box open or a resident in reach takes F (and the prompt slot) from the carriers; never docked or mid-fade.
     const talkSec = nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null;
     let talk = false;
     timed('talk', () => { talk = dialogue.update(talkSec ? playerPos : null, talkSec, inp.interact, inp.back, inp.walkIntent, dt); });
     timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk && !nav.cutscene, nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null, talk));
-    const rigP = nav.samplePath(pos, look); // rail pose, or the fly-over's during a non-adjacent jump
+    const rigP = nav.samplePath(pos, look); // rail pose
     content.followOffset(p, off);
     pos.add(off); look.add(off);
     rig.update(camera, rigP, pos, look, pointer, t, dt, reducedMotion); // look-ahead, damped parallax, bob, banking roll (journey.ts)
@@ -676,7 +658,7 @@ export async function start(root: HTMLElement) {
       }
     }
     else camera.rotation.z -= eased.x * 0.02;
-    // The hero slab belongs to the vista only: it fades the moment a pan starts (p may not move until a fly-over's apex).
+    // The hero slab belongs to the vista only: it fades the moment a location change starts.
     const heroOn = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05 && !landing.covering;
     heroAlpha += ((heroOn ? 1 : 0) - heroAlpha) * Math.min(1, dt * 6);
     heroCopy.style.opacity = heroAlpha.toFixed(3);
@@ -696,12 +678,6 @@ export async function start(root: HTMLElement) {
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));
     timed('audio', () => audio.update(p));
-    if (lensK > 0) {
-      if (!landing.covering) lensK = Math.max(0, lensK - dt / 1.5);
-      const k = lensK * lensK * (3 - 2 * lensK);
-      const fov = THREE.MathUtils.lerp(baseFov, LANDING_FOV, k), zoom = THREE.MathUtils.lerp(1, Math.max(1, camera.aspect / (16 / 9)), k);
-      if (fov !== camera.fov || zoom !== camera.zoom) { camera.fov = fov; camera.zoom = zoom; camera.updateProjectionMatrix(); }
-    }
     const t0 = performance.now();
     timed('render', () => pipeline.render());
     if (firstFrame) {

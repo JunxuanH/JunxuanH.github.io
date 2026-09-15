@@ -6,7 +6,7 @@ import type { InputState } from './input';
 
 export async function mountGaitView(stage: HTMLElement, hud: HTMLElement, name: string) {
   const player = createPlayer({ asset: await loadCharacter(name), rim: 0xff2bd6 });
-  const input: InputState = { move: new THREE.Vector2(), run: false, interact: false, back: false, orbitX: 0, orbitY: 0, skip: false, walkIntent: false, stick: false };
+  const input: InputState = { move: new THREE.Vector2(), run: false, interact: false, back: false, orbitX: 0, orbitY: 0, walkIntent: false, stick: false };
   const renderer = new THREE.WebGPURenderer({ antialias: true });
   await renderer.init(); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   stage.appendChild(renderer.domElement);
