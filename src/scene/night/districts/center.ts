@@ -5,7 +5,7 @@ import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';
 import { AVENUE_HALF, SIDEWALK, CURB_H, PATCH_LIFT } from '../streets';
 import { THEMES } from '../theme';
-import { createFlameSign, createConduit, type DistrictBuild, type DistrictCtx } from './shared';
+import { type DistrictBuild, type DistrictCtx } from './shared';
 
 /*
  * Work district — City Center corporate avenue: glass lobbies spilling white-cyan light onto the
@@ -63,27 +63,27 @@ function glassLobby(w: number, h: number, d: number, tint: number) {
 export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const T = THEMES.work;
   const group = new THREE.Group();
-  const tints = [PAL.cyan, T.warm, 0xdfe8ff, PAL.cyan];
-  const pts: THREE.Vector3[] = [];
-  ANCHORS.workSigns.forEach((p, i) => {
-    const job = ctx.content.jobs[i] ?? { label: `JOB ${i + 1}`, rows: 3 };
-    const sign = createFlameSign(job.label, job.rows, 40 + i * 7, tints[i], 14, 8.0, T.secondary); // cyan rim like the avenue conduits (the near-white primary washed out under bloom)
-    sign.position.copy(p);
-    sign.rotation.y = p.x < 0 ? Math.PI / 2 - 0.35 : -Math.PI / 2 + 0.35;
-    group.add(sign);
-    pts.push(p.clone().add(new THREE.Vector3(0, -3.4, 0)));
-  });
-  // One conduit per side of the avenue, hugging the façades between the signs on that side.
-  for (const side of [-1, 1]) {
-    const mine = pts.filter((q) => Math.sign(q.x) === side);
-    if (mine.length < 2) continue;
-    const run: THREE.Vector3[] = [];
-    mine.forEach((q, i) => {
-      run.push(q.clone());
-      if (i < mine.length - 1) run.push(new THREE.Vector3(q.x + side * 1.2, 4.5, (q.z + mine[i + 1].z) / 2));
-    });
-    group.add(createConduit(run, T.secondary));
-  }
+  // Employer content now lives in the kiosk. Remove the four obsolete 14×8
+  // panels and their connecting cables so they no longer obscure the product ads.
+  // One small facade sign replaces the west-side display. Its left arrow points
+  // south (+Z), toward the Downtown terminal at z=-87.
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024; canvas.height = 320;
+  const c = canvas.getContext('2d')!;
+  c.fillStyle = '#08121d'; c.fillRect(0, 0, 1024, 320);
+  c.strokeStyle = '#68cbd9'; c.lineWidth = 5; c.strokeRect(8, 8, 1008, 304);
+  c.fillStyle = '#dce5ef'; c.font = 'bold 65px monospace';
+  c.fillText('← DOWNTOWN TERMINAL', 42, 143);
+  c.fillStyle = '#76bdc8'; c.font = '30px monospace';
+  c.fillText('WORK / EXPERIENCE · PUBLIC ACCESS', 48, 226);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const wayfinding = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1.6875),
+    new THREE.MeshBasicNodeMaterial({ map: texture }));
+  wayfinding.name = 'Downtown terminal wayfinding';
+  wayfinding.position.set(-17.5, 5.5, -158);
+  wayfinding.rotation.y = Math.PI / 2;
+  group.add(wayfinding);
 
   // Fictional corporate holo-logos above each employer sign, facing the road.
   const logos = await createKeyedSigns(
