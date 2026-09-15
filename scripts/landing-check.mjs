@@ -54,8 +54,11 @@ const INIT = () => {
   const lc = (window.__lc = { samples: [], frames: [], sampling: false, longtasks: [], videoPlayedBeforeClick: false });
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) lc.longtasks.push([Math.round(e.startTime), Math.round(e.duration)]); }).observe({ type: 'longtask', buffered: true }); } catch { /* unsupported */ }
   const iv = setInterval(() => {
-    const v = document.querySelector('.warp-loop'), b = document.getElementById('boot'), g = document.getElementById('gate');
-    const q = v && v.getVideoPlaybackQuality ? v.getVideoPlaybackQuality() : null;
+    // The on-screen clip: the launch (played once after Enter) then the loop; frame counts are summed over both.
+    const lp = document.querySelector('.warp-loop'), ln = document.querySelector('.warp-launch'), b = document.getElementById('boot'), g = document.getElementById('gate');
+    const v = window.__landing?.phase === 'launch' && ln ? ln : lp;
+    const qs = [lp, ln].filter((x) => x && x.getVideoPlaybackQuality).map((x) => x.getVideoPlaybackQuality());
+    const q = qs.length ? { totalVideoFrames: qs.reduce((a, x) => a + x.totalVideoFrames, 0), droppedVideoFrames: qs.reduce((a, x) => a + x.droppedVideoFrames, 0) } : null;
     const playing = [...document.querySelectorAll('video')].some((x) => !x.paused || x.currentTime > 0);
     const gateOpen = !!g && g.dataset.state === 'open';
     if (gateOpen && playing) lc.videoPlayedBeforeClick = true;
@@ -177,7 +180,7 @@ function loopChecks(tag, samples, w, loadShots) {
   }
   const drops = pre.slice(1).map((s, i) => ({ t: s.t, d: s.dropped - pre[i].dropped, gap: s.t - pre[i].t })).filter((x) => x.d > 0);
   info(`${tag}: pre-warm ${w.prewarm ?? '?'} ms, ${pre.length} samples from the loop's first frame to the city's (largest main-thread gap ${Math.round(maxGap)} ms)${drops.length ? `; drops at ${drops.map((x) => `${Math.round(x.t)} ms +${x.d}`).join(', ')}` : ''}`);
-  check(`1 ${tag}: the loop keeps playing through the load and pre-warm`, pre.length > 1 && rate > 0.85 && stuck === 0, `playback ${fmt(rate, 2)}× real time from video frame counts, ${stuck} frozen samples`);
+  check(`1 ${tag}: the launch and the loop keep playing through the load and pre-warm`, pre.length > 1 && rate > 0.85 && stuck === 0, `playback ${fmt(rate, 2)}× real time from video frame counts, ${stuck} frozen samples`);
   check(`1 ${tag}: few dropped video frames`, total > 0 && dropped / total < 0.05, `${dropped} dropped / ${total} frames (${startDrops} more at decoder start-up)`);
   const ys = loadShots.map((f) => ({ f, y: luma(f) }));
   const minY = ys.reduce((m, s) => (s.y < m.y ? s : m), { y: Infinity, f: '' });
@@ -207,6 +210,7 @@ async function endChecks(page, tag, aspect, { series, vista }) {
   check(`2 ${tag}: arrival starts after the first render, on the loop's wrap, with no second tap`, t.arrivalPlay >= t.ready && t.arrivalPlay - t.ready <= 6500 && cutOff <= 0.15 && t.landReason === 'ended',
     `play ${fmt(t.arrivalPlay - t.ready, 0)} ms after the first render, loop ${fmt(cutOff * 1000, 0)} ms from its wrap at the cut, reason ${t.landReason}`);
   check(`3 ${tag}: end state (is-landed, #boot and #gate removed, relabelled)`, end.landed && !end.boot && !end.gate && /Start the tour/.test(end.label || ''), `label "${end.label}"`);
+  { const lt = end.times || {}; check(`3 ${tag}: launch played once, then cut to the loop or the arrival on its last frame`, Number(lt.launchPlays) === 1 && lt.launchLastFrame != null && !lt.launchSkipped, `plays ${lt.launchPlays}, last frame at ${lt.launchTimeAtEnd}s, skipped ${lt.launchSkipped ?? 'no'}, arrival from ${lt.arrivalFrom}`); }
   check(`3 ${tag}: camera on the vista's establishing pose`, end.p === end.est && end.dist < 2, `p ${end.p} (establish ${end.est}), ${fmt(end.dist, 2)} u from poseAt, fov ${fmt(end.fov)} zoom ${fmt(end.zoom, 2)}`);
   check(`3 ${tag}: hero card visible 1 s after landing`, end.hero > 0.9, `opacity ${fmt(end.hero, 2)}`);
   const s = vista ? ssimCity(vista, aspect, { blur: 1.5 }) : NaN;
@@ -272,7 +276,7 @@ try {
     });
     await page.screenshot({ path: `${SHOTS}/reduced-poster-midload.png` });
     const y = luma(`${SHOTS}/reduced-poster-midload.png`);
-    check('6 reduced: poster + HUD, no video source, no CSS warp', early.mode === 'poster' && !early.src && /warp-poster\.jpg/.test(early.bg) && early.warp === 'none' && y >= BLACK_Y,
+    check('6 reduced: poster + HUD, no video source, no CSS warp', early.mode === 'poster' && !early.src && /hover(-p)?\.jpg/.test(early.bg) && early.warp === 'none' && y >= BLACK_Y,
       `mode ${early.mode}, src ${early.src}, CSS warp ${early.warp}, p90 luma ${fmt(y)}`);
     check('6 reduced: session reduced-motion flag on', early.flag === true && early.cls, `reducedMotion ${early.flag}, html.reduce-motion ${early.cls}`);
     await page.waitForSelector('html.is-landed', { timeout: 180_000 }).catch(() => null);

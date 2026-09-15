@@ -3,7 +3,10 @@
 # clip that drops out of warp onto the bay vista (design/night/cutscenes/frames/city.png).
 # Usage:
 #   scripts/landing-gen.sh key [take=1]            # $0.30 nano-banana-pro/edit ×2 (2K 16:9) → design/night/landing/key-<take>-{1,2}.png
-#   scripts/landing-gen.sh pick <candidate.png>    # downscale the chosen candidate → design/night/landing/keyframe.png (1920×1080)
+#   scripts/landing-gen.sh pick <candidate.png> [keyframe|hover]  # downscale the chosen candidate → design/night/landing/<keyframe|hover>.png (1920×1080)
+#   scripts/landing-gen.sh hover [take=1]          # $0.30 nano-banana-pro/edit ×2 from keyframe.png + the car concept: the same framing,
+#                                                  # car hovering still in calm space (the gate still) → hover-<take>-{1,2}.png
+#   scripts/landing-gen.sh launch [take=1]         # $0.56 Kling O1 start = hover.png, end = keyframe.png (the loop's first frame) → launch-<take>.mp4
 #   scripts/landing-gen.sh loop [take=1] [--start-only]   # $0.56 Kling O1 start = end = keyframe → loop-<take>.mp4
 #                                                  # --start-only: no end frame; then `seam loop-<take>.mp4` makes it loop
 #   scripts/landing-gen.sh seam <raw.mp4>          # fallback: crossfade the last 1 s into the first 1 s → <raw>.seam.mp4
@@ -12,8 +15,9 @@
 #                                                  # photosensitivity: centred N-frame temporal blend over [from, to] with 0.3 s
 #                                                  # ramps (fast bright moving cables flicker per WCAG 2.3.1) → <raw>.soft.mp4;
 #                                                  # measure with scripts/flash-check.py, then ARRIVAL=<raw>.soft.mp4 encode
-#   LOOP=… ARRIVAL=… scripts/landing-gen.sh encode # → public/night/landing/ (defaults: loop-1.mp4, arrival-1.mp4)
-#   LOOP=… ARRIVAL=… scripts/landing-gen.sh check  # SSIM gates + design/night/landing/contact-sheet.png
+#   LOOP=… ARRIVAL=… LAUNCH=… scripts/landing-gen.sh encode   # → public/night/landing/ (defaults: loop-1.mp4, arrival-1[.soft].mp4,
+#                                                  # launch-1[.soft].mp4 and hover.png when present)
+#   LOOP=… ARRIVAL=… LAUNCH=… scripts/landing-gen.sh check    # SSIM gates + contact-sheet.png (+ contact-sheet-launch.png)
 # Prompts: design/night/prompts/landing-{key,loop,arrival}.txt (edit and re-run with the next take to retry).
 # Raws, responses, request sidecars and the chosen-take table live in design/night/landing/ (gitignored).
 # Every paid call goes through scripts/fal-run.sh (budget FAL_BUDGET, ledger design/fal-spend.log). FAL_KEY from .env.local.
@@ -69,7 +73,10 @@ frame_at() { $FF -v error -y -ss "$2" -i "$1" -frames:v 1 "$3"; }             # 
 frame_last() { $FF -v error -y -sseof -0.2 -i "$1" -update 1 "$2"; }           # last decoded frame
 dur() { $FP -v error -show_entries format=duration -of csv=p=0 "$1"; }
 
-LOOP="${LOOP:-$DIR/loop-1.mp4}"; ARRIVAL="${ARRIVAL:-$DIR/arrival-1.mp4}"
+# a .soft.mp4 next to a raw (see `soften`) is the flash-safe version and wins by default
+prefer_soft() { if [[ -f "${1%.mp4}.soft.mp4" ]]; then echo "${1%.mp4}.soft.mp4"; else echo "$1"; fi; }
+LOOP="${LOOP:-$DIR/loop-1.mp4}"; ARRIVAL="${ARRIVAL:-$(prefer_soft "$DIR/arrival-1.mp4")}"; LAUNCH="${LAUNCH:-$(prefer_soft "$DIR/launch-1.mp4")}"
+HOVER=$DIR/hover.png
 
 case "$CMD" in
 key)
@@ -85,10 +92,32 @@ key)
   ls -1 "$DIR"/key-"$TAKE"-*.png
   ;;
 pick)
-  SRC="${2:?candidate png}"
-  $FF -v error -y -i "$SRC" -vf "scale=1920:1080:flags=lanczos" "$KEY"
-  printf '%s\tkeyframe\t%s\n' "$(date -u +%FT%TZ)" "$SRC" >> "$DIR/chosen.tsv"
-  echo "$KEY ← $SRC"
+  SRC="${2:?candidate png}"; ROLE="${3:-keyframe}"; [[ $ROLE == keyframe || $ROLE == hover ]] || { echo "role must be keyframe|hover" >&2; exit 1; }
+  DST=$DIR/$ROLE.png
+  $FF -v error -y -i "$SRC" -vf "scale=1920:1080:flags=lanczos" "$DST"
+  printf '%s\t%s\t%s\n' "$(date -u +%FT%TZ)" "$ROLE" "$SRC" >> "$DIR/chosen.tsv"
+  echo "$DST ← $SRC"
+  ;;
+hover)
+  TAKE="${2:-1}"; key_env
+  [[ -f "$KEY" ]] || { echo "no $KEY (run key + pick)" >&2; exit 1; }
+  K_URL="$(upload "$KEY")"; CAR_URL="$(upload "$CAR")"
+  INPUT=$DIR/hover-$TAKE.input.json
+  jq -n --rawfile p "$PROMPTS/landing-hover.txt" --arg k "$K_URL" --arg car "$CAR_URL" \
+    '{prompt: ($p | rtrimstr("\n")), image_urls: [$k, $car], num_images: 2, aspect_ratio: "16:9", resolution: "2K", output_format: "png"}' > "$INPUT"
+  PRICE="$(awk -v p="$EDIT_PRICE" 'BEGIN {printf "%.2f", p * 2}')"
+  run "$EDIT" "$PRICE" "night/landing/hover-$TAKE" "$INPUT" "$DIR/hover-$TAKE-1.png" '.images[0].url'
+  url2="$(jq -r '.images[1].url // empty' "$DIR/hover-$TAKE-1.response.json")"
+  [[ -n "$url2" ]] && curl -sS -L -o "$DIR/hover-$TAKE-2.png" "$url2"
+  ls -1 "$DIR"/hover-"$TAKE"-*.png
+  ;;
+launch)
+  TAKE="${2:-1}"; key_env
+  [[ -f "$KEY" && -f "$HOVER" ]] || { echo "need $KEY and $HOVER (run key/hover + pick)" >&2; exit 1; }
+  H_URL="$(upload "$HOVER")"; K_URL="$(upload "$KEY")"; INPUT=$DIR/launch-$TAKE.input.json
+  jq -n --rawfile p "$PROMPTS/landing-launch.txt" --arg h "$H_URL" --arg k "$K_URL" \
+    '{prompt: ($p | rtrimstr("\n")), start_image_url: $h, end_image_url: $k, duration: "5"}' > "$INPUT"
+  run "$KLING" "$KLING_PRICE" "night/landing/launch-$TAKE" "$INPUT" "$DIR/launch-$TAKE.mp4" '.video.url'
   ;;
 loop)
   TAKE="${2:-1}"; START_ONLY="${3:-}"; key_env
@@ -164,13 +193,29 @@ encode)
   }
   poster "$OUT/warp-loop.mp4" "$OUT/warp-poster.jpg" 120000
   poster "$OUT/warp-loop-p.mp4" "$OUT/warp-poster-p.jpg" 60000
-  for f in warp-loop.mp4 warp-arrival.mp4 warp-loop-p.mp4 warp-arrival-p.mp4 warp-poster.jpg warp-poster-p.jpg; do
+  files=(warp-loop.mp4 warp-arrival.mp4 warp-loop-p.mp4 warp-arrival-p.mp4 warp-poster.jpg warp-poster-p.jpg)
+  if [[ -f "$HOVER" ]]; then  # the gate's still: hover.png itself (the launch clip starts on it)
+    poster "$HOVER" "$OUT/hover.jpg" 150000
+    $FF -v error -y -i "$HOVER" -vf "$TALL" -f image2 -c:v png "$DIR/.hover-p.png"
+    poster "$DIR/.hover-p.png" "$OUT/hover-p.jpg" 70000; rm -f "$DIR/.hover-p.png"
+    files+=(hover.jpg hover-p.jpg)
+  fi
+  if [[ -f "$LAUNCH" ]]; then
+    # its last frame is the loop's first (end frame = keyframe): drop it so launch → loop does not hold a frame
+    nl="$($FP -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$LAUNCH")"
+    LTRIM="trim=end_frame=$((nl - 1)),setpts=PTS-STARTPTS"
+    enc "$LAUNCH" "$OUT/warp-launch.mp4" 1800000 "$LTRIM,$WIDE"
+    enc "$LAUNCH" "$OUT/warp-launch-p.mp4" 700000 "$LTRIM,$TALL"
+    files+=(warp-launch.mp4 warp-launch-p.mp4)
+  fi
+  for f in "${files[@]}"; do
     d=null; [[ $f == *.mp4 ]] && d="$(printf '%.3f' "$(dur "$OUT/$f")")"
     jq -n --arg k "${f%.*}" --arg path "/night/landing/$f" --argjson duration "$d" --argjson bytes "$(stat -f%z "$OUT/$f")" \
       --arg sha "$(shasum -a 256 "$OUT/$f" | cut -c1-8)" '{($k): {path: $path, duration: $duration, bytes: $bytes, sha: $sha}}'
   done | jq -s --arg loop "$(basename "$LOOP")" --arg arrival "$(basename "$ARRIVAL")" \
-    'add | {v: 1, source: {loop: $loop, arrival: $arrival}, files: .}' > "$OUT/manifest.json"
-  printf '%s\tencode\tloop=%s arrival=%s\n' "$(date -u +%FT%TZ)" "$LOOP" "$ARRIVAL" >> "$DIR/chosen.tsv"
+    --arg launch "$([[ -f "$LAUNCH" ]] && basename "$LAUNCH")" --arg hover "$([[ -f "$HOVER" ]] && basename "$HOVER")" \
+    'add | {v: 1, source: ({loop: $loop, arrival: $arrival, launch: $launch, hover: $hover} | with_entries(select(.value != ""))), files: .}' > "$OUT/manifest.json"
+  printf '%s\tencode\tloop=%s arrival=%s launch=%s\n' "$(date -u +%FT%TZ)" "$LOOP" "$ARRIVAL" "$LAUNCH" >> "$DIR/chosen.tsv"
   cat "$OUT/manifest.json"
   ;;
 check)
@@ -195,25 +240,33 @@ check)
   # consecutive-frame change a third into the loop: streaks should keep moving, not freeze
   t1="$(awk -v d="$(dur "$W")" 'BEGIN {print d / 3}')"; frame_at "$W" "$t1" "$T/m1.png"; frame_at "$W" "$(awk -v t="$t1" 'BEGIN {print t + 0.2}')" "$T/m2.png"
   gate "loop motion: t <-> t+0.2 s (must differ)" "$(ssim "$T/m1.png" "$T/m2.png")" lt 0.99
+  LW="$OUT/warp-launch.mp4"; LAUNCH_ROWS=0
+  if [[ -f "$LW" && -f "$HOVER" ]]; then
+    LAUNCH_ROWS=1
+    frame_at "$LW" 0 "$T/n0.png"; frame_last "$LW" "$T/nN.png"; frame_at "$LW" "$(awk -v d="$(dur "$LW")" 'BEGIN {print d / 2}')" "$T/nM.png"
+    gate "launch first <-> hover still" "$(ssim "$T/n0.png" "$HOVER")" ge 0.95
+    gate "launch last <-> loop first" "$(ssim "$T/nN.png" "$T/l0.png")" ge 0.95
+    gate "launch motion: first <-> mid (must differ)" "$(ssim "$T/n0.png" "$T/nM.png")" lt 0.90
+    echo "  (info) hover.jpg <-> hover still: $(ssim "$OUT/hover.jpg" "$HOVER")"
+  fi
   # contact sheet: keyframe candidates, then 5 frames of loop / arrival (wide) and of both phone crops
-  for clip in warp-loop warp-arrival warp-loop-p warp-arrival-p; do
+  clips=(warp-loop warp-arrival warp-loop-p warp-arrival-p); [[ $LAUNCH_ROWS == 1 ]] && clips+=(warp-launch warp-launch-p)
+  for clip in "${clips[@]}"; do
     d="$(dur "$OUT/$clip.mp4")"
     for i in 0 1 2 3 4; do
       if [[ $i == 4 ]]; then frame_last "$OUT/$clip.mp4" "$T/$clip-$i.png"; else frame_at "$OUT/$clip.mp4" "$(awk -v d="$d" -v i="$i" 'BEGIN {print d * i / 4}')" "$T/$clip-$i.png"; fi
     done
   done
-  python3 - "$T" "$DIR/contact-sheet.png" "$DIR" <<'PY'
+  sheet() { python3 - "$T" "$@" <<'PY'
 import sys, glob, os
 from PIL import Image, ImageDraw
-t, out, d = sys.argv[1:4]
-cw, pad = 384, 8
+t, out, cand, *clips = sys.argv[1:]
+pad = 8
 rows = []
-keys = sorted(glob.glob(os.path.join(d, 'key-*-[0-9].png')))
-if keys: rows.append(('keyframe candidates: ' + ', '.join(os.path.basename(k) for k in keys), [Image.open(k).convert('RGB') for k in keys]))
-for clip in ['warp-loop', 'warp-arrival']:
-    rows.append((clip + ' (0, 25, 50, 75 %, last)', [Image.open(f'{t}/{clip}-{i}.png').convert('RGB') for i in range(5)]))
-for clip in ['warp-loop-p', 'warp-arrival-p']:
-    rows.append((clip + ' phone crop', [Image.open(f'{t}/{clip}-{i}.png').convert('RGB') for i in range(5)]))
+keys = sorted(glob.glob(cand))
+if keys: rows.append(('candidates: ' + ', '.join(os.path.basename(k) for k in keys), [Image.open(k).convert('RGB') for k in keys]))
+for clip in sorted(clips, key=lambda c: c.endswith('-p')):
+    rows.append((clip + (' phone crop' if clip.endswith('-p') else ' (0, 25, 50, 75 %, last)'), [Image.open(f'{t}/{clip}-{i}.png').convert('RGB') for i in range(5)]))
 def fit(im, h): return im.resize((round(im.width * h / im.height), h), Image.LANCZOS)
 lines = []
 for label, ims in rows:
@@ -234,6 +287,9 @@ for label, ims, h in lines:
     y += h + pad
 sheet.save(out); print(out, sheet.size)
 PY
+  }
+  sheet "$DIR/contact-sheet.png" "$DIR/key-*-[0-9].png" warp-loop warp-arrival warp-loop-p warp-arrival-p
+  if [[ $LAUNCH_ROWS == 1 ]]; then sheet "$DIR/contact-sheet-launch.png" "$DIR/hover-*-[0-9].png" warp-launch warp-loop warp-launch-p warp-loop-p; fi
   [[ $fail == 0 ]] && echo "check: all gates pass" || { echo "check: FAILED gates above" >&2; exit 2; }
   ;;
 *) echo "unknown command $CMD" >&2; exit 1 ;;

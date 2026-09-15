@@ -2,11 +2,14 @@
  * "Warp to Neon Harbor": the `#boot` overlay (index.astro) between the gate (gate.ts) and the live city.
  *
  * Behind the gate nothing plays: `warm()` fetches the chosen variant's clips as blobs (desktop 16:9 or the phone
- * 9:16 crop). The gate's Enter calls `begin(full)`: full motion plays the looping light-speed clip (a muted <video>
- * keeps decoding while the shader pre-warm holds the main thread); reduced motion, data-saver, slower-than-4g links,
- * no H.264, a failed / stalled / late loop show the poster instead (+ a CSS warp unless reduced). When the first frame
- * is up (`boot.done` → `ready`), full motion waits for the loop's pass to end and cuts to the arrival on its first
- * frame (the arrival's first frame is the loop's first frame, its last the bay vista); ~0.35 s before its end the
+ * 9:16 crop). The gate shows the hovering car (hover.jpg). The gate's Enter calls `begin(full)`: full motion plays the
+ * launch once (hover still → light speed; its last frame is the loop's first), cuts to the looping light-speed clip on
+ * the launch's last presented frame (a muted <video> keeps decoding while the shader pre-warm holds the main thread);
+ * reduced motion shows the hover still; data-saver, slower-than-4g links, no H.264, a failed / stalled / late loop show
+ * the warp poster + a CSS warp. A launch that fails goes straight to the loop. When the first frame is up
+ * (`boot.done` → `ready`), full motion waits for the loop's pass to end (or for the launch to finish, then goes
+ * straight on) and cuts to the arrival on its first frame (the arrival's first frame is the loop's first frame, its
+ * last the bay vista); ~0.35 s before its end the
  * overlay fades onto the live vista, which main.ts has been rendering underneath at ~4 fps at the clip's lens. The
  * poster crossfades straight to the vista. Esc / Space / Enter / a tap skips to the fade.
  * `data-landing`: pending (gate open) · poster · video · off (`?flat`, `?nolanding`, `?p=`: the plain boot screen).
@@ -15,6 +18,7 @@ import { reducedMotion } from './palette';
 
 const el = typeof document !== 'undefined' ? document.getElementById('boot') : null;
 const loop = el?.querySelector<HTMLVideoElement>('.warp-loop') ?? null;
+const launch = el?.querySelector<HTMLVideoElement>('.warp-launch') ?? null;
 const arrival = el?.querySelector<HTMLVideoElement>('.warp-arrival') ?? null;
 const sr = el?.querySelector<HTMLElement>('.boot-sr') ?? null;
 
@@ -46,7 +50,9 @@ const conn = typeof navigator !== 'undefined' ? (navigator as unknown as { conne
 /** Clips are allowed on this device and link (the full-motion choice still shows the poster otherwise). */
 const canVideo = enabled && !conn?.saveData && (conn?.effectiveType ?? '4g') === '4g' && !!loop?.canPlayType('video/mp4; codecs="avc1.640028"');
 const SFX = phone ? '-p' : '';
-export const LANDING_SRC = { loop: `/night/landing/warp-loop${SFX}.mp4`, arrival: `/night/landing/warp-arrival${SFX}.mp4` };
+export const LANDING_SRC = { launch: `/night/landing/warp-launch${SFX}.mp4`, loop: `/night/landing/warp-loop${SFX}.mp4`, arrival: `/night/landing/warp-arrival${SFX}.mp4` };
+/** s: a frame's duration in the 30 fps clips; a mediaTime within 1.5 frames of the end is the last frame. */
+const FRAME = 1 / 30;
 
 type Rvfc = (cb: (now: number, meta: { mediaTime: number }) => void) => number;
 /** Next presented video frame (rVFC) or the next animation frame: `cb(mediaTime)`. */
@@ -62,6 +68,8 @@ let arriving = false;     // the arrival is on screen or the fade began: render 
 let started = false;      // the arrival's play() was called
 let leaving = false;      // the overlay fade has started
 let begun = false, isReady = false;
+/** What is on screen after Enter: the launch clip, then the loop. */
+let phase: 'none' | 'launch' | 'loop' = 'none';
 let arrivalReady = false, arrivalFailed = false;
 let onLand: (() => void) | null = null;
 const times: Record<string, number | string> = {};
@@ -69,20 +77,22 @@ const mark = (k: string) => { times[k] ??= Math.round(performance.now()); };
 
 // ---- clips as blobs (warm-up behind the gate, or from Enter)
 const mkCtrl = () => (typeof AbortController !== 'undefined' ? new AbortController() : null);
-const ctrls = { loop: mkCtrl(), arrival: mkCtrl() };
-const abortAll = () => { ctrls.loop?.abort(); ctrls.arrival?.abort(); };
+type Clip = 'launch' | 'loop' | 'arrival';
+const ctrls: Record<Clip, AbortController | null> = { launch: mkCtrl(), loop: mkCtrl(), arrival: mkCtrl() };
+const abortAll = () => { for (const c of Object.values(ctrls)) c?.abort(); };
 const blobUrls: string[] = [];
-const got: { loop?: string } = {};
-const inflight: { loop?: Promise<string | null>; arrival?: Promise<string | null> } = {};
-const fetchBlob = (src: string, key: 'loop' | 'arrival') => inflight[key] ??= fetch(src, { signal: ctrls[key]?.signal })
+const got: Partial<Record<Clip, string>> = {};
+const inflight: Partial<Record<Clip, Promise<string | null>>> = {};
+const fetchBlob = (src: string, key: Clip) => inflight[key] ??= fetch(src, { signal: ctrls[key]?.signal })
   .then((r) => { if (!r.ok) throw new Error(`${r.status} ${src}`); return r.blob(); })
-  .then((b) => { const u = URL.createObjectURL(b); blobUrls.push(u); mark(`${key}Blob`); if (key === 'loop') got.loop = u; return u; })
+  .then((b) => { const u = URL.createObjectURL(b); blobUrls.push(u); mark(`${key}Blob`); got[key] = u; return u; })
   .catch((e) => { if ((e as Error).name !== 'AbortError') console.warn('[landing] clip fetch failed', src, e); return null; });
 
 /** Behind the gate (full motion pre-selected): fetch both clips so Enter starts instantly and the arrival is ready. */
 function warm() {
   if (!canVideo || begun) return;
   mark('warm');
+  if (launch) fetchBlob(LANDING_SRC.launch, 'launch');
   fetchBlob(LANDING_SRC.loop, 'loop');
   fetchBlob(LANDING_SRC.arrival, 'arrival');
 }
@@ -108,48 +118,133 @@ function toPoster(reason: string) {
   if (!el || !loop || el.dataset.landing === 'off' || leaving) return;
   times.posterReason ??= reason;
   el.dataset.landing = 'poster';
-  if (loop.getAttribute('src')) { loop.pause(); loop.removeAttribute('src'); loop.load(); }
+  el.dataset.poster = 'warp';
+  for (const v of [launch, loop]) if (v?.getAttribute('src')) { v.pause(); v.classList.remove('is-on'); v.removeAttribute('src'); v.load(); }
+  phase = 'loop';
 }
 
-/** The gate's Enter (inside the click): show the overlay; full motion starts the loop. */
+/** The gate's Enter (inside the click): show the overlay; full motion plays the launch, then the loop. */
 function begin(full: boolean) {
   if (!enabled || !el || begun) return;
   begun = true;
   mark('begin');
   times.choice = full ? 'full' : 'reduced';
   el.dataset.landing = 'poster';
+  el.dataset.poster = full && !canVideo ? 'warp' : 'hover'; // the hover still (the launch's first frame) until a clip shows
   if (sr) sr.textContent = 'Loading Neon Harbor';
   if (!full || !canVideo || !loop) { if (!full) abortAll(); return; }
-  // The warmed blob when it is in; otherwise stream the file (and drop the half-fetched blob rather than download twice).
-  const src = got.loop ?? LANDING_SRC.loop;
-  const streamed = !got.loop;
-  if (streamed) ctrls.loop?.abort();
+  prepareArrival();
+  loadLoop(loop);
+  if (launch) playLaunch(launch, loop);
+  else playLoop(loop, null);
+}
+
+/** The warmed blob when it is in; otherwise stream the file (dropping the half-fetched blob rather than download twice). */
+function srcOf(key: Clip) {
+  const u = got[key];
+  if (!u) ctrls[key]?.abort();
+  return { src: u ?? LANDING_SRC[key], streamed: !u };
+}
+
+let loopStreamed = false;
+/** Set the loop's source and decode its first frame (paused): it waits under the launch for the cut. */
+function loadLoop(l: HTMLVideoElement) {
+  const { src, streamed } = srcOf('loop');
+  loopStreamed = streamed;
+  l.preload = 'auto';
+  l.addEventListener('error', () => toPoster('error'), { once: true });
+  l.src = src;
+  l.load();
+}
+
+/** Launch once; cut to the loop (or the arrival, when the city is already up) on its last presented frame. */
+function playLaunch(v: HTMLVideoElement, l: HTMLVideoElement) {
+  phase = 'launch';
+  const { src, streamed } = srcOf('launch');
+  let shown = false, stall: ReturnType<typeof setTimeout> | undefined;
+  const skipLaunch = (reason: string) => {
+    if (phase !== 'launch' || leaving) return;
+    times.launchSkipped = reason;
+    clearTimeout(late); clearTimeout(stall);
+    v.pause();
+    if (!shown) { v.removeAttribute('src'); v.load(); }
+    phase = 'loop';
+    playLoop(l, shown ? v : null);
+  };
+  const late = setTimeout(() => { if (!shown) skipLaunch('late'); }, PLAY_MAX);
+  v.addEventListener('error', () => skipLaunch('error'), { once: true });
+  v.addEventListener('waiting', () => { if (streamed && v.readyState < 4) { clearTimeout(stall); stall = setTimeout(() => skipLaunch('stall'), LOOP_STALL); } });
+  v.addEventListener('playing', () => clearTimeout(stall));
+  v.addEventListener('play', () => { times.launchPlays = (Number(times.launchPlays) || 0) + 1; });
+  v.addEventListener('ended', () => launchDone(v, l), { once: true });
+  v.src = src;
+  mark('launchPlay');
+  v.play().catch(() => skipLaunch('play-rejected'));
+  onFrame(v, () => {
+    if (phase !== 'launch' || leaving) return;
+    shown = true;
+    clearTimeout(late);
+    mark('launchFirstFrame');
+    v.classList.add('is-on');
+    el!.dataset.landing = 'video';
+    const dur = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 3;
+    const poll = (mt: number) => {
+      if (phase !== 'launch' || leaving) return;
+      if (mt >= dur - 1.5 * FRAME) return launchDone(v, l);
+      onFrame(v, poll);
+    };
+    onFrame(v, poll);
+  });
+}
+
+function launchDone(v: HTMLVideoElement, l: HTMLVideoElement) {
+  if (phase !== 'launch' || leaving) return;
+  phase = 'loop';
+  mark('launchLastFrame');
+  times.launchTimeAtEnd = Math.round(v.currentTime * 1000) / 1000;
+  // The city finished during the launch: straight on to the arrival (its first frame is the launch's last too).
+  if (isReady && arrivalReady && arrival) return playArrival(arrival, v);
+  playLoop(l, v);
+}
+
+/** Start the loop; `from` (the launch, holding its last frame) is hidden once the loop's first frame is on screen. */
+function playLoop(l: HTMLVideoElement, from: HTMLVideoElement | null) {
+  phase = 'loop';
+  const streamed = loopStreamed;
   let settled = false, stall: ReturnType<typeof setTimeout> | undefined;
   const late = setTimeout(() => { if (!settled) { settled = true; toPoster('late'); } }, PLAY_MAX);
-  loop.addEventListener('playing', () => {
+  l.addEventListener('playing', () => {
     clearTimeout(stall);
     if (settled) return;
     settled = true; clearTimeout(late);
-    if (el.dataset.landing === 'poster') el.dataset.landing = 'video';
+    if (el!.dataset.landing === 'poster') el!.dataset.landing = 'video';
     mark('loopPlaying');
   });
-  loop.addEventListener('waiting', () => {
+  l.addEventListener('waiting', () => {
     // A loop that keeps buffering would freeze on one frame: the poster reads better (a blob never buffers).
-    if (!streamed || loop.readyState >= 4 || el.dataset.landing !== 'video') return;
+    if (!streamed || l.readyState >= 4 || el!.dataset.landing !== 'video') return;
     clearTimeout(stall); stall = setTimeout(() => toPoster('stall'), LOOP_STALL);
   });
-  loop.addEventListener('error', () => { clearTimeout(late); settled = true; toPoster('error'); }, { once: true });
   if (streamed) {
     const watch = setInterval(() => {
-      if (el.dataset.landing !== 'video' || leaving) { if (el.dataset.landing !== 'poster' || settled) clearInterval(watch); return; }
-      const b = loop.buffered, end = b.length ? b.end(b.length - 1) : 0, dur = loop.duration;
+      if (el!.dataset.landing !== 'video' || leaving) { if (el!.dataset.landing !== 'poster' || settled) clearInterval(watch); return; }
+      const b = l.buffered, end = b.length ? b.end(b.length - 1) : 0, dur = l.duration;
       if (Number.isFinite(dur) && end >= dur - 0.1) return clearInterval(watch); // all in: loops from cache
-      if (end - loop.currentTime < MIN_AHEAD) { clearInterval(watch); toPoster('slow'); }
+      if (end - l.currentTime < MIN_AHEAD) { clearInterval(watch); toPoster('slow'); }
     }, 500);
   }
-  loop.src = src;
-  loop.play().catch(() => { if (!settled) { settled = true; clearTimeout(late); toPoster('play-rejected'); } });
-  prepareArrival();
+  mark('loopPlay');
+  l.play().catch(() => { if (!settled) { settled = true; clearTimeout(late); toPoster('play-rejected'); } });
+  onFrame(l, () => {
+    mark('loopFirstFrame');
+    if (from && !leaving) {
+      times.loopReadyAtCut = l.readyState;
+      from.classList.remove('is-on');
+      from.pause();
+      mark('launchHidden');
+    }
+    if (isReady && !started && !leaving) waitForWrap(l);
+  });
 }
 
 // ---- first frame: auto-transition
@@ -159,12 +254,21 @@ async function ready() {
   mark('ready');
   addEventListener('keydown', onSkipKey, true);
   el.addEventListener('pointerdown', skip);
+  if (phase === 'launch' && !reducedMotion) { if (sr) sr.textContent = 'Dropping out of warp.'; return; } // launchDone goes on from here
   if (el.dataset.landing !== 'video' || reducedMotion || !loop || !arrival) return land('direct');
   if (sr) sr.textContent = 'Dropping out of warp.';
+  waitForWrap(loop);
+}
+
+let waiting = false;
+/** Start the arrival just before the loop wraps: its first frame (= the loop's first frame) then replaces the wrap. */
+function waitForWrap(l: HTMLVideoElement) {
+  if (waiting || !arrival || !el) return;
+  waiting = true;
+  const a = arrival;
   const t0 = performance.now();
-  const dur = Number.isFinite(loop.duration) && loop.duration > 0 ? loop.duration : 5;
-  let last = loop.currentTime;
-  // Start the arrival just before the loop wraps: its first frame (= the loop's first frame) then replaces the wrap.
+  const dur = Number.isFinite(l.duration) && l.duration > 0 ? l.duration : 5;
+  let last = l.currentTime;
   const tick = (mt: number) => {
     if (leaving || started) return;
     if (el.dataset.landing !== 'video') return land('direct'); // the loop fell back to the poster
@@ -173,13 +277,13 @@ async function ready() {
     const wrapped = mt < last - 0.5;
     last = mt;
     if (arrivalReady && (wrapped || mt >= dur - PRE_ROLL)) {
-      const wait = wrapped ? 0 : Math.max(0, (dur - loop.currentTime - LATENCY) * 1000);
-      setTimeout(() => playArrival(arrival, loop), wait);
+      const wait = wrapped ? 0 : Math.max(0, (dur - l.currentTime - LATENCY) * 1000);
+      setTimeout(() => playArrival(a, l), wait);
       return;
     }
-    onFrame(loop, tick);
+    onFrame(l, tick);
   };
-  onFrame(loop, tick);
+  onFrame(l, tick);
   // rVFC stops with a paused / starved loop: don't wait on it forever.
   setTimeout(() => { if (!started && !leaving && !document.hidden) land('direct'); }, ARRIVAL_WAIT + (dur + 1) * 1000);
 }
@@ -210,6 +314,7 @@ function playArrival(a: HTMLVideoElement, l: HTMLVideoElement) {
   a.addEventListener('playing', () => clearTimeout(stall));
   if (a.currentTime !== 0) a.currentTime = 0;
   mark('arrivalPlay');
+  times.arrivalFrom = l === loop ? 'loop' : 'launch';
   times.loopTimeAtArrival = Math.round(l.currentTime * 1000) / 1000;
   const watchdog = setTimeout(() => { if (times.arrivalFirstFrame == null) land('noframe'); }, FIRST_FRAME_MAX);
   a.play().catch(() => land('play-rejected'));
@@ -248,7 +353,7 @@ function land(reason: string) {
     if (done) return;
     done = true;
     el.removeEventListener('transitionend', onEnd);
-    for (const v of [loop, arrival]) { if (v) { v.pause(); v.removeAttribute('src'); v.load(); } }
+    for (const v of [launch, loop, arrival]) { if (v) { v.pause(); v.removeAttribute('src'); v.load(); } }
     abortAll();
     for (const u of blobUrls) URL.revokeObjectURL(u);
     el.remove();
@@ -285,12 +390,13 @@ export const landing = {
    * presented a new frame, or after `maxMs` when no video is playing / the frame never comes. Cheap no-op otherwise.
    */
   breathe(maxMs = 80): Promise<void> {
-    const playing = !!loop && el?.dataset.landing === 'video' && !loop.paused;
+    const v = phase === 'launch' ? launch : loop;
+    const playing = !!v && el?.dataset.landing === 'video' && !v.paused;
     if (!playing) return new Promise((r) => setTimeout(r, 0));
     return new Promise((r) => {
       let done = false;
       const finish = () => { if (!done) { done = true; r(); } };
-      onFrame(loop!, () => onFrame(loop!, finish)); // two presented frames: the compositor really got a turn
+      onFrame(v!, () => onFrame(v!, finish)); // two presented frames: the compositor really got a turn
       setTimeout(finish, maxMs);
     });
   },
@@ -298,7 +404,7 @@ export const landing = {
   ready,
   /** boot.fail(): stop the videos and downloads; boot shows the error and the text page takes over. */
   fail() {
-    for (const v of [loop, arrival]) v?.pause();
+    for (const v of [launch, loop, arrival]) v?.pause();
     abortAll();
     covering = false;
   },
@@ -315,6 +421,7 @@ if (typeof window !== 'undefined') {
     get leaving() { return leaving; },
     get arrivalReady() { return arrivalReady; },
     get mode() { return el?.dataset.landing ?? 'gone'; },
+    get phase() { return phase; },
     skip,
   };
 }

@@ -2,7 +2,9 @@
   "v": 1,
   "source": {
     "loop": "loop-1.mp4",
-    "arrival": "arrival-1.soft.mp4"
+    "arrival": "arrival-1.soft.mp4",
+    "launch": "launch-1.mp4",
+    "hover": "hover.png"
   },
   "files": {
     "warp-loop": {
@@ -40,6 +42,30 @@
       "duration": null,
       "bytes": 56962,
       "sha": "1d108594"
+    },
+    "hover": {
+      "path": "/night/landing/hover.jpg",
+      "duration": null,
+      "bytes": 98867,
+      "sha": "5d34068b"
+    },
+    "hover-p": {
+      "path": "/night/landing/hover-p.jpg",
+      "duration": null,
+      "bytes": 42924,
+      "sha": "c3189904"
+    },
+    "warp-launch": {
+      "path": "/night/landing/warp-launch.mp4",
+      "duration": 5.033,
+      "bytes": 1628908,
+      "sha": "4a8061cc"
+    },
+    "warp-launch-p": {
+      "path": "/night/landing/warp-launch-p.mp4",
+      "duration": 5.033,
+      "bytes": 670458,
+      "sha": "8c9b1054"
     }
   }
 }

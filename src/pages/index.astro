@@ -29,12 +29,12 @@ const win = (k: string) => WINDOWS[k].join(',');
     <meta property="og:image" content="/og.jpg" />
     <link rel="icon" href="/logo.ico" />
     <script is:inline>
-      // Warp poster (the loop's first frame: the gate's dimmed backdrop and the reduced-motion overlay): preload the breakpoint's image unless the landing is off. Inserted
+      // Hover still (the gate's backdrop, the launch clip's first frame and the reduced-motion overlay): preload the breakpoint's image unless the landing is off. Inserted
       // by script so ?flat / ?nolanding / ?p= never fetch anything from /night/landing/.
       (function () {
         var q = new URLSearchParams(location.search);
         if (q.has('flat') || q.has('nolanding') || q.has('p') || !('WebGLRenderingContext' in window)) return;
-        [['/night/landing/warp-poster.jpg', '(min-width: 761px)'], ['/night/landing/warp-poster-p.jpg', '(max-width: 760px)']].forEach(function (x) {
+        [['/night/landing/hover.jpg', '(min-width: 761px)'], ['/night/landing/hover-p.jpg', '(max-width: 760px)']].forEach(function (x) {
           var l = document.createElement('link');
           l.rel = 'preload'; l.as = 'image'; l.href = x[0]; l.media = x[1];
           document.head.appendChild(l);
@@ -74,6 +74,7 @@ const win = (k: string) => WINDOWS[k].join(',');
       <div class="boot-media" aria-hidden="true">
         <div class="boot-warp"><i></i><i></i><i></i></div>
         <video class="warp-loop" muted playsinline loop disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true"></video>
+        <video class="warp-launch" muted playsinline disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true"></video>
         <video class="warp-arrival" muted playsinline disablepictureinpicture preload="auto" tabindex="-1" aria-hidden="true"></video>
       </div>
       <div class="boot-top">
