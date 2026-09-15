@@ -407,7 +407,7 @@ export function createCrowd(opts: CrowdOptions) {
     const speed = smin + rand() * (smax - smin);
     const stride = opts.strideSpeed ?? strideOf(inst);
     const w: Walker = {
-      name: asset.name, root: inst.root, inst, held: false, t: i / opts.count + rand() * 0.02, dir: opts.path.closed && rand() < 0.4 ? -1 : 1,
+      name: asset.name, root: inst.root, inst, held: false, t: i / opts.count + rand() * 0.02, dir: opts.path.closed && !opts.path.oneWay && rand() < 0.4 ? -1 : 1,
       speed, baseSpeed: speed, stride, state: 'walk', until: 0, stall: -1, faceTarget: null,
       hold(face) {
         if (w.stall >= 0) { occupied.delete(w.stall); vacantSince[w.stall] = elapsed; w.stall = -1; }

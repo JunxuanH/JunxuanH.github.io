@@ -22,6 +22,7 @@ export interface PathDef {
   id: string;
   points: Vec3[];
   closed: boolean;
+  oneWay?: boolean;
   stalls?: Stall[];
   /** Ground height for props placed along it. */
   y?: number;
@@ -55,13 +56,14 @@ export const WORK_WALK_RIGHT: PathDef = {
 };
 
 export const PROJECTS_MARKET: PathDef = {
-  id: 'projects-market', closed: true, y: Y,
-  points: [[24, 0, -221], [48, 0, -221], [65, 0, -221], [80, 0, -222], [80, 0, -232], [64, 0, -235], [48, 0, -235], [24, 0, -235], [21, 0, -228]],
+  id: 'projects-market', closed: true, oneWay: true, y: Y,
+  points: [[29, Y, -222], [48, Y, -221], [68, Y, -221], [76, Y, -225], [76, Y, -231], [68, Y, -235], [48, Y, -234.5], [29, Y, -233.5], [27, Y, -228]],
   stalls: [
-    { pos: [36, 0, -221], face: [36, Y, -217], clip: 'wave' },
-    { pos: [58, 0, -221], face: [60, 0, -221], clip: 'talk' },
-    { pos: [60, 0, -221], face: [58, 0, -221], clip: 'talk' },
-    { pos: [64, 0, -235], face: [72, Y, -228], clip: 'idle' },
+    { pos: [34, Y, -220.5], face: [34, Y, -217], clip: 'idle' },
+    { pos: [52, Y, -220.5], face: [52, Y, -217], clip: 'talk' },
+    { pos: [70, Y, -220.5], face: [70, Y, -217], clip: 'idle' },
+    { pos: [52, Y, -235.5], face: [52, Y, -239], clip: 'idle' },
+    { pos: [70, Y, -235.5], face: [70, Y, -239], clip: 'talk' },
   ],
 };
 
@@ -121,6 +123,6 @@ export const DISTRICT_CROWDS = [
   { path: WORK_WALK_RIGHT, assets: ['corpo', 'idol', 'patrol-bot', 'mech-pilot', 'salaryman', 'medic', 'bouncer-android', 'yakuza-boss'], count: { high: 8, med: 4, low: 1 } },
   { path: AVENUE_WALK_LEFT, assets: ['netrunner', 'cat-courier', 'salaryman', 'punk', 'dj', 'tagger', 'yakuza-boss', 'delivery-rider'], count: { high: 9, med: 5, low: 1 } },
   { path: AVENUE_WALK_RIGHT, assets: ['corpo', 'medic', 'idol', 'patrol-bot', 'mech-pilot', 'salaryman', 'tagger', 'bouncer-android', 'exo-courier'], count: { high: 9, med: 5, low: 1 } },
-  { path: PROJECTS_MARKET, assets: ['chef', 'vendor', 'noodle-cook', 'dj', 'skater', 'cat-courier', 'maid-bot', 'punk', 'delivery-rider', 'exo-courier'], count: { high: 12, med: 7, low: 2 } },
+  { path: PROJECTS_MARKET, assets: ['skater', 'cat-courier', 'maid-bot', 'punk', 'delivery-rider', 'exo-courier', 'ronin'], count: { high: 8, med: 6, low: 4 } },
   { path: CONTACT_PAD, assets: ['nomad', 'cat-courier', 'medic', 'mech-pilot', 'dock-worker', 'exo-courier'], count: { high: 6, med: 3, low: 1 } },
 ] as const;

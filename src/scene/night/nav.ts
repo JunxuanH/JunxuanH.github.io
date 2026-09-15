@@ -22,7 +22,7 @@ export interface Pose { pos: THREE.Vector3; look: THREE.Vector3 }
 export const SPAWN: Record<WalkSection, { pos: [number, number, number]; yaw: number }> = {
   education: { pos: [-80, 0.22, -90], yaw: Math.PI },              // on the plaza axis, facing the terminal
   work: { pos: [-18, 0.22, -83], yaw: Math.PI },                    // aligned with the kiosk, clear of avenue lamps
-  projects: { pos: [54, 0, -226], yaw: Math.PI / 2 },               // market street, facing the holo stall
+  projects: { pos: [25, 0.22, -225], yaw: Math.PI / 2 },           // pedestrian entrance, kiosk on the right
   contact: { pos: [140, 2.9, 4], yaw: 0 },                          // pier deck, facing the departures board
 };
 

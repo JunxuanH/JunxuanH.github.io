@@ -1,161 +1,132 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, mix, step, fract, texture, uv, float, smoothstep, time, hash, floor, uniform } from '../tsl';
-import { PAL, rng } from '../palette';
-import { ANCHORS } from '../journey';
-import { neonText, createKeyedSigns, signMat } from '../signs';
-import { CURB_H, SIDEWALK, CROSS_HALF } from '../streets';
-import { THEMES } from '../theme';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { facadeBlock, stringLights, type DistrictBuild, type DistrictCtx } from './shared';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { CURB_H } from '../streets';
+import { MARKET_STALLS, MARKET_BOLLARDS } from '../market-layout';
+import { loader } from '../palette';
 
-/*
- * Projects district — Kabuki night-market alley. Overhangs and awnings close the street in, red
- * paper lanterns hang across it, stalls with menu boards and noren, crates, a parked tuk-tuk,
- * the Flip-3D holo stack at the end. Steam and sparks come from particles.ts.
- */
-
-// Overhang strips of one tint share a material (the buzz has no per-strip seed, so they already flickered
-// in step); the lantern material is one instance for every string.
-const stripCache = new Map<number, THREE.MeshBasicNodeMaterial>();
-function overhangStrip(tint: number) {
-  let stripMat = stripCache.get(tint);
-  if (!stripMat) {
-    stripMat = new THREE.MeshBasicNodeMaterial();
-    const buzz = mix(float(1), hash(floor(time.mul(20))), step(0.9, hash(floor(time.mul(0.4)))));
-    stripMat.colorNode = uniform(new THREE.Color(tint)).mul(1.8).mul(buzz.mul(0.4).add(0.6));
-    stripCache.set(tint, stripMat);
-  }
-  return stripMat;
-}
-let lanternMat: THREE.MeshStandardNodeMaterial | null = null;
-
-/** Corrugated overhang with an emissive strip underneath (procedural, one per façade row). */
-function overhang(w: number, tint: number) {
-  const group = new THREE.Group();
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(w, 0.25, 3.4), new THREE.MeshStandardNodeMaterial({ color: 0x1a1a22, roughness: 0.6, metalness: 0.5 }));
-  roof.position.set(0, 0, 1.7);
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 0.1, 0.1), overhangStrip(tint));
-  strip.position.set(0, -0.18, 3.2);
-  const brace = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.08), new THREE.MeshStandardNodeMaterial({ color: 0x0c0d14 }));
-  brace.position.set(0, -0.6, 2.6);
-  group.add(roof, strip, brace);
-  return group;
-}
-
-/** Instanced red paper lanterns along a catenary: sphere + inner glow tint, slight sway in update(). */
-function lanternString(from: THREE.Vector3, to: THREE.Vector3, n: number, sag: number) {
-  const group = new THREE.Group();
-  if (!lanternMat) {
-    lanternMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.8 });
-    lanternMat.colorNode = color(0x6a1010);
-    lanternMat.emissiveNode = mix(color(0xff3a2a), color(0xffa040), smoothstep(-0.2, 0.2, positionLocal.y)).mul(0.8);
-  }
-  const mat = lanternMat;
-  const mats: THREE.Matrix4[] = [];
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    mats.push(new THREE.Matrix4().makeTranslation(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t - Math.sin(t * Math.PI) * sag, from.z + (to.z - from.z) * t));
-  }
-  const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 10, 8).scale(1, 1.3, 1), mat, mats.length);
-  mats.forEach((m, k) => im.setMatrixAt(k, m));
-  group.add(im);
-  group.add(stringLights(from, to, n * 3, sag, 0.05, 0x101010, 0.3)); // the cord
-  return group;
-}
-
+/** A compact pedestrian electronics / food bazaar. No stand or vehicle occupies its central lane. */
 export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
-  const T = THEMES.projects;
   const group = new THREE.Group();
-  const r = rng(707);
-  const m = ANCHORS.market;
-  const rowZ = (side: number) => m.z + side * (CROSS_HALF + SIDEWALK + 8.5); // façade rows
-
-  // Backdrop blocks with storefronts facing the alley, overhangs along both rows.
-  for (const [dx, side, w, h, seed] of [[-14, 1, 30, 14, 2], [18, 1, 26, 11, 3], [-10, -1, 34, 12, 1], [24, -1, 22, 16, 0]] as const) {
-    const d = 16;
-    const b = facadeBlock(w, h, d, ctx.tex, seed, side > 0 ? 'nz' : 'pz', seed % 2 ? T.primary : T.secondary);
-    b.position.set(m.x + dx, CURB_H, rowZ(side));
-    group.add(b);
-    const oh = overhang(w, seed % 2 ? T.primary : T.secondary);
-    oh.position.set(m.x + dx, CURB_H + 5.6, rowZ(side) - side * (d / 2));
-    oh.rotation.y = side > 0 ? Math.PI : 0;
-    group.add(oh);
-  }
-
-  // Stalls with menu boards / noren, crates beside them.
-  const stallGeo = new THREE.BoxGeometry(3.2, 2.2, 2.4).translate(0, 1.1, 0);
-  const stallMat = new THREE.MeshStandardNodeMaterial({ color: 0x1a1e2c, roughness: 0.6 });
-  const stallTop = new THREE.MeshBasicNodeMaterial();
-  stallTop.colorNode = mix(color(T.primary), color(T.warm), step(0.5, fract(positionLocal.x.mul(0.5)))).mul(2.0);
-  const crateMat = new THREE.MeshStandardNodeMaterial({ color: 0x2a2418, roughness: 0.9 });
-  const menuSpots: { x: number; y: number; z: number; yaw: number; w?: number }[] = [];
-  const stallMats: THREE.Matrix4[] = [], stripMats: THREE.Matrix4[] = [], crateMats: THREE.Matrix4[] = [];
-  const yq = new THREE.Quaternion(), yAxis = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
-  for (let i = 0; i < 8; i++) {
-    const side = i < 4 ? -1 : 1;
-    const x = m.x - 26 + (i % 4) * 14, z = m.z + side * (CROSS_HALF + 3);
-    stallMats.push(new THREE.Matrix4().makeTranslation(x, CURB_H, z));
-    stripMats.push(new THREE.Matrix4().makeTranslation(x, CURB_H + 2.3, z - side * 1.25));
-    menuSpots.push({ x: x + 1.2, y: CURB_H + 2.9, z: z - side * 1.3, yaw: side > 0 ? Math.PI : 0, w: 1.6 });
-    for (let k = 0; k < 2 + Math.floor(r() * 3); k++) {
-      yq.setFromAxisAngle(yAxis, r() * 0.5);
-      crateMats.push(new THREE.Matrix4().compose(new THREE.Vector3(x + 2.4 + (r() - 0.5) * 0.6, CURB_H + 0.35 + k * 0.7, z + (r() - 0.5) * 0.8), yq, one));
-    }
-  }
-  const inst = (geo: THREE.BufferGeometry, mat: THREE.Material, list: THREE.Matrix4[]) => {
-    const im = new THREE.InstancedMesh(geo, mat, list.length);
-    list.forEach((mm, k) => im.setMatrixAt(k, mm));
-    return im;
+  group.name = 'Afterhours pedestrian market';
+  const metal = new THREE.MeshStandardNodeMaterial({ color: 0x17202d, roughness: .65, metalness: .35 });
+  const panel = new THREE.MeshStandardNodeMaterial({ color: 0x27303e, roughness: .85 });
+  const rubber = new THREE.MeshStandardNodeMaterial({ color: 0x0b101a, roughness: .9 });
+  const ceramic = new THREE.MeshStandardNodeMaterial({ color: 0xc2bcb0, roughness: .65 });
+  const yellow = new THREE.MeshBasicNodeMaterial({ color: 0xb9ae45 });
+  // Static geometry is merged by material after placement; small props don't each cost a draw call.
+  const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  const add = (g: THREE.BufferGeometry, mat: THREE.Material, parent: THREE.Object3D, x: number, y: number, z: number, rx = 0, ry = 0) => {
+    parent.updateMatrixWorld(true);
+    const m = new THREE.Matrix4().compose(new THREE.Vector3(x,y,z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,0)), new THREE.Vector3(1,1,1));
+    g.applyMatrix4(parent.matrixWorld.clone().multiply(m));
+    const list = batches.get(mat) ?? []; list.push(g); batches.set(mat,list);
   };
-  group.add(inst(stallGeo, stallMat, stallMats), inst(new THREE.BoxGeometry(3.4, 0.12, 0.12), stallTop, stripMats), inst(new THREE.BoxGeometry(0.9, 0.7, 0.9), crateMat, crateMats));
-  group.add(await createKeyedSigns(menuSpots, ['lantern-3', 'lantern-4', 'lantern-3', 'lantern-4']));
-
-  // Lantern strings across the alley + a few hanging lantern cutouts under the overhangs.
-  for (let k = 0; k < 6; k++) {
-    const x = m.x - 30 + k * 12;
-    if (Math.abs(x - 68) < 3) continue; // the holo stall's cards sit here (carriers/stall.ts)
-    group.add(lanternString(new THREE.Vector3(x, 6.4, m.z - CROSS_HALF - 3), new THREE.Vector3(x, 6.4, m.z + CROSS_HALF + 3), 9, 1.1));
+  const box = (p: THREE.Object3D, mat: THREE.Material, w: number,h: number,d: number,x: number,y: number,z: number,rx=0,ry=0) =>
+    add(new THREE.BoxGeometry(w,h,d),mat,p,x,y,z,rx,ry);
+  const label = (text: string, sub: string, tint: number, w: number) => {
+    const c = document.createElement('canvas'); c.width=1024; c.height=256;
+    const a=c.getContext('2d')!; a.fillStyle='#08101b'; a.fillRect(0,0,1024,256);
+    const hex='#'+tint.toString(16).padStart(6,'0');
+    a.strokeStyle=hex; a.lineWidth=7; a.strokeRect(8,8,1008,240);
+    a.fillStyle=hex; a.font='italic 900 66px sans-serif'; a.fillText(text,38,112,950);
+    a.fillStyle='#ced8dd'; a.font='26px monospace'; a.fillText(sub,42,195,940);
+    const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+    return new THREE.Mesh(new THREE.PlaneGeometry(w,w/4),new THREE.MeshBasicNodeMaterial({map:t}));
+  };
+  const poster = (name: string,w=2.2) => {
+    const t=loader.load('/night/ads/'+name); t.colorSpace=THREE.SRGBColorSpace;
+    return new THREE.Mesh(new THREE.PlaneGeometry(w,w*.67),new THREE.MeshBasicNodeMaterial({map:t}));
+  };
+  // Existing skyline/storefront architecture stays behind the counters.
+  for (const [dx,side,w,h,seed] of [[-14,1,30,14,2],[18,1,26,11,3],[-10,-1,34,12,1],[24,-1,22,16,0]]) {
+    const b=facadeBlock(w,h,16,ctx.tex,seed,side>0?'nz':'pz',side>0?0xc867c4:0x5fced8);
+    b.position.set(50+dx,CURB_H,-228+side*22.5); group.add(b);
   }
-  const hanging = [];
-  for (let i = 0; i < 6; i++) hanging.push({ x: m.x - 28 + i * 11 + 5, y: 4.6, z: m.z + (i % 2 ? 1 : -1) * (CROSS_HALF + SIDEWALK - 1.2), yaw: i % 2 ? Math.PI : 0, w: 1.4 });
-  group.add(await createKeyedSigns(hanging, ['lantern-1', 'lantern-2']));
-
-  // Tuk-tuk parked at the alley mouth (fal GLB if present).
-  try {
-    const gl = new GLTFLoader();
-    gl.setDRACOLoader(new DRACOLoader().setDecoderPath('/draco/'));
-    const g = await gl.loadAsync('/night/models/tuktuk.glb');
-    const box = new THREE.Box3().setFromObject(g.scene);
-    const size = box.getSize(new THREE.Vector3());
-    const k = 3.2 / Math.max(size.x, size.z);
-    g.scene.scale.setScalar(k);
-    g.scene.position.set(m.x - 34, CURB_H - box.min.y * k, m.z + CROSS_HALF - 1.5);
-    g.scene.rotation.y = -0.4;
-    group.add(g.scene);
-  } catch { /* not generated yet */ }
-
-  // (The Flip-3D project cards are CSS3D objects mounted here by content.ts.)
-  const lbl = neonText('SIDE PROJECTS', T.signGlow, 9, { font: '"IBM Plex Mono", ui-monospace, monospace', gain: 1.3 });
-  lbl.position.set(m.x + 4, 8.5, m.z - CROSS_HALF - SIDEWALK - 0.4);
-  group.add(lbl);
-  const title = neonText('歌舞伎横丁', '#ff3a2a', 10, { gain: 2.4 });
-  title.position.set(m.x - 30, 9.5, m.z - CROSS_HALF - SIDEWALK - 8.3);
-  group.add(title);
-
-  const props: DistrictBuild['props'] = [];
-  for (let i = 0; i < 8; i++) {
-    const side = i < 4 ? -1 : 1;
-    const x = m.x - 26 + (i % 4) * 14, z = m.z + side * (CROSS_HALF + 3);
-    props.push({ kind: 'parasol', x: x + 2.4, z, yaw: i * 0.7, s: 1.1 });
-    props.push({ kind: 'awning', x, z: z + side * 2.2, yaw: side > 0 ? Math.PI : 0, y: 3.2 });
+  const lights: DistrictBuild['lights']=[];
+  for (const [i,s] of MARKET_STALLS.entries()) {
+    const p=new THREE.Group(); p.position.set(s.x,CURB_H,s.z); p.rotation.y=s.yaw; group.add(p);
+    const trim=new THREE.MeshBasicNodeMaterial({color:s.accent});
+    // Recessed back wall, waist-high counter, angled metal awning and exposed service box.
+    box(p,panel,6,3.6,.18,0,1.8,-1.8);
+    box(p,metal,6,1.02,1.1,0,.51,1);
+    box(p,rubber,6.2,.12,1.3,0,1.08,1);
+    box(p,trim,5.8,.055,.045,0,.92,1.57);
+    box(p,metal,6.7,.18,4.2,0,3.7,0,-.10);
+    box(p,trim,6.6,.07,.07,0,3.41,2.07);
+    for(const x of [-3,3]) { box(p,metal,.13,3.6,.13,x,1.8,1.6); box(p,yellow,.14,.22,.15,x,.6,1.61); }
+    box(p,metal,.7,1.15,.45,2.5,2.8,-1.45);
+    for(let k=0;k<4;k++) box(p,trim,.32,.04,.03,2.5,2.45+k*.16,-1.2);
+    const sign=label(s.name,['HOT FOOD / NIGHT SHIFT','DIAGNOSTICS / PARTS','PLAY / TRADE / REPAIR','LISTEN / CONNECT','STREETWEAR / AUGMENTS','COLD DRINKS / RECHARGE'][i],s.accent,5.5);
+    sign.position.set(0,3.02,1.75); p.add(sign);
+    if(s.kind==='audio'||s.kind==='repair') {
+      const art=poster(s.kind==='audio'?'product-headphones-v2.webp':'product-computer-v2.webp',2.4);
+      art.position.set(-1.25,2.55,-1.67); p.add(art);
+    }
+    if(s.kind==='food') {
+      for(let k=0;k<5;k++) {
+        add(new THREE.CylinderGeometry(.24,.13,.14,12),ceramic,p,-2+k,1.2,1.05);
+        box(p,yellow,.5,.025,.025,-2+k,1.29,1.05,0,.18);
+      }
+      for(const x of [-1.9,0,1.9]) {
+        add(new THREE.CylinderGeometry(.32,.32,.12,12),rubber,p,x,.7,2.7);
+        add(new THREE.CylinderGeometry(.07,.1,.65,8),metal,p,x,.33,2.7);
+      }
+      // Short noren curtain strips, above head height.
+      for(let k=0;k<6;k++) box(p,panel,.8,.5,.035,-2.4+k*.96,3.13,1.8);
+    } else if(s.kind==='drinks') {
+      box(p,metal,1.5,2.4,.9,-1.7,1.2,-1.2);
+      box(p,trim,1.25,1.6,.025,-1.7,1.35,-.73);
+      for(let k=0;k<8;k++) {
+        add(new THREE.CylinderGeometry(.12,.12,.35,10),k%2?trim:ceramic,p,-2.5+k*.68,1.32,1);
+      }
+    } else if(s.kind==='wear') {
+      box(p,metal,4.5,.08,.08,0,2.9,-.65);
+      for(let k=0;k<4;k++) {
+        const x=-1.7+k*1.1;
+        box(p,k%2?panel:rubber,.65,1.05,.22,x,2.12,-.65);
+        box(p,trim,.45,.045,.03,x,2.28,-.51);
+        box(p,panel,.22,.8,.24,x-.42,2.05,-.65,0,.2);
+        box(p,panel,.22,.8,.24,x+.42,2.05,-.65,0,-.2);
+      }
+    } else if(s.kind==='audio') {
+      for(let k=0;k<3;k++) {
+        add(new THREE.TorusGeometry(.29,.035,6,16),trim,p,-1.8+k*1.7,1.6,1.05);
+        for(const dx of [-.26,.26]) box(p,rubber,.14,.3,.2,-1.8+k*1.7+dx,1.48,1.05);
+        box(p,metal,.06,.4,.06,-1.8+k*1.7,1.32,.94);
+      }
+    } else {
+      for(let k=0;k<4;k++) {
+        box(p,metal,.9,.09,.55,-2+k*1.3,1.18,1,0,.12);
+        box(p,trim,.55,.015,.36,-2+k*1.3,1.235,1,0,.12);
+      }
+      if(s.kind==='repair') for(let k=0;k<4;k++) box(p,ceramic,.08,.48,.06,.5+k*.3,2.3,-1.65);
+    }
+    lights.push([s.x,3.2,s.z+Math.cos(s.yaw)*2.2,s.accent,140,9]);
   }
-  props.push({ kind: 'lamp', x: m.x - 36, z: m.z + CROSS_HALF + 1.2, yaw: 0 }, { kind: 'lamp', x: m.x + 30, z: m.z - CROSS_HALF - 1.2, yaw: Math.PI });
-  props.push({ kind: 'barrier', x: m.x - 36, z: m.z - CROSS_HALF + 1, yaw: 0.2 }, { kind: 'cone', x: m.x - 35, z: m.z - 2, yaw: 0 }, { kind: 'dumpster', x: m.x + 34, z: m.z + CROSS_HALF + 1.5, yaw: 0.8 });
-
-  const lights: DistrictBuild['lights'] = [
-    [36, 6, -228, T.warm, 900], [64, 6, -228, T.warm, 900], [50, 9, -238, PAL.magenta, 500], [50, 4, -232, T.primary, 450], [70, 5, -224, T.secondary, 400],
-  ];
-  void texture; void uv; void signMat;
-  return { group, props, lights };
+  // Lanterns and exposed catenary cables; high enough to keep every sign readable.
+  for(const x of [28,46,64,80]) {
+    group.add(stringLights(new THREE.Vector3(x,6,-241),new THREE.Vector3(x,6,-215),9,.75,.14,0xffb66d,1));
+    group.add(stringLights(new THREE.Vector3(x+.18,6.3,-241),new THREE.Vector3(x+.18,6.3,-215),28,.95,.035,0x10141c,.35));
+  }
+  for(const b of MARKET_BOLLARDS) {
+    add(new THREE.CylinderGeometry(.14,.18,1,8),metal,group,b.x,.5,b.z);
+    add(new THREE.CylinderGeometry(.15,.15,.12,8),yellow,group,b.x,.77,b.z);
+  }
+  // Seating bays at the far end, never across the through-route.
+  for(const z of [-234.5,-221.5]) {
+    box(group,metal,1.2,.12,3,79,.55,z);
+    box(group,panel,.12,.6,3,79.55,.86,z);
+    for(const dz of [-1,1]) box(group,metal,.75,.5,.12,79,.25,z+dz);
+  }
+  const gate=label('AFTERHOURS MARKET','PEDESTRIAN LANE / OPEN ALL NIGHT',0xe176cb,8);
+  gate.position.set(81,6.4,-228); gate.rotation.y=-Math.PI/2; group.add(gate);
+  for(const z of [-234,-222]) box(group,metal,.16,7,.16,81,3.5,z);
+  box(group,metal,.16,.16,12,81,7,-228);
+  for(const [mat,geos] of batches) {
+    const merged=mergeGeometries(geos,false);
+    if(merged) group.add(new THREE.Mesh(merged,mat));
+    geos.forEach(g=>g.dispose());
+  }
+  return {group,props:[],lights};
 }

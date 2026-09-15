@@ -44,7 +44,7 @@ export function terminalScreen(id: TerminalId) {
   ctx.fillStyle = spec.accent; ctx.font = '24px monospace'; ctx.fillText('NEON HARBOR / PUBLIC ACCESS', 48, 82);
   ctx.fillStyle = '#eef0e7'; ctx.font = 'bold 66px monospace'; ctx.fillText(spec.label, 48, 205);
   ctx.fillStyle = spec.accent; ctx.font = '30px monospace'; ctx.fillText(spec.subtitle, 48, 265);
-  ctx.fillRect(48, 330, 672, 2); ctx.font = '28px monospace'; ctx.fillText('[ E ]  OPEN TERMINAL', 48, 408);
+  ctx.fillRect(48, 330, 672, 2); ctx.font = '28px monospace'; ctx.fillText('[ F ]  OPEN TERMINAL', 48, 408);
   const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
   return new THREE.Mesh(new THREE.PlaneGeometry(3, 2), new THREE.MeshBasicNodeMaterial({ map: texture }));
 }

@@ -3,6 +3,7 @@ import {
   positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, uniform,
 } from './tsl';
 import { loader, rng } from './palette';
+import { MARKET, isMarketLane } from './market-layout';
 
 /*
  * Street level. One big ground plane zoned in the shader: the avenue (|x| < AVENUE_HALF) and three
@@ -16,7 +17,7 @@ export const SIDEWALK = 6;
 export const CROSS_Z = [-60, -144, -228];
 export const CROSS_HALF = 8;
 
-export const isRoad = (x: number, z: number) => Math.abs(x) < AVENUE_HALF || CROSS_Z.some((cz) => Math.abs(z - cz) < CROSS_HALF);
+export const isRoad = (x: number, z: number) => !isMarketLane(x,z) && (Math.abs(x) < AVENUE_HALF || CROSS_Z.some((cz) => Math.abs(z - cz) < CROSS_HALF));
 export const isSidewalk = (x: number, z: number) =>
   !isRoad(x, z) && (Math.abs(x) < AVENUE_HALF + SIDEWALK || CROSS_Z.some((cz) => Math.abs(z - cz) < CROSS_HALF + SIDEWALK));
 export const CURB_H = 0.22;
@@ -110,8 +111,9 @@ export function createStreets(tex: GroundTextures) {
   // Zones
   const ax = abs(x);
   const nearest = CROSS_Z.map((cz) => abs(z.sub(cz))).reduce((a, b) => min(a, b));
-  const road = max(step(ax, AVENUE_HALF), step(nearest, CROSS_HALF));
-  const walk = max(step(ax, AVENUE_HALF + SIDEWALK), step(nearest, CROSS_HALF + SIDEWALK)).mul(float(1).sub(road));
+  const market = step(MARKET.x0,x).mul(step(x,MARKET.x1)).mul(step(abs(z.sub(MARKET.z)),MARKET.halfWidth));
+  const road = max(step(ax, AVENUE_HALF), step(nearest, CROSS_HALF)).mul(float(1).sub(market));
+  const walk = max(market,max(step(ax, AVENUE_HALF + SIDEWALK), step(nearest, CROSS_HALF + SIDEWALK))).mul(float(1).sub(road));
 
   // Lane paint (avenue: yellow centre dashes + white edges; cross streets: white dashes) and crosswalks.
   const centreDash = step(ax, 0.18).mul(step(fract(z.mul(1 / 6)), 0.5));
@@ -173,5 +175,10 @@ export function createStreets(tex: GroundTextures) {
   for (const cz of CROSS_Z) for (const side of [-1, 1]) {
     for (const half of [-1, 1]) addWalk(300, SIDEWALK, half * (AVENUE_HALF + SIDEWALK + 150), cz + side * (CROSS_HALF + SIDEWALK / 2));
   }
+  // Fill the former road to sidewalk height; no markings or curb down the shopping lane.
+  const marketPaving = new THREE.Mesh(new THREE.BoxGeometry(MARKET.x1-MARKET.x0,CURB_H,CROSS_HALF*2),
+    groundMaterial(tex.pavers,tex.paversN,3,{roughness:.65}));
+  marketPaving.position.set((MARKET.x0+MARKET.x1)/2,CURB_H/2,MARKET.z);
+  group.add(marketPaving);
   return group;
 }

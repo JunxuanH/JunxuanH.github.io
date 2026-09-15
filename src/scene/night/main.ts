@@ -15,7 +15,8 @@ import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
 import { createKitbash, loadGlbTowers } from './towers';
 import { createProps } from './props';
-import { loadCharacter, createCrowd } from './characters';
+import { loadCharacter, createCrowd, instantiate } from './characters';
+import { MARKET_STALLS } from './market-layout';
 import { createRobots } from './robots';
 import { createDrones } from './drones';
 import { DISTRICT_CROWDS, PATROLS, DRONE_LANES } from './paths';
@@ -212,11 +213,11 @@ export async function start(root: HTMLElement) {
   const ads = await createAds([{ x: -12, y: 38, z: -70 }, { x: 14, y: 42, z: -104 }, { x: -14, y: 30, z: -168 }, { x: 16, y: 48, z: -180 }]);
   scene.add(ads.group);
   const traffic = await createTraffic([
-    // Street level: both avenue directions and the market cross street.
+    // Street level: avenue and the parallel Downtown cross street; Market is pedestrian-only.
     { pts: [[-5, 0.1, -24], [-5, 0.1, -200], [-5, 0.1, -640]], speed: 0.02, ground: true },
     { pts: [[5, 0.1, -640], [5, 0.1, -200], [5, 0.1, -24]], speed: 0.018, ground: true },
-    { pts: [[-300, 0.1, -232], [0, 0.1, -232], [300, 0.1, -232]], speed: 0.02, ground: true },
-    { pts: [[300, 0.1, -224], [0, 0.1, -224], [-300, 0.1, -224]], speed: 0.02, ground: true },
+    { pts: [[-300, 0.1, -148], [0, 0.1, -148], [300, 0.1, -148]], speed: 0.02, ground: true },
+    { pts: [[300, 0.1, -140], [0, 0.1, -140], [-300, 0.1, -140]], speed: 0.02, ground: true },
     // Aloft: hover lanes and the bridge deck.
     { pts: [[-40, 22, 300], [-12, 24, 120], [-8, 26, -40], [-6, 28, -200], [10, 30, -420]], speed: 0.05 },
     { pts: [[12, 30, -420], [8, 33, -200], [10, 34, -60], [20, 32, 100], [60, 30, 300]], speed: 0.045 },
@@ -242,8 +243,7 @@ export async function start(root: HTMLElement) {
   const specs: ParticleSpec[] = [
     { kind: 'sakura', section: 'education', box: { center: [-80, 10, -102], size: [90, 20, 60] } },
     { kind: 'koi', section: 'education', loops: [[[-96, 0.3, -90], [-90, 0.3, -86], [-86, 0.3, -92], [-90, 0.3, -98], [-96, 0.3, -96]]] },
-    { kind: 'steam', section: 'projects', points: [24, 38, 52, 66, 76].map((x) => [x, 2.6, -239] as [number, number, number]) },
-    { kind: 'sparks', section: 'projects', origin: [22, 1, -228] },
+    { kind: 'steam', section: 'projects', points: [[34, 1.5, -238]] },
     { kind: 'spray', section: 'contact', points: [[134.8, -0.2, -10], [145.2, -0.2, 2], [134.8, -0.2, 14], [145.2, -0.2, 26]] },
   ];
   const particles = params.has('noparticles') ? [] : specs.map((s) => createParticles(s, tier, { motion: !reducedMotion }));
@@ -252,7 +252,7 @@ export async function start(root: HTMLElement) {
   for (const [x, y, z, c, i, d] of districts.lights) lamp(x, y, z, c, i, d);
 
   // ---------- people, robots, drones (rigged fal characters; walkers stay visible out to 140 u)
-  const life: { update(dt: number, cam: THREE.Camera): void }[] = [];
+  const life: { group?: THREE.Group; update(dt: number, cam: THREE.Camera): void }[] = [];
   const crowds: { id: string; walkers: ReturnType<typeof createCrowd>['walkers'] }[] = []; // the walkers, for the dialogue
   if (!params.has('nopeople')) {
     try {
@@ -260,6 +260,27 @@ export async function start(root: HTMLElement) {
       const all = RIGS_ALL;
       const names = lite ? RIGS_LITE : all;
       const rigs = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await loadCharacter(n)]))) as Partial<Record<(typeof all)[number], Awaited<ReturnType<typeof loadCharacter>>>>;
+      // Shopkeepers stay behind their counters. Reuse already-loaded rigs on phones.
+      const vendorGroup = new THREE.Group();
+      vendorGroup.name = 'Market shopkeepers';
+      scene.add(vendorGroup);
+      const vendors = MARKET_STALLS.map((s,i) => {
+        const asset = rigs[s.rig] ?? rigs[['dj','medic','cat-courier'][i%3] as keyof typeof rigs];
+        if (!asset) return null;
+        const inst = instantiate(asset);
+        inst.root.position.set(s.x, .22, s.z-.45*Math.cos(s.yaw));
+        inst.root.rotation.y=s.yaw;
+        const action=inst.play(inst.actions.has('talk')?'talk':'idle',0);
+        if(action) action.time=i*.43;
+        vendorGroup.add(inst.root);
+        return inst;
+      }).filter((v): v is NonNullable<typeof v> => !!v);
+      life.push({group:vendorGroup,update(dt,cam) {
+        for(const v of vendors) {
+          v.root.visible = v.root.position.distanceToSquared(cam.position)<100*100 && districts.group.children[2].visible;
+          if(v.root.visible && !reducedMotion) v.mixer.update(dt);
+        }
+      }});
       for (const d of DISTRICT_CROWDS) {
         const assets = d.assets.map((n) => rigs[n]).filter((a): a is NonNullable<typeof a> => !!a);
         if (!assets.length) continue;

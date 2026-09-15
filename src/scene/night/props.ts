@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, rng } from './palette';
 import { AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, CURB_H, isRoad, isSidewalk } from './streets';
+import { MARKET } from './market-layout';
 
 /*
  * Street furniture from the Kenney City Kits (CC0): lamps, dumpsters, barriers, cones, fences,
@@ -142,6 +143,8 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
   for (const cz of CROSS_Z) {
     for (let x = -280; x <= 280; x += 28) {
       if (Math.abs(x) < AVENUE_HALF + SIDEWALK + 2) continue;
+      // Vendor lighting/cables replace generic poles that would pierce the stalls and kiosk view.
+      if (cz === MARKET.z && x >= MARKET.x0-8 && x <= MARKET.x1) continue;
       add('pole', x, cz + CROSS_HALF + 2, Math.PI / 2);
       // Two wires to the next pole (skipping the avenue gap).
       if (x + 28 <= 280 && Math.abs(x + 28) >= AVENUE_HALF + SIDEWALK + 2) for (const dy of [0, -0.5]) cable(new THREE.Vector3(x, 7.4 + dy, cz + CROSS_HALF + 2.3), new THREE.Vector3(x + 28, 7.4 + dy, cz + CROSS_HALF + 2.3), 1.2);

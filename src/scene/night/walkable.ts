@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three/webgpu';
 import { TERMINALS } from './terminal-layout';
+import { MARKET_STALLS, MARKET_BOLLARDS } from './market-layout';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
 import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, QUAY_Z, isRoad, isSidewalk } from './streets';
@@ -121,19 +122,15 @@ function market(placed: boolean): Area {
   const m = ANCHORS.market; // (50, 0, −228)
   const rects: Rect[] = [{ x0: 14, x1: 86, z0: m.z - 14, z1: m.z + 14 }];
   const obstacles: Obstacle[] = [
-    { kind: 'obb', x: 72, z: -227, hw: 3.4, hd: 1.4, yaw: -Math.PI / 2 + 0.55, h: 3.0 }, // holo stall counter + crates (carriers/stall.ts)
-    circle(m.x - 34, m.z + 8 - 1.5, 1.9, 2.2), // tuk-tuk
     box(10, 90, -262, m.z - 14.5, 12), box(10, 90, m.z + 14.5, -194, 12), // façade rows (camera bounds)
   ];
-  for (let i = 0; i < 8; i++) {
-    const side = i < 4 ? -1 : 1;
-    const x = m.x - 26 + (i % 4) * 14, z = m.z + side * 11;
-    obstacles.push(centred(x, z, 3.2, 2.4, 2.2), circle(x + 2.4, z, 0.7, 1.4)); // stall + crates/parasol
+  for (const s of MARKET_STALLS) {
+    obstacles.push(centred(s.x, s.z, 6.3, 3.8, 3.8));
+    if(s.kind==='food') for(const dx of [-1.9,0,1.9]) obstacles.push(circle(s.x+dx,s.z+2.7,.32,.85));
   }
-  if (!placed) {
-    obstacles.push(circle(m.x - 36, m.z + 9.2, 0.3, 6.5), circle(m.x + 30, m.z - 9.2, 0.3, 6.5), circle(m.x - 36, m.z - 7, 0.8, 1.1),
-      circle(m.x - 35, m.z - 2, 0.35, 0.8), circle(m.x + 34, m.z + 9.5, 1.1, 1.6));
-  }
+  for(const b of MARKET_BOLLARDS) obstacles.push(circle(b.x,b.z,.18,1));
+  for(const z of [-234.5,-221.5]) obstacles.push(centred(79,z,1.3,3,1.2));
+  for(const z of [-234,-222]) obstacles.push(circle(81,z,.12,7));
   return { section: 'projects', rects, obstacles };
 }
 
