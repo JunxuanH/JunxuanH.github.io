@@ -30,7 +30,11 @@
     <script>
       import { mountRigView } from '../../scene/night/rigview';
       const hud = document.getElementById('hud')!;
-      mountRigView(document.getElementById('stage')!, hud).catch((e) => {
+      const gait = new URLSearchParams(location.search).get('gait');
+      const mounted = gait
+        ? import('../../scene/night/gaitview').then(({ mountGaitView }) => mountGaitView(document.getElementById('stage')!, hud, gait))
+        : mountRigView(document.getElementById('stage')!, hud);
+      mounted.catch((e) => {
         hud.textContent = `error: ${e?.message ?? e}`;
         console.error(e);
         (window as any).__view = { ready: true, error: String(e?.message ?? e) };

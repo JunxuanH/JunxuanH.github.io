@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { gaitForSpeed, gaitRate, gaitPhase, WALK_SPEED } from '../src/scene/night/gait.ts';
+assert.equal(gaitForSpeed(.12, 'idle'), 'idle');
+assert.equal(gaitForSpeed(.12, 'walk'), 'walk');
+assert.equal(gaitForSpeed(.05, 'walk'), 'idle');
+assert.equal(gaitForSpeed(2.1, 'walk'), 'walk');
+assert.equal(gaitForSpeed(2.1, 'run'), 'run');
+assert.equal(gaitForSpeed(2.3, 'walk'), 'run');
+assert.equal(gaitForSpeed(1.8, 'run'), 'walk');
+assert.ok(gaitRate(WALK_SPEED, 1.54) < 1.2, 'normal walk no longer sped up to 1.56x');
+assert.ok(gaitRate(.2, 1.54) < .14, 'slow thumbstick input has no forced shuffle');
+assert.equal(gaitRate(0, 1.54), 0);
+assert.ok(Math.abs(gaitPhase(.8, 1.6, .8) - .4) < 1e-9);
+assert.ok(Math.abs(gaitPhase(2.4, 1.6, .8) - .4) < 1e-9);
+console.log('PASS gait: cadence, slow input, threshold hysteresis, walk/run phase continuity');

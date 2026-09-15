@@ -1,6 +1,6 @@
 /**
  * The protagonist (the `agent` rig by default — main.ts picks it) and the third-person camera that follows
- * it. Movement is camera-relative (yaw of the follow camera), walk 2.4 / run 5.0 u/s with 12 u/s²
+ * it. Movement is camera-relative (yaw of the follow camera), walk 1.8 / run 4.8 u/s with 12 u/s²
  * acceleration, the heading slerps toward the move direction, and idle / walk / run are chosen by speed.
  * Ground height and collisions come from walkable.ts. The camera hangs 5.5 u behind and 2.4 u above the
  * feet (orbit yaw/pitch from drag), looks at the head + 2 u ahead, damps exponentially, shortens its boom
@@ -12,8 +12,9 @@ import { instantiate, strideOf, type CharacterAsset, type Instance } from './cha
 import { PAL } from './palette';
 import { limitCamera, resolve, groundY, type Area } from './walkable';
 import type { InputState } from './input';
+import { WALK_SPEED, RUN_SPEED, gaitForSpeed, gaitRate, gaitPhase } from './gait';
 
-export const WALK = 2.4, RUN = 5.0, ACCEL = 12, DECEL = 18; // soldier: walk clip 1.54 u/s (timeScale 1.56), run clip 4.60 (1.09)
+export const WALK = WALK_SPEED, RUN = RUN_SPEED, ACCEL = 12, DECEL = 18;
 const BOOM = 5.8, PITCH0 = Math.asin(1.8 / 5.8); // 5.5 back, 2.4 up at the default pitch (pivot 0.6 above the feet)
 const PITCH_MIN = THREE.MathUtils.degToRad(-10), PITCH_MAX = THREE.MathUtils.degToRad(35);
 
@@ -159,18 +160,27 @@ export function createPlayer(opts: PlayerOptions) {
       // Sliding along a wall: keep the visible speed honest.
       speed = Math.min(speed, pos.distanceTo(prev) / Math.max(dt, 1e-4));
     }
-    if (len > 0.05) {
-      const want = Math.atan2(wish.x, wish.z);
+    if (speed > 0.08) {
+      // Face actual travel during reversals, not an input direction the body has not reached yet.
+      const want = Math.atan2(vel.x, vel.z);
       yaw = wrapAngle(yaw + wrapAngle(want - yaw) * (1 - Math.exp(-10 * dt)));
       root.rotation.y = yaw;
     }
     // Clips by speed, 0.2 s fades; stride keeps the feet from sliding.
-    const next: typeof clip = speed < 0.25 ? 'idle' : speed < 3.4 ? 'walk' : 'run';
-    if (next !== clip) { clip = next; variety = false; idleFor = 0; inst.play(next, 0.2); }
+    const next = gaitForSpeed(speed, clip);
+    if (next !== clip) {
+      const previous = inst.actions.get(clip);
+      const moving = clip !== 'idle' && next !== 'idle';
+      const action = inst.play(next, 0.2);
+      // Walk/run are complete left-right cycles: keep the planted-leg phase through the fade.
+      if (moving && previous && action) action.time = gaitPhase(previous.time, previous.getClip().duration, action.getClip().duration);
+      clip = next; variety = false; idleFor = 0;
+    }
     else if (clip === 'idle' && lookA && !variety && (idleFor += dt) > IDLE_VARIETY_AFTER) { variety = true; inst.play('lookaround', 0.3); }
     const walkA = inst.actions.get('walk'), runA = inst.actions.get('run');
-    if (walkA) walkA.timeScale = clip === 'walk' ? THREE.MathUtils.clamp(speed / STRIDE_WALK, 0.6, 2.2) : 1;
-    if (runA) runA.timeScale = clip === 'run' ? THREE.MathUtils.clamp(speed / STRIDE_RUN, 0.7, 1.5) : 1;
+    // Outgoing actions also track speed while fading out, rather than snapping back to 1×.
+    if (walkA) walkA.timeScale = gaitRate(speed, STRIDE_WALK);
+    if (runA) runA.timeScale = gaitRate(speed, STRIDE_RUN);
     inst.mixer.update(dt);
     if (speed > 0.3) {
       phase += (speed * dt) / (clip === 'run' ? STEP_RUN : STEP_WALK);

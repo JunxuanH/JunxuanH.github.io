@@ -134,7 +134,7 @@ export async function start(root: HTMLElement) {
     depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
   } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
-  const PROTAGONIST = 'soldier'; // the player's rig (rigs.ts row: height 1.85, cyan rim); agent + netrunner stay on disk / in the crowd
+  const PROTAGONIST = 'ronin-player'; // chosen anime Ronin; separate from the existing ronin NPC
   const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot',
     'delivery-rider', 'tech-shaman', 'tagger', 'dock-worker', 'bouncer-android', 'yakuza-boss', 'nurse', 'exo-courier'] as const; // 'tourist' dropped (rigs.ts note)
   // Phones: 11 varied crowd rigs (the smallest downloads, ≈ 4.5 MB) + the player + the patrol robot (≈ 5.6 MB in all), plus the
@@ -308,7 +308,13 @@ export async function start(root: HTMLElement) {
   const propsBuilt = await propsReady.catch(() => null);
   const placements = (propsBuilt as unknown as { placements?: PropPlacement[] } | null)?.placements ?? null;
   const areas = buildAreas(placements);
-  const protagonist = params.has('nopeople') ? null : await loadCharacter(PROTAGONIST).catch(() => null);
+  const protagonist = params.has('nopeople') ? null : await loadCharacter(PROTAGONIST).then((asset) => {
+    if (!['idle', 'walk', 'run'].every((name) => asset.clips.has(name))) throw new Error('Ronin locomotion clips missing');
+    return asset;
+  }).catch((e) => {
+    console.warn('[night] Ronin unavailable; using the previous protagonist', e);
+    return loadCharacter('soldier').catch(() => null);
+  });
   const footstep = (audio as unknown as { step?: () => void }).step; // audio.ts grows `step()` with the interactions pass
   const player = protagonist ? createPlayer({ asset: protagonist, rim: PAL.cyan, onStep: () => footstep?.call(audio) }) : null;
   if (player) {

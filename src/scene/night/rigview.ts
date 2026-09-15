@@ -277,6 +277,8 @@ export async function mountRigView(stage: HTMLElement, hud: HTMLElement) {
         `       maxDisp ${fmt(audit.maxDisp)} stray ${(audit.strayWeights * 100).toFixed(2)}% [${esc(audit.strayBones.join(' '))}] stretch ${fmt(audit.stretch)}`,
         `       stride ${fmt(audit.clips.walk?.stride)} (${audit.clips.walk?.cycles ?? 0} cyc, step ${fmt(audit.clips.walk?.stepLen)}) run ${fmt(audit.clips.run?.stride)} (step ${fmt(audit.clips.run?.stepLen)}) · tracks ${audit.redundantTracks} redundant / ${audit.totalTracks} · ${audit.vertices} v ${audit.triangles} t ${audit.bones} bones`,
         `<b>flags</b>  ${esc(audit.flags.join(', ') || 'ok')}`,
+        ...Object.entries(audit.clips).filter(([name]) => ['idle', 'walk', 'run'].includes(name)).map(([name, clip]) =>
+          `       ${name} plantedY ${fmt(clip.minY.p20)} range ${fmt(clip.minY.min)}…${fmt(clip.minY.max)} unitScale ${fmt(asset.clipUnitScales?.get(name) ?? 1)}`),
       );
     }
     lines.push(sizes.join(' · '));

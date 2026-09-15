@@ -1,0 +1,17 @@
+{
+  "name": "ronin-player",
+  "generate_type": "Normal",
+  "height_meters": 1.8,
+  "concept": "concept.png",
+  "fal_requests": "concept=01a0a301-147a-7c61-bca5-9727ceea8d75 3d=01a0a301-f64d-7671-add5-0840da59db26 rig=01a0a304-e627-7710-ac9a-daa4cc31d3f2",
+  "files": [
+    "model.glb",
+    "rigged.glb",
+    "walk.glb",
+    "run.glb",
+    "idle.glb"
+  ],
+  "meshy_idle": 0,
+  "meshy_clips": "",
+  "generated": "2026-09-15T03:07:11Z"
+}
