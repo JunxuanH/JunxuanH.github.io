@@ -20,7 +20,9 @@ export async function createBackdrop(opts: { ring?: boolean } = {}) {
   // `bottom` = [start, end] of a fade over the plate's lower part (uv.y): the side plates' foreground rooftops dissolve into
   // haze instead of sitting on the water like a cut-out. Uniforms, so every plate keeps the same program.
   const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean, bottom: [number, number] = [0, 0.0001], side = false) => {
-    const margin = side ? 0.28 : 0.08;
+    // Keep only the central 28% of side artwork; outer buildings still bent at the previous 28% trim.
+    // Crop geometry and UVs together so retained buildings are not stretched to fill the old width.
+    const margin = side ? 0.36 : 0.08;
     const geo = croppedPlateGeometry(W, H, margin, mirror);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
     mat.fog = false;
