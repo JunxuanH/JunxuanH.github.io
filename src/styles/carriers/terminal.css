@@ -70,7 +70,7 @@
 .sheet .sys-note { margin: 0; font-size: 13px; color: #ffd9a0; }
 .sheet .sys-note::before { content: '> '; color: #7dff9a; }
 
-/* ---------- blimp ticker (blimp.ts): the bullets as a marquee; E toggles --sweep (slow / fast) */
+/* ---------- blimp ticker (blimp.ts): the bullets as a marquee; F toggles --sweep (slow / fast) */
 .term-ticker { margin: 14px 0 0; padding: 8px 0; border-top: 1px dashed rgb(255 176 0 / 0.3); border-bottom: 1px dashed rgb(255 176 0 / 0.3); overflow: hidden; white-space: nowrap; font-size: 13px; color: #ffd27a; }
 .term-ticker > span { display: inline-block; padding-left: 100%; animation: term-marquee var(--sweep, 18s) linear infinite; }
 @keyframes term-marquee { to { transform: translateX(-100%); } }

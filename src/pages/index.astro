@@ -252,20 +252,20 @@ const win = (k: string) => WINDOWS[k].join(',');
       <button class="hud-skip" type="button" aria-label="Skip scene transition">Skip <span aria-hidden="true">▸</span></button>
       <div class="hud-fade" aria-hidden="true"></div>
       <div class="hud-toast" hidden aria-live="polite"><span class="hud-toast-name"></span><small class="hud-toast-sub"></small></div>
-      <button class="hud-prompt" type="button" hidden aria-live="polite"><kbd>E</kbd><span class="hud-prompt-label"></span></button>
+      <button class="hud-prompt" type="button" hidden aria-live="polite"><kbd>F</kbd><span class="hud-prompt-label"></span></button>
       <div class="hud-hint" hidden>
         <p class="hud-hint-title">Controls</p>
         <ul>
           <li class="keys-only"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>move</span></li>
           <li class="keys-only"><kbd>Shift</kbd><span>run</span></li>
-          <li class="keys-only"><kbd>E</kbd><span>interact</span></li>
+          <li class="keys-only"><kbd>F</kbd><span>interact</span></li>
           <li class="keys-only"><kbd>Q</kbd><kbd>E</kbd><span>turn camera</span></li>
           <li class="keys-only"><kbd>Esc</kbd><span>back</span></li>
           <li class="keys-only">drag<span>look around</span></li>
           <li class="touch-only">left thumb<span>move</span></li>
           <li class="touch-only">push past the ring<span>run</span></li>
           <li class="touch-only">right thumb<span>look around</span></li>
-          <li class="touch-only"><kbd>E</kbd><span>interact</span></li>
+          <li class="touch-only"><kbd>F</kbd><span>interact</span></li>
         </ul>
       </div>
       <button class="hud-back" type="button" hidden>← Back</button>
@@ -274,7 +274,7 @@ const win = (k: string) => WINDOWS[k].join(',');
           <div class="stick"><i class="stick-knob"></i></div>
           <div class="stick-rest"><span>move</span></div>
         </div>
-        <div class="hud-btns"><span class="hud-elabel"></span><button class="hud-btn hud-btn-e" data-act="interact" type="button" tabindex="-1">E</button></div>
+        <div class="hud-btns"><span class="hud-elabel"></span><button class="hud-btn hud-btn-e" data-act="interact" type="button" tabindex="-1">F</button></div>
       </div>
       <!-- Phone chip bar (dock mode, coarse pointers): the docked carrier's named actions; hud.ts shows only the ones it defines. -->
       <div class="hud-chips" hidden aria-hidden="true">

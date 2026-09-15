@@ -107,7 +107,7 @@ export function create(_ctx: CarrierCtx): Carrier {
     interact: {
       onEnter(el) {
         slab = el; off = 0;
-        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> turn · <kbd>E</kbd> respin · <kbd>Esc</kbd> back');
+        hint(el, '<kbd>◀</kbd><kbd>▶</kbd> turn · <kbd>F</kbd> respin · <kbd>Esc</kbd> back');
         spin();
       },
       onExit(el) {

@@ -60,7 +60,7 @@ export function createHud() {
     if (m !== 'walk') hideHint();
   };
 
-  function showPrompt(label: string | null, key = coarse ? 'TAP' : 'E') {
+  function showPrompt(label: string | null, key = coarse ? 'TAP' : 'F') {
     if (label === promptText && (!label || promptKey?.textContent === key)) return;
     promptText = label;
     // Touch: the label rides on the E button, which pulses while something is in range.

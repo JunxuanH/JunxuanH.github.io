@@ -1,10 +1,9 @@
 /**
- * Device layer for walk mode. Keyboard (WASD / arrows, Shift = run, E / Enter = interact, Esc = back),
- * pointer drag on the stage = orbit, and for coarse pointers a virtual joystick (any touch on the left
- * half of the HUD's stick zone) plus E / run buttons. Pointer events only, no touch API. `poll()` returns
+ * Device layer for walk mode. Keyboard (WASD / arrows, Shift = run, F / Enter = interact, Q / E held = turn the
+ * camera, Esc = back), pointer drag on the stage = orbit, and for coarse pointers a virtual joystick (any touch on
+ * the left half of the HUD's stick zone) plus the interact button. Pointer events only, no touch API. `poll()` returns
  * the frame's snapshot and clears the edge flags and drag deltas. Keys are never intercepted while the
- * focus is in a form field, link or button, so the nav stays keyboard-usable. Q / E (held) turn the camera when
- * nothing is in range (`interactable`). `skip` (Esc / Enter / Space,
+ * focus is in a form field, link or button, so the nav stays keyboard-usable. `skip` (Esc / Enter / Space,
  * or a tap / click on the stage without a drag) lets nav.ts cut a transition cutscene short.
  */
 import * as THREE from 'three/webgpu';
@@ -42,11 +41,6 @@ export interface InputOptions {
   onKey?: (e: KeyboardEvent) => boolean | void;
   /** Keys move the player only while this returns true (arrows are then prevented from scrolling). */
   enabled?: () => boolean;
-  /**
-   * E is the interact key while this returns true (something in range, a dialogue or terminal open); otherwise
-   * holding E turns the camera right, the mirror of Q. Defaults to always interact.
-   */
-  interactable?: () => boolean;
 }
 
 const MOVE_KEYS: Record<string, [number, number, boolean]> = {
@@ -84,9 +78,8 @@ export function createInput(opts: InputOptions) {
     if (e.code in MOVE_KEYS) { held.add(e.code); if (enabled()) e.preventDefault(); return; }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { run = true; return; }
     if (e.repeat) return;
-    if (e.code === 'KeyQ') { held.add('KeyQ'); if (enabled()) e.preventDefault(); return; }
-    if (e.code === 'KeyE' && enabled() && !(opts.interactable?.() ?? true)) { held.add('KeyE'); e.preventDefault(); return; } // nothing to use: E turns the camera
-    if (e.code === 'KeyE' || e.code === 'Enter') { interact = true; if (e.code === 'Enter') skip = true; e.preventDefault(); return; }
+    if (e.code === 'KeyQ' || e.code === 'KeyE') { held.add(e.code); if (enabled()) e.preventDefault(); return; } // turn the camera
+    if (e.code === 'KeyF' || e.code === 'Enter') { interact = true; if (e.code === 'Enter') skip = true; e.preventDefault(); return; }
     if (e.code === 'Escape') { back = true; skip = true; return; }
     if (e.code === 'Space') { skip = true; e.preventDefault(); return; }
   };

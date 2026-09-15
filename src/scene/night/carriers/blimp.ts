@@ -168,12 +168,12 @@ export function create(ctx: CarrierCtx): Carrier & { setSpeedScale(s: number): v
   };
 
   // ---- dock: the camera already rides in formation (nav dockOffset); the session shows the job with a ticker line
-  // (the bullets as a marquee, `.term-ticker`) and E toggles it between the slow cruise and a fast crawl
+  // (the bullets as a marquee, `.term-ticker`) and F toggles it between the slow cruise and a fast crawl
   // (interact.css reads --sweep as the marquee duration).
   let fast = false, slab: HTMLElement | null = null, ticker: HTMLElement | null = null;
   const setTicker = (el: HTMLElement) => {
     ticker?.style.setProperty('--sweep', fast ? '5s' : '18s');
-    hint(el, `<kbd>E</kbd> ticker · <b>${fast ? 'FAST' : 'SLOW'}</b> · <kbd>Esc</kbd> back`);
+    hint(el, `<kbd>F</kbd> ticker · <b>${fast ? 'FAST' : 'SLOW'}</b> · <kbd>Esc</kbd> back`);
   };
   const actions: DockActions = { confirm: () => { if (!slab) return; fast = !fast; setTicker(slab); sfx.select(); } };
 

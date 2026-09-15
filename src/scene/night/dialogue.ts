@@ -83,7 +83,7 @@ export function createDialogue(opts: DialogueOptions) {
     '<p class="dlg-name"><span class="dlg-who"></span><span class="dlg-title"></span></p>' +
     '<p class="dlg-text" aria-hidden="true"><span class="dlg-typed"></span><span class="dlg-ghost"></span></p>' +
     '<span class="dlg-sr" aria-live="polite"></span>' +
-    '<span class="dlg-more" aria-hidden="true"><kbd>E</kbd><i>▸</i></span>';
+    '<span class="dlg-more" aria-hidden="true"><kbd>F</kbd><i>▸</i></span>';
   (hudEl ?? document.body).appendChild(box);
   const who = box.querySelector<HTMLElement>('.dlg-who')!, title = box.querySelector<HTMLElement>('.dlg-title')!;
   const typed = box.querySelector<HTMLElement>('.dlg-typed')!, ghost = box.querySelector<HTMLElement>('.dlg-ghost')!, sr = box.querySelector<HTMLElement>('.dlg-sr')!;
@@ -202,7 +202,7 @@ export function createDialogue(opts: DialogueOptions) {
   const horiz = (t: Target, p: THREE.Vector3) => { t.root.getWorldPosition(tmp); return Math.hypot(tmp.x - p.x, tmp.z - p.z); };
 
   /**
-   * Per frame in walk mode (before interactables.update). Returns true when the dialogue owns `E` this frame:
+   * Per frame in walk mode (before interactables.update). Returns true when the dialogue owns the interact key (F / Enter) this frame:
    * a box is open, or a resident is within TALK_RANGE. Pass `section = null` outside walk mode.
    */
   function update(playerPos: THREE.Vector3 | null, section: WalkSection | null, pressInteract: boolean, pressBack: boolean, walkIntent: boolean, dt: number): boolean {

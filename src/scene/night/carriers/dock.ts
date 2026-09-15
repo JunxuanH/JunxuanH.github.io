@@ -7,9 +7,9 @@ import type { Carrier } from './index';
 
 export type DockActions = NonNullable<NonNullable<Carrier['interact']>['actions']>;
 
-/** ↑ ↓ ← → Enter / E → the matching action; true when one ran (key repeats never re-fire `confirm`). */
+/** ↑ ↓ ← → Enter / F → the matching action; true when one ran (key repeats never re-fire `confirm`). */
 export function keyToAction(e: KeyboardEvent, a: DockActions): boolean {
-  const confirm = e.key === 'Enter' || e.code === 'KeyE';
+  const confirm = e.key === 'Enter' || e.code === 'KeyF';
   const fn = e.key === 'ArrowUp' ? a.up : e.key === 'ArrowDown' ? a.down : e.key === 'ArrowLeft' ? a.left : e.key === 'ArrowRight' ? a.right : confirm ? a.confirm : undefined;
   if (!fn) return false;
   if (!(confirm && e.repeat)) fn();
