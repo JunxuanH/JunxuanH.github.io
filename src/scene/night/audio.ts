@@ -68,7 +68,7 @@ export function primeAudio() {
 
 export function createAudio(opts: { base?: string; volume?: number } = {}): NightAudio {
   const base = opts.base ?? '/night/audio';
-  const master = opts.volume ?? 0.8;
+  const master = Math.min(1, Math.max(0, opts.volume ?? 0.55));
   const params = new URLSearchParams(location.search);
   let muted = true;
   try {
@@ -78,6 +78,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
 
   let ctx: AudioContext | null = null;
   let masterGain: GainNode | null = null;
+  let ambience: BiquadFilterNode | null = null;
   let analyser: AnalyserNode | null = null;
   let analyserBuf: Float32Array<ArrayBuffer> | null = null;
   const gains = new Map<string, GainNode>();
@@ -98,7 +99,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     const buf = await ctx.decodeAudioData(await res.arrayBuffer());
     const gain = ctx.createGain();
     gain.gain.value = 0;
-    gain.connect(masterGain!);
+    gain.connect(ambience!);
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
@@ -116,10 +117,19 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
       if (ctx.state === 'suspended' && !muted) ctx.resume().catch(() => {});
       masterGain = ctx.createGain();
       masterGain.gain.value = 0;
+      // Keep generated ambience behind the interaction, with less hiss and low-end rumble.
+      ambience = ctx.createBiquadFilter();
+      ambience.type = 'lowpass'; ambience.frequency.value = 3200; ambience.Q.value = 0.5;
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = 'highpass'; highpass.frequency.value = 90; highpass.Q.value = 0.5;
+      ambience.connect(highpass); highpass.connect(masterGain);
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.value = -12; compressor.knee.value = 12;
+      compressor.ratio.value = 4; compressor.attack.value = 0.004; compressor.release.value = 0.2;
       analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       analyserBuf = new Float32Array(new ArrayBuffer(analyser.fftSize * 4));
-      masterGain.connect(analyser);
+      masterGain.connect(compressor); compressor.connect(analyser);
       analyser.connect(ctx.destination);
       const names = [BED, ...Object.values(DISTRICT_LOOPS)];
       const results = await Promise.allSettled(names.map(loadLoop));
@@ -137,7 +147,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   function applyMute() {
     if (!ctx || !masterGain) return;
     if (ctx.state === 'suspended' && !muted) ctx.resume().catch(() => {});
-    masterGain.gain.setTargetAtTime(muted ? 0 : master, ctx.currentTime, 0.25);
+    masterGain.gain.setTargetAtTime(muted || document.hidden ? 0 : master, ctx.currentTime, 0.25);
   }
 
   // ---- synth SFX: one-shot bursts (oscillator or band-passed noise) with an exponential decay, straight into the master.
@@ -158,14 +168,19 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   }
   let noiseBuf: AudioBuffer | null = null;
   let bursts = 0;
+  let activeBursts = 0;
   function burst(b: Burst) {
-    if (!ctx || !masterGain || muted) return;
+    if (!ctx || !masterGain || muted || document.hidden || activeBursts >= 6) return;
     const t0 = ctx.currentTime + (b.at ?? 0);
     const g = ctx.createGain();
-    g.gain.setValueAtTime(b.gain, t0);
-    g.gain.exponentialRampToValueAtTime(0.001, t0 + b.dur);
+    // Start and end at silence instead of switching an arbitrary oscillator/noise sample on abruptly.
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(b.gain, t0 + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + b.dur);
+    g.gain.linearRampToValueAtTime(0, t0 + b.dur + 0.01);
     g.connect(masterGain);
     let src: AudioScheduledSourceNode;
+    let filter: BiquadFilterNode | null = null;
     if (b.noise) {
       if (!noiseBuf) {
         noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
@@ -176,6 +191,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
       n.buffer = noiseBuf;
       n.loop = true;
       const bp = ctx.createBiquadFilter();
+      filter = bp;
       bp.type = 'bandpass'; bp.frequency.value = b.freq; bp.Q.value = b.q ?? 1;
       n.connect(bp); bp.connect(g);
       src = n;
@@ -189,16 +205,20 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     }
     src.start(t0);
     src.stop(t0 + b.dur + 0.02);
+    activeBursts++;
+    src.onended = () => { src.disconnect(); filter?.disconnect(); g.disconnect(); activeBursts--; };
     bursts++;
   }
   /** Split-flap clacks: `count` bursts `interval` s apart, each a random 1.4–2 kHz bandpassed tick. */
   function clack(count = 1, interval = 0.07) {
-    for (let k = 0; k < count; k++) burst({ freq: 1400 + Math.random() * 600, q: 6, gain: 0.5, dur: 0.05, noise: true, at: k * interval });
+    for (let k = 0; k < Math.min(3, count); k++) burst({ freq: 900 + Math.random() * 300, q: 2, gain: 0.08, dur: 0.05, noise: true, at: k * Math.max(.1, interval) });
   }
-  const step = () => burst({ freq: 120, to: 60, gain: 0.05, dur: 0.04 });
-  const select = () => burst({ freq: 1200, gain: 0.14, dur: 0.03, type: 'triangle' });
-  const confirm = () => { burst({ freq: 900, gain: 0.16, dur: 0.05, type: 'triangle' }); burst({ freq: 1400, gain: 0.16, dur: 0.07, type: 'triangle', at: 0.07 }); };
-  const staticBurst = () => burst({ freq: 2500, q: 0.6, gain: 0.3, dur: 0.08, noise: true });
+  const step = () => burst({ freq: 120, to: 70, gain: 0.025, dur: 0.05 });
+  const select = () => burst({ freq: 750, gain: 0.055, dur: 0.045 });
+  const confirm = () => { burst({ freq: 660, gain: 0.065, dur: 0.06 }); burst({ freq: 990, gain: 0.055, dur: 0.08, at: 0.08 }); };
+  const staticBurst = () => burst({ freq: 1100, q: 1, gain: 0.035, dur: 0.08, noise: true });
+
+  const mixTargets = new Map<string, number>();
 
   function applyMix(p: number, immediate = false) {
     if (!ctx) return;
@@ -206,13 +226,17 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     const set = (name: string, v: number) => {
       const g = gains.get(name);
       if (!g) return;
+      // Avoid queuing redundant automation every animation frame at a stationary camera.
+      if (!immediate && Math.abs((mixTargets.get(name) ?? -1) - v) < 0.001) return;
+      mixTargets.set(name, v);
+      g.gain.cancelScheduledValues(t);
       if (immediate) g.gain.setValueAtTime(v, t);
-      else g.gain.setTargetAtTime(v, t, 0.35);
+      else g.gain.setTargetAtTime(v, t, 0.65);
     };
-    set(BED, 0.4);
+    set(BED, 0.12);
     for (const s of SECTIONS) {
       if (s.id === 'city') continue;
-      set(DISTRICT_LOOPS[s.id], windowFor(p, s.start, s.end));
+      set(DISTRICT_LOOPS[s.id], windowFor(p, s.start, s.end) * 0.3);
     }
   }
 
@@ -220,6 +244,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   const onGesture = () => { start(); };
   addEventListener('pointerdown', onGesture, { passive: true });
   addEventListener('keydown', onGesture);
+  document.addEventListener('visibilitychange', applyMute);
   // Automated checks (`?audio=1`): headless Chrome allows autoplay with --autoplay-policy=no-user-gesture-required.
   if (params.get('audio') === '1') setTimeout(start, 0);
 
@@ -248,6 +273,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     dispose() {
       removeEventListener('pointerdown', onGesture);
       removeEventListener('keydown', onGesture);
+      document.removeEventListener('visibilitychange', applyMute);
       for (const s of sources.values()) { try { s.stop(); } catch { /* already stopped */ } }
       ctx?.close().catch(() => {});
       ctx = null;
