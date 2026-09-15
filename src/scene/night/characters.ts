@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import type { PathDef } from './paths';
+import { refineRoninRun } from './ronin-run';
 import { rigMeta, groundOffsetFor, type RigMeta } from './rigs';
 
 /**
@@ -131,6 +132,9 @@ export function loadCharacter(name: string, base = '/night/characters'): Promise
         const before = clip.tracks.length;
         clip.tracks = clip.tracks.filter((t) => filter(t) !== 'redundant');
         stripped += before - clip.tracks.length;
+      }
+      if (name === 'ronin-player' && clips.has('run') && clips.has('walk')) {
+        clips.set('run', refineRoninRun(clips.get('run')!, clips.get('walk')!));
       }
       // Meshy normalises the bind pose to meta.height_meters; measure anyway (unrigged model.glb fallback).
       const height = bboxHeight(g.scene) || 1.75;

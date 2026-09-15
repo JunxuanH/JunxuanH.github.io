@@ -27,5 +27,14 @@ Pricing sources: https://fal.ai/models/fal-ai/hunyuan-3d/v3.1/pro/image-to-3d an
 - Runtime foot offsets: walk .002 m, run .022 m. Idle metadata offset -.0153 m is divided by the exported 1.17647 unit scale, giving -.013 m after normalization.
 - Player: walk 1.8 m/s, run 4.8 m/s; speed-dependent clip rate even during fade-out, hysteresis, phase-preserving walk/run transitions, heading follows velocity during reversal.
 - QA: `/lab/characters?gait=ronin-player` provides actual-controller regression checks and visual controls. All seven idle/slow/walk/run/walk/reverse/idle stages passed, planted-foot p20 within .004 m and skeleton-scale error 0.
+
+## Run refinement (2026-09-15)
+
+- No new generated assets or fal charges. `ronin-run.ts` clones the run at load time and softens its poses using phase-matched walk samples: shoulder 75%, arms 45%, hips/spine/legs 20%. The original GLBs, scale tracks, and other rigs are untouched.
+- Re-audited native run speed: 4.778 m/s; step length 1.593 m; run ground offset .024 m. At player speed 4.8 m/s the clip now plays at 1.00× instead of .89×.
+- Run foot-height range in the audit fell from roughly 17 cm to 10 cm, and maximum vertex displacement fell from .218 to .160 m. This moderates the springy sprint and jacket pinching; it is not a new skin-weight solution.
+- Player enters run above 3.1 m/s and returns to walk below 2.7 m/s, avoiding the old very slow sprint at 2.2 m/s while retaining hysteresis.
+- Visual checks: same side-on pose before/after and live full-speed run. Actual-rig regression: idle/slow/walk/run/walk/reverse/idle passed, planted foot within .003 m, skeleton-scale error zero, browser error log empty.
+- `scripts/ronin-run-check.mjs` covers immutable source, phase sampling, loop continuity on synthetic tracks, normalized rotations, unchanged scale, and reduced extremes. Gait tests and production build pass. TypeScript still reports the 11 existing unrelated scene errors, with no errors in the changed files.
 - Unit check: `node --experimental-strip-types scripts/gait-check.mjs`.
 - Previous soldier kept intact and used as load/clip-error fallback.

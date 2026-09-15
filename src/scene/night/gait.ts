@@ -6,7 +6,8 @@ export const RUN_SPEED = 4.8;
 export function gaitForSpeed(speed: number, previous: Gait): Gait {
   // Separate entry/exit thresholds avoid animation chatter with a thumbstick or against walls.
   if (speed < (previous === 'idle' ? .16 : .08)) return 'idle';
-  return speed > (previous === 'run' ? 1.95 : 2.2) ? 'run' : 'walk';
+  // Stay in a brisk walk until the sprint can play at a believable cadence.
+  return speed > (previous === 'run' ? 2.7 : 3.1) ? 'run' : 'walk';
 }
 
 export function gaitRate(speed: number, stride: number): number {
