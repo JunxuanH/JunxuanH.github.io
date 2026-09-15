@@ -1,17 +1,11 @@
-import { SECTIONS, type SectionId } from './journey';
-
 /*
- * Ambient sound. Five seamless loops (public/night/audio/<name>.{opus,m4a}, see scripts/night-audio.sh):
- * a constant rain bed plus one loop per district, crossfaded by journey progress. The AudioContext is
+ * One continuous instrumental synthwave loop across every location, with quiet interaction effects.
+ * No layered rain or district ambience. The AudioContext is
  * created lazily on the first pointerdown/keydown (autoplay policy); everything is muted by default
  * unless the visitor unmuted before (localStorage) or `?audio=1` is set for automated checks.
  */
-const DISTRICT_LOOPS: Record<Exclude<SectionId, 'city'>, string> = {
-  education: 'japantown', work: 'center', projects: 'kabuki', contact: 'pier',
-};
-const BED = 'rain';
+const TRACK = 'neon-cruise-v1';
 const STORAGE_KEY = 'night-audio';
-const FEATHER = 0.05;
 
 export interface NightAudio {
   update(p: number): void;
@@ -46,13 +40,6 @@ export const sfx = {
   clack: (count?: number, interval?: number) => current?.clack(count, interval),
 };
 
-/** Triangle window over a section range with ±FEATHER feathering; 1 well inside, 0 outside. */
-function windowFor(p: number, start: number, end: number) {
-  const inA = Math.min(1, Math.max(0, (p - (start - FEATHER)) / (2 * FEATHER)));
-  const outA = Math.min(1, Math.max(0, ((end + FEATHER) - p) / (2 * FEATHER)));
-  return Math.min(inA, outA);
-}
-
 let primed: AudioContext | null = null;
 /**
  * Create the AudioContext inside a user gesture (the landing gate's Enter): iOS / Safari only unlock audio from one.
@@ -85,7 +72,6 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   const sources = new Map<string, AudioBufferSourceNode>();
   let ready = false;
   let starting = false;
-  let lastP = 0;
 
   const canOpus = (() => {
     try { return document.createElement('audio').canPlayType('audio/ogg; codecs=opus') !== ''; } catch { return false; }
@@ -104,7 +90,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     src.buffer = buf;
     src.loop = true;
     src.connect(gain);
-    src.start(0, Math.random() * buf.duration); // desync the loops
+    src.start(0); // start on the downbeat; location changes never restart the track
     gains.set(name, gain);
     sources.set(name, src);
   }
@@ -117,11 +103,11 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
       if (ctx.state === 'suspended' && !muted) ctx.resume().catch(() => {});
       masterGain = ctx.createGain();
       masterGain.gain.value = 0;
-      // Keep generated ambience behind the interaction, with less hiss and low-end rumble.
+      // Gentle bandwidth control without muffling the synth melody.
       ambience = ctx.createBiquadFilter();
-      ambience.type = 'lowpass'; ambience.frequency.value = 3200; ambience.Q.value = 0.5;
+      ambience.type = 'lowpass'; ambience.frequency.value = 8500; ambience.Q.value = 0.5;
       const highpass = ctx.createBiquadFilter();
-      highpass.type = 'highpass'; highpass.frequency.value = 90; highpass.Q.value = 0.5;
+      highpass.type = 'highpass'; highpass.frequency.value = 45; highpass.Q.value = 0.5;
       ambience.connect(highpass); highpass.connect(masterGain);
       const compressor = ctx.createDynamicsCompressor();
       compressor.threshold.value = -12; compressor.knee.value = 12;
@@ -131,12 +117,12 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
       analyserBuf = new Float32Array(new ArrayBuffer(analyser.fftSize * 4));
       masterGain.connect(compressor); compressor.connect(analyser);
       analyser.connect(ctx.destination);
-      const names = [BED, ...Object.values(DISTRICT_LOOPS)];
+      const names = [TRACK];
       const results = await Promise.allSettled(names.map(loadLoop));
       results.forEach((r, i) => { if (r.status === 'rejected') console.warn('[audio] loop failed', names[i], r.reason); });
       ready = gains.size > 0;
       applyMute();
-      applyMix(lastP, true);
+      gains.get(TRACK)?.gain.setTargetAtTime(0.65, ctx.currentTime, 0.6);
     } catch (e) {
       console.warn('[audio] unavailable', e);
     } finally {
@@ -218,28 +204,6 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   const confirm = () => { burst({ freq: 660, gain: 0.065, dur: 0.06 }); burst({ freq: 990, gain: 0.055, dur: 0.08, at: 0.08 }); };
   const staticBurst = () => burst({ freq: 1100, q: 1, gain: 0.035, dur: 0.08, noise: true });
 
-  const mixTargets = new Map<string, number>();
-
-  function applyMix(p: number, immediate = false) {
-    if (!ctx) return;
-    const t = ctx.currentTime;
-    const set = (name: string, v: number) => {
-      const g = gains.get(name);
-      if (!g) return;
-      // Avoid queuing redundant automation every animation frame at a stationary camera.
-      if (!immediate && Math.abs((mixTargets.get(name) ?? -1) - v) < 0.001) return;
-      mixTargets.set(name, v);
-      g.gain.cancelScheduledValues(t);
-      if (immediate) g.gain.setValueAtTime(v, t);
-      else g.gain.setTargetAtTime(v, t, 0.65);
-    };
-    set(BED, 0.12);
-    for (const s of SECTIONS) {
-      if (s.id === 'city') continue;
-      set(DISTRICT_LOOPS[s.id], windowFor(p, s.start, s.end) * 0.3);
-    }
-  }
-
   // Autoplay policy: only a user gesture may create/resume the context.
   const onGesture = () => { start(); };
   addEventListener('pointerdown', onGesture, { passive: true });
@@ -249,10 +213,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   if (params.get('audio') === '1') setTimeout(start, 0);
 
   const api: NightAudio = {
-    update(p) {
-      lastP = p;
-      if (ready) applyMix(p);
-    },
+    update(_p) { /* The soundtrack continues unchanged between locations. */ },
     clack, step, select, confirm, static: staticBurst,
     setMuted(m) {
       muted = m;
@@ -291,7 +252,7 @@ export function bindAudioToggle(audio: NightAudio, button: HTMLElement | null) {
   const sync = () => {
     const on = !audio.muted;
     button.setAttribute('aria-pressed', String(on));
-    button.setAttribute('aria-label', on ? 'Mute ambient sound' : 'Unmute ambient sound');
+    button.setAttribute('aria-label', on ? 'Mute soundtrack' : 'Unmute soundtrack');
     button.dataset.state = on ? 'on' : 'off';
   };
   button.addEventListener('click', () => { audio.setMuted(!audio.muted); sync(); });

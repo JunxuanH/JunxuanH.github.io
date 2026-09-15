@@ -1,0 +1,9 @@
+{
+  "title": "Neon Cruise",
+  "endpoint": "elevenlabs/music/v2.5",
+  "request_id": "01a0a377-fc7a-7f80-a3dc-6e91865e22d9",
+  "estimated_cost_usd": 0.625,
+  "source_duration_ms": 62500,
+  "prompt": "Instrumental minimal mellow synthwave loop for a neon cyberpunk harbor at night. Exactly 96 BPM steady 4/4. Warm soft analog pad chords, round clean pulsing synth bass, restrained electronic kick and snare, sparse delicate arpeggio. Calm confident late-night cruising mood, spacious polished mix with gentle highs and controlled bass. One consistent understated groove throughout, start immediately on the groove, no intro, no outro, no build-ups, no drops, no busy solos, no harsh distortion, no glitch effects, no rain or city sound effects, no voices. Repeating 8-bar harmonic pattern in A minor, designed for unobtrusive looping beneath a website.",
+  "processing": "scripts/synthwave-loop.sh: 2.5s tail/head crossfade, 60s loop, loudness -20 LUFS, true peak target -3 dBTP"
+}

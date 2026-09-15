@@ -87,6 +87,8 @@ export interface Cover {
 
 export interface NavOptions {
   journey: { p: number };
+  /** Location changes fade by default; cinematic paths are retained only for explicit tooling. */
+  transition?: 'fade' | 'cinematic';
   onMode?(mode: Mode, prev: Mode): void;
   onSection?(id: SectionId): void;
   onEnterWalk?(id: WalkSection): void;
@@ -174,8 +176,8 @@ export function createNav(opts: NavOptions) {
   const endCut = () => { cut = null; opts.onBeat?.(null); };
   const dropCover = () => { if (cut?.cover) { cut.cover.dispose(); cut.cover = null; } };
 
-  function enterWalk(id: WalkSection) {
-    setMode('walk', CUT.handoff);
+  function enterWalk(id: WalkSection, blend = CUT.handoff) {
+    setMode('walk', blend);
     opts.onEnterWalk?.(id);
   }
   /** The move has ended: park on the destination and start the hold (the title shows). */
@@ -213,7 +215,8 @@ export function createNav(opts: NavOptions) {
    * Redirecting mid-cutscene glides onto the new move. Reduced motion fades through black instead.
    */
   function panTo(id: SectionId) {
-    if (mode === 'dock' && !reducedMotion) undock();
+    const fadeOnly = opts.transition !== 'cinematic' || reducedMotion;
+    if (mode === 'dock' && !fadeOnly) undock();
     if (mode === 'walk' && id === section && !cut) return;       // already there (unless cancelling a pending fade)
     if (cut && id === cut.to) return;                             // already on the way there
     const fromId = section, to = NAV_TARGET[id];
@@ -222,7 +225,7 @@ export function createNav(opts: NavOptions) {
     dropCover();
     inFlight = true;
     rig.navFlight = true;
-    if (reducedMotion) {
+    if (fadeOnly) {
       // No camera motion at all: fade to black, cut everything at once behind it, fade back (tick).
       move = null;
       beginCut('fade', fromId, id, null);
@@ -324,7 +327,7 @@ export function createNav(opts: NavOptions) {
           journey.p = NAV_TARGET[id]; move = null;
           rig.reset(); rig.navFlight = false; inFlight = false;
           opts.onArrive?.(id);
-          if (id !== 'city') enterWalk(id);
+          if (id !== 'city') enterWalk(id, 0);
           setBeat('reveal');
         }
         break;

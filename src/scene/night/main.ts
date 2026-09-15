@@ -32,7 +32,6 @@ import { createNav, SPAWN } from './nav';
 import { createPlayer } from './player';
 import { createInput } from './input';
 import { createHud } from './hud';
-import { createCine } from './cutscene';
 import { createInteractables } from './interactables';
 import { createDialogue, walkerTargets, carrierTarget, type Target } from './dialogue';
 import { buildAreas, type WalkSection } from './walkable';
@@ -154,10 +153,9 @@ export async function start(root: HTMLElement) {
   const ground = await loadGroundTextures();
   scene.add(createStreets(ground));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
-  // Painted skyline belongs only to the distant City establishing shot. Street cameras expose
-  // the flat panels as nearby walls, including the north panel between downtown buildings.
-  let backdrop: THREE.Group | null = null;
-  if (!panoUrl) pending.push(createBackdrop({ ring: !params.has('noring') }).then((m) => { backdrop = m; scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
+  // Keep the painted skyline on the far north boundary, visible down the city streets.
+  // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
+  if (!panoUrl) pending.push(createBackdrop({ ring: false }).then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],
@@ -335,10 +333,9 @@ export async function start(root: HTMLElement) {
   const dockTarget = new THREE.Vector3(), dockNormal = new THREE.Vector3();
   const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.nav a[data-section]')];
   // Generated video cutscenes over the nav transitions (desktop only; cutscene.ts decides). Clips are warmed per section.
-  const cine = createCine({ lite, narrow });
   const nav = createNav({
     journey,
-    cover: cine.cover,
+    transition: 'fade',
     onMode: (m) => { hud.setMode(m); if (player) player.root.visible = m !== 'ride'; },
     onSection: (id) => {
       navLinks.forEach((a) => {
@@ -354,7 +351,7 @@ export async function start(root: HTMLElement) {
       hud.showHintOnce();
     },
     // The camera has settled on the district's establishing shot (the cutscene's hold): the title card.
-    onArrive: (id) => { if (id !== 'city') { const th = THEMES[id]; hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase()); } cine.preload(id); },
+    onArrive: (id) => { if (id !== 'city') { const th = THEMES[id]; hud.toast(th.name.toUpperCase(), th.subtitle.toUpperCase()); } },
     onBeat: (s) => hud.cutscene(s), // letterbox bars, the skip chip, the reduced-motion fade
     onDock: (id) => {
       content.dock(id);
@@ -534,7 +531,6 @@ export async function start(root: HTMLElement) {
   // ---------- journey: ride at p (the hero, or a `?p=` override) until the nav or the hero button pans somewhere
   if (player) player.root.visible = false;
   nav.start();
-  cine.preload(nav.section); // the four clips out of the starting section, once the first frame is up and the thread idle
   const railPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
@@ -685,8 +681,6 @@ export async function start(root: HTMLElement) {
     timed('life', () => { for (const l of life) l.update(dt, camera); });
     dialogue.glance(); // after the mixers: the resident being talked to looks at the player
     timed('districts', () => districts.update(t, p, walkSec));
-    // Include the landing reveal, but never walking, docking or travel between districts.
-    if (backdrop) backdrop.visible = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05;
     timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));
