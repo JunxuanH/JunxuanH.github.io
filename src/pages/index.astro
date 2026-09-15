@@ -28,27 +28,112 @@ const win = (k: string) => WINDOWS[k].join(',');
     <meta property="og:description" content={profile.summary} />
     <meta property="og:image" content="/og.jpg" />
     <link rel="icon" href="/logo.ico" />
+    <script is:inline>
+      // Warp poster (the loop's first frame: the gate's dimmed backdrop and the reduced-motion overlay): preload the breakpoint's image unless the landing is off. Inserted
+      // by script so ?flat / ?nolanding / ?p= never fetch anything from /night/landing/.
+      (function () {
+        var q = new URLSearchParams(location.search);
+        if (q.has('flat') || q.has('nolanding') || q.has('p') || !('WebGLRenderingContext' in window)) return;
+        [['/night/landing/warp-poster.jpg', '(min-width: 761px)'], ['/night/landing/warp-poster-p.jpg', '(max-width: 760px)']].forEach(function (x) {
+          var l = document.createElement('link');
+          l.rel = 'preload'; l.as = 'image'; l.href = x[0]; l.media = x[1];
+          document.head.appendChild(l);
+        });
+      })();
+    </script>
   </head>
   <body>
     <a class="skip" href="#education">Skip to content</a>
-    <div id="boot" class="boot" role="status" aria-live="polite" aria-busy="true">
-      <div class="boot-inner">
-        <p class="boot-kicker">Neon Harbor · boot sequence</p>
-        <p class="boot-wordmark" data-text="IVAN HE">IVAN HE</p>
-        <div class="boot-bar" aria-hidden="true"><i></i></div>
-        <p class="boot-pct" aria-hidden="true">00%</p>
-        <ol class="boot-log" aria-hidden="true"><li class="is-live">downloading the city</li></ol>
-        <p class="boot-msg"></p>
-        <a class="boot-skip" href="?flat">Skip the render → text version</a>
-        <p class="boot-hint">Heavy on phones — the text version has everything.</p>
+    <!-- Landing gate (scene/night/gate.ts): static on first paint, nothing 3D runs behind it. Enter starts the load. -->
+    <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" aria-describedby="gate-notice">
+      <div class="gate-bg" aria-hidden="true"></div>
+      <div class="gate-card">
+        <p class="gate-kicker">Neon Harbor · an interactive résumé</p>
+        <h2 id="gate-h" class="gate-name">{profile.name}</h2>
+        <p class="gate-role">{profile.title}</p>
+        <p class="gate-summary">{profile.summary}</p>
+        <p class="gate-links">
+          <a href="/resume">Résumé</a>
+          <a href={profile.links.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
+          <a href={profile.links.github} target="_blank" rel="noopener">GitHub ↗</a>
+          <a href="?flat">Text version</a>
+        </p>
+        <p id="gate-notice" class="gate-notice">
+          <span class="gate-notice-long"><strong>Motion warning.</strong> This experience contains fast motion and flashing lights. If you are sensitive to flashing images, choose reduced motion.</span>
+          <span class="gate-notice-short"><strong>Motion warning:</strong> fast motion and flashing lights.</span>
+        </p>
+        <div class="gate-actions">
+          <button class="neon-btn primary gate-enter" type="button" data-choice="full">Enter the city</button>
+          <button class="neon-btn outline gate-enter" type="button" data-choice="reduced">Enter with reduced motion</button>
+        </div>
       </div>
     </div>
+    <!-- Boot + warp landing (scene/night/boot.ts, landing.ts): after Enter, the light-speed loop while the city builds (or
+         the poster for reduced motion); when the first frame is up the arrival clip plays and fades onto the live vista. -->
+    <div id="boot" class="boot" aria-busy="true">
+      <div class="boot-media" aria-hidden="true">
+        <div class="boot-warp"><i></i><i></i><i></i></div>
+        <video class="warp-loop" muted playsinline loop disablepictureinpicture preload="none" tabindex="-1" aria-hidden="true"></video>
+        <video class="warp-arrival" muted playsinline disablepictureinpicture preload="auto" tabindex="-1" aria-hidden="true"></video>
+      </div>
+      <div class="boot-top">
+        <p class="boot-wordmark" data-text="IVAN HE">IVAN HE</p>
+        <p class="boot-kicker">Neon Harbor · inbound</p>
+      </div>
+      <div class="boot-hud">
+        <div class="boot-bar" aria-hidden="true"><i></i></div>
+        <div class="boot-row">
+          <p class="boot-pct" aria-hidden="true">00%</p>
+          <ol class="boot-log" aria-hidden="true"><li class="is-live">downloading the city</li></ol>
+          <a class="boot-skip" href="?flat">Text version →</a>
+        </div>
+        <p class="boot-msg"></p>
+        <p class="boot-hint">Heavy on phones — the text version has everything.</p>
+      </div>
+      <p class="boot-sr visually-hidden" role="status" aria-live="polite"></p>
+    </div>
     <script is:inline>
-      // Runs before the app bundle arrives: creep the boot bar toward 12% so the download phase isn't a frozen screen.
+      // Gate + landing mode, before first paint. Off (?flat, ?nolanding, ?p=, no WebGL): no gate, the plain boot screen.
+      // Otherwise the gate opens with the remembered choice (localStorage nh-gate) or the OS reduced-motion preference
+      // pre-selected, and catches a click that lands before gate.ts has loaded.
       (function () {
-        var bar = document.querySelector('.boot-bar i'), pct = document.querySelector('.boot-pct'), t0 = Date.now();
+        var gate = document.getElementById('gate'), boot = document.getElementById('boot'), q = new URLSearchParams(location.search);
+        if (q.has('flat') || q.has('nolanding') || q.has('p') || !('WebGLRenderingContext' in window)) { boot.dataset.landing = 'off'; gate.remove(); return; }
+        boot.dataset.landing = 'pending';
+        var saved = null;
+        try { saved = localStorage.getItem('nh-gate'); } catch (e) {}
+        if (saved !== 'full' && saved !== 'reduced') saved = null;
+        var pre = saved || (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full');
+        gate.dataset.pre = pre;
+        gate.dataset.state = 'open';
+        if (saved) gate.classList.add('is-returning');
+        var btns = gate.querySelectorAll('.gate-enter');
+        for (var i = 0; i < btns.length; i++) {
+          var on = btns[i].getAttribute('data-choice') === pre;
+          btns[i].classList.toggle('primary', on); btns[i].classList.toggle('outline', !on);
+        }
+        if (pre === 'reduced') btns[0].parentNode.insertBefore(btns[1], btns[0]);
+        gate.querySelector('.gate-enter.primary').focus({ preventScroll: true });
+        gate.addEventListener('click', function (e) {
+          var b = e.target.closest && e.target.closest('.gate-enter');
+          if (!b || window.__gateModule || window.__gateChoice) return; // gate.ts handles it once loaded
+          var c = b.getAttribute('data-choice');
+          window.__gateChoice = c;
+          try { localStorage.setItem('nh-gate', c); } catch (e) {}
+          if (c === 'reduced') document.documentElement.classList.add('reduce-motion');
+          gate.dataset.state = 'closed';
+          boot.dataset.landing = 'poster';
+        });
+      })();
+    </script>
+    <script is:inline>
+      // Runs before the app bundle arrives: creep the boot bar toward 12% so the download phase isn't a frozen screen
+      // (from Enter when the gate is up; boot.ts takes the bar over once it loads).
+      (function () {
+        var boot = document.getElementById('boot'), bar = document.querySelector('.boot-bar i'), pct = document.querySelector('.boot-pct'), t0 = Date.now();
         function tick() {
           if (!bar || document.documentElement.classList.contains('is-booted') || bar.dataset.owned) return;
+          if (boot.dataset.landing === 'pending') { t0 = Date.now(); return requestAnimationFrame(tick); }
           var s = Date.now() - t0, v = 12 * (1 - Math.exp(-s / 5000));
           bar.style.width = v.toFixed(1) + '%'; pct.textContent = String(Math.round(v)).padStart(2, '0') + '%';
           requestAnimationFrame(tick);
@@ -229,16 +314,22 @@ const win = (k: string) => WINDOWS[k].join(',');
     <script>
       import { start } from '../scene/night/main';
       import { boot } from '../scene/night/boot';
+      import { gate } from '../scene/night/gate';
       const stage = document.getElementById('stage')!;
       const flat = new URLSearchParams(location.search).has('flat') || !('WebGLRenderingContext' in window);
+      const run = () => {
+        boot.begin();
+        start(stage)
+          .then((info) => console.info('[night]', info))
+          .catch((err) => {
+            console.error('[night] falling back to static page', err);
+            boot.fail(String(err?.message ?? err).slice(0, 80));
+            document.documentElement.classList.add('no-3d');
+          });
+      };
       if (flat) { document.documentElement.classList.add('no-3d'); boot.hide(); }
-      else start(stage)
-        .then((info) => console.info('[night]', info))
-        .catch((err) => {
-          console.error('[night] falling back to static page', err);
-          boot.fail(String(err?.message ?? err).slice(0, 80));
-          document.documentElement.classList.add('no-3d');
-        });
+      else if (gate.enabled) gate.wait().then(run); // nothing 3D until the visitor enters
+      else run();
     </script>
   </body>
 </html>

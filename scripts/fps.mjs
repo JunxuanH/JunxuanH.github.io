@@ -7,7 +7,7 @@ const browser = await chromium.launch({ executablePath: exe, headless: true, arg
 for (const q of queries) {
   const [vw, vh] = (process.env.VIEW || '1600x900').split('x').map(Number);
   const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: Number(process.env.DPR) || 1 });
-  await page.goto(`${base}?${q}`);
+  await page.goto(`${base}?${q}&nolanding`); // the warp landing throttles the render to ~4 fps under its overlay
   await page.waitForTimeout(Number(process.env.WAIT) || 12000);
   const r = await page.evaluate(() => new Promise((res) => {
     const ts = [];

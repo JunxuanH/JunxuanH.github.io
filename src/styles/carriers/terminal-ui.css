@@ -77,3 +77,8 @@
   .sheet.is-on .term-body * { clip-path: none; }
   .stage::after { transition: none; }
 }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion .sheet.is-on, html.reduce-motion .sheet.is-on .term-body *, html.reduce-motion .term-cursor, html.reduce-motion .term-head::before { animation: none !important; }
+html.reduce-motion .sheet.is-on .term-body * { clip-path: none; }
+html.reduce-motion .stage::after { transition: none; }
+

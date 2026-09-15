@@ -2,6 +2,7 @@ import * as THREE from 'three/webgpu';
 import { uniform, mix, float, hash, floor, time } from './tsl';
 import gsap from 'gsap';
 import { sectionAt, type SectionId } from './journey';
+import { reducedMotion } from './palette';
 import type { Instance } from './characters';
 
 /*
@@ -31,7 +32,6 @@ export interface InteractOptions {
   onGust?: (district: SectionId, strength: number) => void;
 }
 
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Wrap a sign material's colorNode once so a `hot` uniform can drive a flicker burst. */
 export function attachHot(mesh: THREE.Mesh): { value: number } | null {

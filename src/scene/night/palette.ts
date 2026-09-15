@@ -14,7 +14,16 @@ export const PAL = {
 export type Tier = 'high' | 'med' | 'low';
 
 export const params = new URLSearchParams(location.search);
-export const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/**
+ * Reduced motion for the session: the OS preference by default; the gate's "Enter with reduced motion" / "Enter the city"
+ * choice overrides it (gate.ts calls `setReducedMotion` before `start()`). A live binding: read it when it is used, never
+ * copy it into a module-level constant. `html.reduce-motion` mirrors it for the stylesheets.
+ */
+export let reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+export function setReducedMotion(on: boolean) {
+  reducedMotion = on;
+  document.documentElement.classList.toggle('reduce-motion', on);
+}
 
 /** Deterministic LCG so the city is identical on every load. */
 export function rng(seed: number) {

@@ -66,3 +66,7 @@ html.no-3d .ch { display: none; }
   .is-glitch > .dock-veil, .sheet .term-out.is-typing, .sheet .term-out.is-typing::after, .sheet .page.is-in, .sheet .is-docked .actions a.is-flip, .sheet .is-pulse { animation: none; }
   .sheet .term-out { clip-path: inset(0); }
 }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion .is-glitch > .dock-veil, html.reduce-motion .sheet .term-out.is-typing, html.reduce-motion .sheet .term-out.is-typing::after, html.reduce-motion .sheet .page.is-in, html.reduce-motion .sheet .is-docked .actions a.is-flip, html.reduce-motion .sheet .is-pulse { animation: none; }
+html.reduce-motion .sheet .term-out { clip-path: inset(0); }
+

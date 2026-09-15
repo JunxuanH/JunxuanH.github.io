@@ -133,3 +133,8 @@
   .term-ticker > span { padding-left: 0; white-space: normal; }
   .term-ticker { white-space: normal; }
 }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion .sheet .slab h2::after, html.reduce-motion .sheet .sys-title::before, html.reduce-motion .term-ticker > span, html.reduce-motion .sheet .card.is-in { animation: none; }
+html.reduce-motion .term-ticker > span { padding-left: 0; white-space: normal; }
+html.reduce-motion .term-ticker { white-space: normal; }
+

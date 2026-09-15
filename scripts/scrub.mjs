@@ -6,7 +6,7 @@ const exe = process.env.CHROME || `${process.env.HOME}/Library/Caches/ms-playwri
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
 page.on('console', (m) => { if (m.text().startsWith('[slow]')) console.log('  ', m.text()); });
-await page.goto(`${process.env.URL || 'http://localhost:4321/'}?${q}`);
+await page.goto(`${process.env.URL || 'http://localhost:4321/'}?${q}&nolanding`); // no warp landing overlay (landing.ts)
 await page.waitForFunction(() => document.documentElement.classList.contains('is-booted'), null, { timeout: 60000 });
 await page.waitForTimeout(Number(process.env.IDLE) || 1500);
 const passes = Number(process.env.PASSES || 1);

@@ -53,6 +53,19 @@ function windowFor(p: number, start: number, end: number) {
   return Math.min(inA, outA);
 }
 
+let primed: AudioContext | null = null;
+/**
+ * Create the AudioContext inside a user gesture (the landing gate's Enter): iOS / Safari only unlock audio from one.
+ * Nothing plays; createAudio adopts the context when the sound starts. Safe to call more than once.
+ */
+export function primeAudio() {
+  if (primed) return;
+  try {
+    primed = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (primed.state === 'suspended') primed.resume().catch(() => {});
+  } catch { primed = null; }
+}
+
 export function createAudio(opts: { base?: string; volume?: number } = {}): NightAudio {
   const base = opts.base ?? '/night/audio';
   const master = opts.volume ?? 0.8;
@@ -99,7 +112,8 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
     if (ctx || starting) return;
     starting = true;
     try {
-      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      ctx = primed ?? new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (ctx.state === 'suspended' && !muted) ctx.resume().catch(() => {});
       masterGain = ctx.createGain();
       masterGain.gain.value = 0;
       analyser = ctx.createAnalyser();

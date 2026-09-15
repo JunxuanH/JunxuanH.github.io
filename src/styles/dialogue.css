@@ -68,3 +68,7 @@
   .dlg.is-on, .dlg.is-done .dlg-more, .dlg:not(.is-done) .dlg-typed::after { animation: none; }
   .dlg-more { transition: none; }
 }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion .dlg.is-on, html.reduce-motion .dlg.is-done .dlg-more, html.reduce-motion .dlg:not(.is-done) .dlg-typed::after { animation: none; }
+html.reduce-motion .dlg-more { transition: none; }
+

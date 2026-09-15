@@ -206,3 +206,8 @@ html[data-cutscene] .nav:hover { opacity: 1; }
   .hud-prompt, .hud-hint, .hud-toast, .stick, .hud-bar, .nav { transition: none; }
   .hud-skip { display: none; }
 }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion .hud-prompt.is-on, html.reduce-motion .hud-hint.is-on, html.reduce-motion .hud-toast.is-on, html.reduce-motion .hud-elabel.is-on, html.reduce-motion .hud-btn-e.is-hot { animation: none; }
+html.reduce-motion .hud-prompt, html.reduce-motion .hud-hint, html.reduce-motion .hud-toast, html.reduce-motion .stick, html.reduce-motion .hud-bar, html.reduce-motion .nav { transition: none; }
+html.reduce-motion .hud-skip { display: none; }
+

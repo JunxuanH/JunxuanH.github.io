@@ -11,7 +11,10 @@
  */
 import * as THREE from 'three/webgpu';
 import * as TSL from 'three/tsl';
+import { reducedMotion } from './palette';
 export * from 'three/tsl';
+/** three's `time` (seconds, per render), held at 0 under reduced motion: no neon buzz, ad glitches, billboard sweeps or ripples. */
+export const time = TSL.uniform(0).setGroup(TSL.renderGroup).onRenderUpdate((frame: { time: number }) => (reducedMotion ? 0 : frame.time));
 export const color = (v: any): any =>
   typeof v === 'number' || typeof v === 'string' || v instanceof THREE.Color ? TSL.uniform(new THREE.Color(v)) : TSL.color(v);
 

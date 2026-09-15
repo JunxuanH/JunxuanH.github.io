@@ -6,7 +6,9 @@ const page = await browser.newPage({ viewport: { width: +w, height: +h }, reduce
 const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`.slice(0, 400)));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`.slice(0, 600)));
-await page.goto(url, { waitUntil: 'load' });
+// The warp landing (landing.ts) covers the city until a tap: skip it unless LANDING=1.
+const target = process.env.LANDING || /[?&](nolanding|flat|p=)/.test(url) ? url : url + (url.includes('?') ? '&' : '?') + 'nolanding';
+await page.goto(target, { waitUntil: 'load' });
 if (+scroll) { await page.waitForTimeout(1500); await page.evaluate((s) => window.scrollTo(0, s * (document.body.scrollHeight - innerHeight)), +scroll); }
 await page.waitForTimeout(+wait);
 console.log(await page.evaluate(() => ({ backend: document.documentElement.dataset.backend, tier: document.documentElement.dataset.tier, classes: document.documentElement.className, gpu: !!navigator.gpu })));

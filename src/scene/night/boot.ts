@@ -1,16 +1,19 @@
 /**
  * Boot screen: the `#boot` overlay in index.astro is visible from first paint; main.ts reports
  * milestones (`phase`) while it builds the city, three's DefaultLoadingManager nudges the bar
- * between them, and `done()` glitches the overlay away after the first rendered frame.
+ * between them, and `done()` hands the overlay to the warp landing (landing.ts: the buttons over the loop, the arrival
+ * clip) after the first rendered frame — or, with the landing off (`?nolanding`, `?p=`), glitches it away as before.
  * Every method is a no-op when the overlay is absent (lab pages, flat page).
  */
 import * as THREE from 'three/webgpu';
+import { landing } from './landing';
+import { reducedMotion } from './palette';
 
 const el = typeof document !== 'undefined' ? document.getElementById('boot') : null;
 const bar = el?.querySelector<HTMLElement>('.boot-bar i') ?? null;
 const pct = el?.querySelector<HTMLElement>('.boot-pct') ?? null;
 const log = el?.querySelector<HTMLElement>('.boot-log') ?? null;
-const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sr = el?.querySelector<HTMLElement>('.boot-sr') ?? null; // the polite live region (the visual log is aria-hidden)
 
 let target = 0;      // last milestone
 let shown = bar ? parseFloat(bar.style.width || '0') / 100 : 0; // continue from the inline pre-script's value
@@ -24,7 +27,7 @@ function paint() {
   // Creep toward the next milestone using the loader's item count so the bar never sits still.
   const within = total > 0 ? loaded / total : 0;
   const goal = finished ? 1 : Math.min(target + 0.03 + within * 0.1, 0.985); // the loader ratio carries the bar through network waits
-  shown = Math.max(shown, Math.min(goal, shown + (goal - shown) * (reduced ? 1 : 0.06)));
+  shown = Math.max(shown, Math.min(goal, shown + (goal - shown) * (reducedMotion ? 1 : 0.06)));
   bar.style.width = `${(shown * 100).toFixed(1)}%`;
   pct.textContent = `${Math.round(shown * 100).toString().padStart(2, '0')}%`;
   if (!finished || shown < 0.999) raf = requestAnimationFrame(paint);
@@ -34,12 +37,19 @@ if (el) {
   const m = THREE.DefaultLoadingManager;
   const prevProgress = m.onProgress;
   m.onProgress = (url, l, t) => { loaded = l; total = t; prevProgress?.(url, l, t); };
-  raf = requestAnimationFrame(paint);
-  // The escape hatch shows itself after a few seconds; on phones it is on from the start.
-  setTimeout(() => el.classList.add('is-slow'), 6000);
 }
+let begun = false;
 
 export const boot = {
+  /** The load starts (right away with the landing off, on the gate's Enter otherwise): run the bar, arm the skip link. */
+  begin() {
+    if (!el || begun) return;
+    begun = true;
+    shown = bar ? parseFloat(bar.style.width || '0') / 100 : 0;
+    raf = requestAnimationFrame(paint);
+    // The escape hatch shows itself after a few seconds; on phones it is on from the start.
+    setTimeout(() => el.classList.add('is-slow'), 6000);
+  },
   /** A milestone: `label` is what is being built now, `f` the overall fraction reached. */
   phase(label: string, f: number) {
     if (!el) return;
@@ -52,21 +62,24 @@ export const boot = {
       log.appendChild(li);
       while (log.children.length > 6) log.removeChild(log.firstElementChild!);
     }
+    if (sr) sr.textContent = `Loading Neon Harbor: ${label}`;
   },
-  /** First frame is on screen: fill the bar, glitch out, remove. */
+  /** First frame is on screen: fill the bar; the landing takes the overlay from here (or it glitches out and goes). */
   done() {
     if (!el || finished) return;
     finished = true;
     log?.lastElementChild?.classList.remove('is-live');
-    el.classList.add('is-done');
-    document.documentElement.classList.add('is-booted');
+    document.documentElement.classList.add('is-booted'); // cine preload and every probe wait for this
     el.setAttribute('aria-busy', 'false');
-    setTimeout(() => { el.remove(); cancelAnimationFrame(raf); }, reduced ? 0 : 700);
+    if (landing.enabled) { landing.ready(); return; }
+    el.classList.add('is-done');
+    setTimeout(() => { el.remove(); cancelAnimationFrame(raf); document.documentElement.classList.add('is-landed'); }, reducedMotion ? 0 : 700);
   },
   /** The scene could not start: say so and point at the flat page (index.astro switches to it). */
   fail(message = 'render failed') {
     if (!el) return;
     finished = true;
+    landing.fail();
     el.classList.add('is-failed');
     const m = el.querySelector<HTMLElement>('.boot-msg');
     if (m) m.textContent = `${message} — loading the text version`;

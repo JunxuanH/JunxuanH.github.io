@@ -9,3 +9,6 @@
   #cine video { object-fit: contain; }
 }
 @media (prefers-reduced-motion: reduce) { #cine { display: none; } }
+/* Session reduced motion (the landing gate's choice; palette.ts adds html.reduce-motion): the same as above. */
+html.reduce-motion #cine { display: none; }
+

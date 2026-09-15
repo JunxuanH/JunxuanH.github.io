@@ -49,7 +49,7 @@ function trackRequests(page) {
 let reloads = 0, onLoad = null;
 async function boot(page, q = '?q=med&dpr=1') {
   if (onLoad) page.off('load', onLoad); // our own navigation is not a reload
-  await page.goto(url + q, { waitUntil: 'load' });
+  await page.goto(url + q + (q.includes('nolanding') ? '' : '&nolanding'), { waitUntil: 'load' }); // the warp landing (landing.ts) would hold the hero behind its overlay
   await page.waitForSelector('html.is-booted', { timeout: 180_000 });
   await page.waitForTimeout(1500);
   // A dev-server HMR full reload mid-probe (someone saved a file) puts the page back on the hero: flag it.

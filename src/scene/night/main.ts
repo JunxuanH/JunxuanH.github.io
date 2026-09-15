@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { createContent } from './content';
 import { boot } from './boot';
+import { landing } from './landing';
 import { dedupeMaterials } from './districts/shared';
 import { createLightPool } from './lights';
 
@@ -25,7 +26,7 @@ import { createAds } from './ads';
 import { createTraffic } from './traffic';
 import { createRain } from './rain';
 import { createDistricts } from './districts';
-import { ANCHORS, poseAt, rig, SECTIONS, type SectionId } from './journey';
+import { ANCHORS, ESTABLISH, poseAt, rig, SECTIONS, type SectionId } from './journey';
 import { createNav, SPAWN } from './nav';
 import { createPlayer } from './player';
 import { createInput } from './input';
@@ -36,6 +37,29 @@ import { createDialogue, walkerTargets, carrierTarget, type Target } from './dia
 import { buildAreas, type WalkSection } from './walkable';
 import { THEMES } from './theme';
 import type { PropPlacement } from './props';
+
+/** The lens of the warp landing's clips (landing.ts): the camera matches it while the overlay is up, then eases back. */
+const LANDING_FOV = 50;
+let tiltAnswer: Promise<boolean> | null = null;
+/** Phones feed device tilt into the parallax (not under reduced motion, not with `?nogyro`). */
+const tiltWanted = () => typeof window !== 'undefined' && matchMedia('(pointer: coarse)').matches && !reducedMotion && !params.has('nogyro') && 'DeviceOrientationEvent' in window;
+/**
+ * Ask for device-tilt access. iOS only prompts from a completed tap (click / touchend): call it synchronously inside one —
+ * the landing gate's Enter does, before `start()`, so the system dialog never covers the warp clip. Resolves true when
+ * tilt may be used (granted, or no permission API), false when refused or not wanted. The answer is kept; a refusal
+ * WebKit makes without prompting (not a gesture it accepts) is forgotten so the next tap asks again.
+ */
+export function askTilt(): Promise<boolean> {
+  if (!tiltWanted()) return Promise.resolve(false);
+  const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
+  if (typeof DOE.requestPermission !== 'function') return Promise.resolve(true);
+  if (tiltAnswer) return tiltAnswer;
+  let req: Promise<string>;
+  try { req = DOE.requestPermission(); } catch { return Promise.resolve(false); }
+  const answer: Promise<boolean> = req.then((s) => s === 'granted', () => { if (tiltAnswer === answer) tiltAnswer = null; return false; });
+  tiltAnswer = answer;
+  return answer;
+}
 
 /**
  * Neon Harbor. Bay vista hero → the nav pans the camera along the rail to a district, where the visitor takes
@@ -169,7 +193,7 @@ export async function start(root: HTMLElement) {
   if (water) scene.add(water);
   scene.add(createBridge());
   scene.add(createQuay(QUAY_Z, ground));
-  const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
+  const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite || reducedMotion ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
   billboard.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5);
   scene.add(billboard);
 
@@ -181,7 +205,7 @@ export async function start(root: HTMLElement) {
     { x: 72, y: 6.5, z: -238, yaw: 0.3, w: 3.5 }, { x: -20, y: 8, z: -70, yaw: Math.PI / 2, w: 4 }, { x: 20, y: 9, z: -140, yaw: -Math.PI / 2, w: 4 },
   ]);
   scene.add(signs);
-  if (lite) params.set('novideo', '1');
+  if (lite || reducedMotion) params.set('novideo', '1'); // phones and reduced motion: still ads
   const ads = await createAds([{ x: -12, y: 38, z: -70 }, { x: 14, y: 42, z: -104 }, { x: -14, y: 30, z: -168 }, { x: 16, y: 48, z: -180 }]);
   scene.add(ads.group);
   const traffic = await createTraffic([
@@ -197,7 +221,7 @@ export async function start(root: HTMLElement) {
     { pts: [[-300, 13.5, 70], [300, 13.5, 70]], speed: 0.03, ground: true },
   ], tier);
   scene.add(traffic.group);
-  const rainCount = params.has('norain') ? 0 : { high: 5000, med: 2500, low: 0 }[tier];
+  const rainCount = params.has('norain') || reducedMotion ? 0 : { high: 5000, med: 2500, low: 0 }[tier];
   if (rainCount) scene.add(createRain(rainCount));
 
   boot.phase('wiring the districts', 0.45);
@@ -453,12 +477,12 @@ export async function start(root: HTMLElement) {
   const railPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
 
-  const pointer = new THREE.Vector2(), eased = new THREE.Vector2();
+  const pointer = new THREE.Vector2(), eased = new THREE.Vector2(), ZERO2 = new THREE.Vector2();
   let tiltOn = false, tiltLook = 1; // a phone is feeding device tilt into `pointer`; tiltLook = walk-mode tilt gain
   addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') pointer.set((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1); });
   // Phones: device tilt drives the same parallax as the mouse, a little stronger. iOS only grants motion access from a
   // user gesture, so the permission is requested on the first touch; Android delivers events directly. `?nogyro` opts out.
-  if (matchMedia('(pointer: coarse)').matches && !reducedMotion && !params.has('nogyro') && 'DeviceOrientationEvent' in window) {
+  if (tiltWanted()) {
     rig.parallaxScale = 3;
     let base: { x: number; y: number } | null = null;
     const onTilt = (e: DeviceOrientationEvent) => {
@@ -475,26 +499,35 @@ export async function start(root: HTMLElement) {
     const DOE = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof DOE.requestPermission === 'function') {
       // iOS: the request only counts inside a completed tap (touchend / click; pointerdown and touchstart are refused
-      // without a prompt). Ask on the first tap anywhere, retry on the next if WebKit refused, stop once answered. The
-      // hero's TILT chip is the explicit way in (a tap on "Enter the city" would prompt mid-cutscene).
+      // without a prompt). The landing's Enter-the-city tap asks (askTilt, before the arrival clip); the hero's TILT
+      // chip is the explicit way in after that. With the landing off (`?nolanding`), the first tap anywhere asks, as
+      // before. A refusal WebKit makes without prompting (not a gesture it accepts) is retried on the next ask.
       const chip = document.querySelector<HTMLButtonElement>('.hero-tilt');
-      let asking = false;
-      const done = (granted: boolean) => {
-        removeEventListener('touchend', ask, true); removeEventListener('click', ask, true);
-        if (chip) { chip.textContent = granted ? 'Tilt on ◈' : 'Tilt off'; chip.disabled = true; setTimeout(() => { chip.hidden = true; }, 1600); }
-      };
+      let answered = false;
       const ask = () => {
-        if (asking) return;
-        asking = true;
-        DOE.requestPermission!().then((s) => { if (s === 'granted') listen(); done(s === 'granted'); })
-          .catch(() => { asking = false; }); // not a gesture WebKit accepts: try again on the next tap
+        if (answered) return;
+        askTilt().then((granted) => {
+          if (answered || (!granted && !tiltAnswer)) return; // not a gesture WebKit accepts: the next tap asks again
+          answered = true;
+          removeEventListener('touchend', ask, true); removeEventListener('click', ask, true);
+          if (granted) listen();
+          if (chip) { chip.textContent = granted ? 'Tilt on ◈' : 'Tilt off'; chip.disabled = true; setTimeout(() => { chip.hidden = true; }, 1600); }
+        });
       };
-      addEventListener('touchend', ask, true);
-      addEventListener('click', ask, true);
-      if (chip) chip.hidden = false;
+      if (tiltAnswer) ask(); // the gate's Enter already asked: adopt its answer
+      else if (!landing.enabled) { addEventListener('touchend', ask, true); addEventListener('click', ask, true); }
+      if (chip && !answered) { chip.addEventListener('click', ask); chip.hidden = false; }
     } else listen();
     (window as any).__tilt = (beta: number, gamma: number) => onTilt({ beta, gamma } as DeviceOrientationEvent); // probes
   }
+
+  // ---------- warp landing (landing.ts): the overlay's tap asks for tilt; its crossfade lands on the vista's establishing pose
+  landing.configure({
+    onLand: () => { if (nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && journey.p !== ESTABLISH.city) { journey.p = ESTABLISH.city; rig.reset(); } },
+  });
+  const baseFov = camera.fov;
+  let lensK = landing.covering ? 1 : 0; // 1 = the clip's lens (phones: fov 50; wider than 16:9: zoomed to its crop), eased to 0 after landing
+  let lastDraw = 0, wasThrottled = false;
 
   const clock = new THREE.Timer();
   const perf = { cpu: 0, frames: 0, renderer, dpr };
@@ -522,11 +555,21 @@ export async function start(root: HTMLElement) {
   // Loop order: input → nav/player (mode camera) → content (carriers, slabs) → districts/carriers with the section
   // override → lights → the rest → render.
   renderer.setAnimationLoop(() => {
+    // Under the landing overlay (compiled shaders, nothing to see) render ~4 fps so the video decode keeps the GPU / CPU.
+    const throttled = !firstFrame && landing.covering && !landing.arriving;
+    if (throttled) {
+      const now = performance.now();
+      if (now - lastDraw < 250) return;
+      lastDraw = now;
+    }
+    const unthrottled = wasThrottled && !throttled;
+    wasThrottled = throttled;
+    if (unthrottled) { ema = 16; slow = 0; fast = 0; } // the 4 fps frame times are not the scene's cost
     clock.update();
     const t = reducedMotion ? 0 : clock.getElapsed();
     const dt = Math.min(clock.getDelta(), 0.05);
-    govern(dt);
-    eased.lerp(pointer, 0.05);
+    if (!throttled && !unthrottled) govern(dt);
+    eased.lerp(landing.covering ? ZERO2 : pointer, 0.05); // no parallax under the overlay: the crossfade lands on the clip's still
     const inp = input.poll();
     if (inp.skip) nav.skip(); // Esc / Enter / Space / a tap on the stage: cut the transition cutscene to its arrival
     nav.tick(dt);             // advance the cutscene: journey.p along the paced move, the beats, the hand-over to the character
@@ -563,7 +606,7 @@ export async function start(root: HTMLElement) {
     }
     else camera.rotation.z -= eased.x * 0.02;
     // The hero slab belongs to the vista only: it fades the moment a pan starts (p may not move until a fly-over's apex).
-    const heroOn = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05;
+    const heroOn = nav.mode === 'ride' && nav.section === 'city' && !nav.inFlight && p < 0.05 && !landing.covering;
     heroAlpha += ((heroOn ? 1 : 0) - heroAlpha) * Math.min(1, dt * 6);
     heroCopy.style.opacity = heroAlpha.toFixed(3);
     heroCopy.style.pointerEvents = heroAlpha > 0.5 ? 'auto' : 'none';
@@ -580,6 +623,12 @@ export async function start(root: HTMLElement) {
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));
     timed('audio', () => audio.update(p));
+    if (lensK > 0) {
+      if (!landing.covering) lensK = Math.max(0, lensK - dt / 1.5);
+      const k = lensK * lensK * (3 - 2 * lensK);
+      const fov = THREE.MathUtils.lerp(baseFov, LANDING_FOV, k), zoom = THREE.MathUtils.lerp(1, Math.max(1, camera.aspect / (16 / 9)), k);
+      if (fov !== camera.fov || zoom !== camera.zoom) { camera.fov = fov; camera.zoom = zoom; camera.updateProjectionMatrix(); }
+    }
     const t0 = performance.now();
     timed('render', () => pipeline.render());
     if (firstFrame) {

@@ -18,7 +18,7 @@ page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') 
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`.slice(0, 600)));
 
 const open = async (p) => {
-  await page.goto(`${url}?p=${p}&dpr=1&q=med&nocine`, { waitUntil: 'load' });
+  await page.goto(`${url}?p=${p}&dpr=1&q=med&nocine&nolanding`, { waitUntil: 'load' });
   await page.waitForSelector('html.is-booted', { timeout: 180_000 });
   await page.waitForTimeout(2500);
 };

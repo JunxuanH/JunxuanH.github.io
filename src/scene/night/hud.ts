@@ -16,6 +16,7 @@
  * and `data-cutscene` on <html> let the CSS dim the nav (it floats over the top bar and stays clickable).
  */
 import type { Mode, CutsceneState } from './nav';
+import { reducedMotion } from './palette';
 import type { DockActions } from './carriers/dock';
 
 const HINT_KEY = 'nh-hint-seen';
@@ -44,7 +45,6 @@ export function createHud() {
   const sheet = document.querySelector<HTMLElement>('.sheet');
   const navEl = document.querySelector<HTMLElement>('.nav');
   const coarse = matchMedia('(pointer: coarse)').matches;
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let hintTimer = 0, toastTimer = 0;
   let mode: Mode = 'ride';
   let promptText: string | null = null;
