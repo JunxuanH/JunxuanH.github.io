@@ -506,10 +506,9 @@ export async function start(root: HTMLElement) {
           const batch = fresh.slice(c, c + CHUNK);
           for (const o of batch) o.visible = true;
           const tc = performance.now();
-          // Compile against the actual post-process target/MRT, not the canvas target.
-          // Async node builds and GPU pipeline creation yield instead of blocking the live car.
-          await scenePass.compileAsync(renderer);
-          await landing.breathe();
+          // Warm the actual render passes in bounded batches. Do not await compileAsync:
+          // mobile drivers can leave its pipeline promises pending, trapping boot indefinitely.
+          // A timeout is not a safe fallback because compilation mutates shared renderer state.
           pipeline.render();
           if (params.has('prof') && performance.now() - tc > 150) console.info('[night] pre-warm chunk', Math.round(performance.now() - tc), 'ms', batch.map((o: any) => `${o.name || o.type}/${(Array.isArray(o.material) ? o.material[0] : o.material)?.type}`).join(', '));
           for (const o of batch) o.visible = false;
@@ -518,7 +517,6 @@ export async function start(root: HTMLElement) {
         }
         for (const o of shown) o.visible = true;
       }
-      await scenePass.compileAsync(renderer);
       await landing.breathe();
       pipeline.render();
       if (params.has('prof')) console.info('[night] pre-warm pose', pp, Math.round(performance.now() - tp), 'ms', fresh.length, 'new');
