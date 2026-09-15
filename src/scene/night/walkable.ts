@@ -8,7 +8,7 @@
 import * as THREE from 'three/webgpu';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
-import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, isRoad, isSidewalk } from './streets';
+import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, QUAY_Z, isRoad, isSidewalk } from './streets';
 import type { PropKind, PropPlacement } from './props';
 
 export type WalkSection = Exclude<SectionId, 'city'>;
@@ -18,7 +18,7 @@ export type Obstacle =
   | { kind: 'circle'; x: number; z: number; r: number; /** Height (u); tall shapes also block the camera. */ h?: number }
   | { kind: 'box'; x0: number; x1: number; z0: number; z1: number; h?: number }
   | { kind: 'obb'; x: number; z: number; hw: number; hd: number; yaw: number; h?: number };
-export interface Area { section: WalkSection; rects: Rect[]; obstacles: Obstacle[] }
+export interface Area { section: WalkSection; rects: Rect[]; obstacles: Obstacle[]; connected?: boolean }
 
 export const PLAYER_RADIUS = 0.4;
 export const DECK_Y = 2.9;
@@ -167,6 +167,32 @@ export function buildAreas(placements?: PropPlacement[] | null): Record<WalkSect
   return areas;
 }
 
+/** Entire rendered dry-land plane, raised quay and existing piers; no district fences. */
+export function buildWorldArea(areas: Record<WalkSection, Area>, buildings: Obstacle[], placements: PropPlacement[] = []): Area {
+  const rects: Rect[] = [
+    { x0: -379, x1: 379, z0: -639, z1: QUAY_Z - 2.4 },
+    { x0: -379, x1: 379, z0: QUAY_Z - 2.4, z1: QUAY_Z - .4, y: 3 },
+    { x0: 134.4, x1: 145.6, z0: QUAY_Z - 2.4, z1: 33.6, y: DECK_Y },
+    ...[-130, 70, 210].map((x) => ({ x0: x - 2.6, x1: x + 2.6, z0: QUAY_Z - 2.4, z1: 13.6, y: 2.85 })),
+  ];
+  const obstacles = buildings; // shared: late GLB loads append their actual bounds here too
+  obstacles.push(...Object.values(areas).flatMap((a) => a.obstacles));
+  // Add every placed prop, including those outside the former district pockets.
+  for (const pl of placements) {
+    const r = PROP_RADIUS[pl.kind];
+    if (r) obstacles.push(circle(pl.x, pl.z, r * (pl.s ?? 1), 1.5));
+  }
+  return { section: 'work', rects, obstacles, connected: true };
+}
+
+/** Spatial ownership changes content on foot without teleporting or resetting the camera. */
+export function sectionAt(x: number, z: number): WalkSection {
+  if (z > -45) return 'contact';
+  if (x < -38 && z > -150 && z < -55) return 'education';
+  if (x > 10 && z < -195 && z > -275) return 'projects';
+  return 'work';
+}
+
 // ---------- queries
 
 export function rectAt(area: Area, x: number, z: number, grow = 0): Rect | undefined {
@@ -175,6 +201,16 @@ export function rectAt(area: Area, x: number, z: number, grow = 0): Rect | undef
 
 /** Foot height at (x, z): the rect's fixed height, else the kerb (0.22) or the road (0). */
 export function groundY(area: Area, x: number, z: number): number {
+  if (area.connected) {
+    // Visible harbor access ramp rises from street to quay top; deck joins with a 10cm step.
+    if (x >= 134 && x <= 146 && z >= -34.4 && z <= -22.4) return CURB_H + (3 - CURB_H) * (z + 34.4) / 12;
+    if (z >= -22.4) {
+      if (z <= -20.4) return 3;
+      if (x >= 134 && x <= 146) return DECK_Y;
+      return 2.85;
+    }
+    return isRoad(x, z) ? 0 : CURB_H;
+  }
   const r = rectAt(area, x, z, 2);
   if (r?.y !== undefined) return r.y;
   return isRoad(x, z) ? 0 : CURB_H;
@@ -218,6 +254,11 @@ const cand = new THREE.Vector2();
  * when the step would leave every rect (x-only, then z-only), push out of obstacles, and set the ground height.
  */
 export function resolve(area: Area, next: THREE.Vector3, prev: THREE.Vector3, radius = PLAYER_RADIUS) {
+  const wantedX = next.x, wantedZ = next.z;
+  // A raised quay is a physical wall unless approached via its access ramp.
+  if (area.connected && Math.abs(groundY(area, next.x, next.z) - groundY(area, prev.x, prev.z)) > .35) {
+    next.x = prev.x; next.z = prev.z;
+  }
   if (!rectAt(area, next.x, next.z)) {
     if (rectAt(area, next.x, prev.z)) next.z = prev.z;
     else if (rectAt(area, prev.x, next.z)) next.x = prev.x;
@@ -229,9 +270,10 @@ export function resolve(area: Area, next: THREE.Vector3, prev: THREE.Vector3, ra
     for (const o of area.obstacles) moved = pushOut(o, cand, radius) || moved;
     if (!moved) break;
   }
-  if (rectAt(area, cand.x, cand.y)) { next.x = cand.x; next.z = cand.y; }
+  if (rectAt(area, cand.x, cand.y) && (!area.connected || Math.abs(groundY(area, cand.x, cand.y) - groundY(area, prev.x, prev.z)) <= .35)) { next.x = cand.x; next.z = cand.y; }
   else { next.x = prev.x; next.z = prev.z; }
   next.y = groundY(area, next.x, next.z);
+  return Math.hypot(next.x - wantedX, next.z - wantedZ) > .001;
 }
 
 const probe = new THREE.Vector2();

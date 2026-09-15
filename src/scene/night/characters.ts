@@ -145,12 +145,12 @@ export function loadCharacter(name: string, base = '/night/characters'): Promise
 }
 
 export interface SkinOptions {
-  /** Neon rim colour (nearest sign); default cyan. */
+  /** Subtle rim colour; neutral by default, with explicit accents for robots/sign-lit characters. */
   rim?: THREE.ColorRepresentation;
   rimStrength?: number;
   /** Multiply albedo (tint variants of the same rig). */
   tint?: THREE.ColorRepresentation;
-  /** Make bright saturated albedo (LED strips, visors) emissive so it blooms. */
+  /** Opt-in inferred LED glow for robots; normal clothing never emits light by default. */
   glow?: boolean;
   glowStrength?: number;
 }
@@ -158,8 +158,8 @@ export interface SkinOptions {
 /** Replace the GLB's standard materials with node materials: PBR maps kept, neon rim + LED glow added. */
 const skinCache = new Map<string, THREE.MeshStandardNodeMaterial>();
 export function applySkin(root: THREE.Object3D, opts: SkinOptions = {}) {
-  const rim = uniform(new THREE.Color(opts.rim ?? 0x00e5ff)); // uniforms so every rig shares one program
-  const rimStrength = uniform(opts.rimStrength ?? 0.6);
+  const rim = uniform(new THREE.Color(opts.rim ?? 0xe5e0d8)); // uniforms so every rig shares one program
+  const rimStrength = uniform(opts.rimStrength ?? 0.12);
   const tint = opts.tint !== undefined ? uniform(new THREE.Color(opts.tint)) : null;
   root.traverse((o: any) => {
     if (!o.isMesh) return;
@@ -167,7 +167,7 @@ export function applySkin(root: THREE.Object3D, opts: SkinOptions = {}) {
     if ((src as any).__nightSkin) return;
     // One material per (source material, skin options): clones of the same rig share it, so a crowd of
     // 50 walkers costs a handful of shader builds instead of a hundred.
-    const key = [src.uuid, opts.rim ?? 0x00e5ff, opts.rimStrength ?? 0.6, opts.tint ?? -1, opts.glow !== false, opts.glowStrength ?? 2.2].join('|');
+    const key = [src.uuid, opts.rim ?? 0xe5e0d8, opts.rimStrength ?? 0.12, opts.tint ?? -1, opts.glow === true, opts.glowStrength ?? 2.2].join('|');
     const cached = skinCache.get(key);
     if (cached) { o.userData.srcMaterial = src; o.material = cached; o.castShadow = false; o.receiveShadow = false; o.frustumCulled = true; return; }
     const m = new THREE.MeshStandardNodeMaterial({
@@ -177,18 +177,20 @@ export function applySkin(root: THREE.Object3D, opts: SkinOptions = {}) {
     m.normalMap = src.normalMap ?? null;
     m.roughnessMap = src.roughnessMap ?? null;
     m.metalnessMap = src.metalnessMap ?? null;
-    const base = src.map ? texture(src.map, uv()).rgb : color(src.color ?? 0x8090a0);
+    // Preserve the GLTF base-color factor as well as its texture; neither is a lighting tint.
+    const base = src.map ? texture(src.map, uv()).rgb.mul(color(src.color)) : color(src.color ?? 0xffffff);
     const albedo = tint ? base.mul(tint) : base;
     m.colorNode = albedo;
     const v = normalize(cameraPosition.sub(positionWorld));
     const fres = pow(float(1).sub(max(dot(normalWorld, v), 0.0)), 2.5);
     let emissive: any = rim.mul(fres).mul(rimStrength);
-    if (opts.glow !== false) {
+    if (opts.glow === true) {
       const hsv = mx_rgbtohsv(base);
       const lit = step(0.55, luminance(base)).mul(step(0.28, (hsv as any).y));
       emissive = emissive.add(base.mul(lit).mul(opts.glowStrength ?? 2.2));
     }
-    if (src.emissiveMap) emissive = emissive.add(texture(src.emissiveMap, uv()).rgb.mul(2.0));
+    const sourceEmission = color(src.emissive ?? 0x000000).mul(src.emissiveIntensity ?? 1);
+    emissive = emissive.add(src.emissiveMap ? texture(src.emissiveMap, uv()).rgb.mul(sourceEmission) : sourceEmission);
     m.emissiveNode = emissive;
     (m as any).__nightSkin = true;
     skinCache.set(key, m);

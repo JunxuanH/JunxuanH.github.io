@@ -162,6 +162,7 @@ export function createKitbash(opts: KitbashOptions) {
   // ---- placement
   const r = rng(7);
   const perVariant: THREE.Matrix4[][] = variants.map(() => []);
+  const obstacles: { kind: 'obb'; x: number; z: number; hw: number; hd: number; yaw: number; h: number }[] = [];
   const screensAt: { m: THREE.Matrix4 }[] = [];
   const props: THREE.Matrix4[] = [];
   const fronts: THREE.Matrix4[] = [];
@@ -183,8 +184,10 @@ export function createKitbash(opts: KitbashOptions) {
     // Keep footprints clear of the roads and sidewalks (streets.ts zones).
     const halfW = v.base.w * s / 2, halfD = v.base.d * s / 2;
     if (opts.clear && !opts.clear(x, z, halfW, halfD)) continue;
-    q.setFromAxisAngle(up, (r() - 0.5) * 0.1 + (r() < 0.5 ? 0 : Math.PI));
+    const yaw = (r() - 0.5) * 0.1 + (r() < 0.5 ? 0 : Math.PI);
+    q.setFromAxisAngle(up, yaw);
     const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(s, s, s));
+    obstacles.push({ kind: 'obb', x, z, hw: halfW, hd: halfD, yaw, h: want });
     perVariant[vi].push(m);
     // Ground-floor storefront on the face that looks onto a street.
     const hw = v.base.w * s / 2, hd = v.base.d * s / 2;
@@ -266,7 +269,7 @@ export function createKitbash(opts: KitbashOptions) {
     group.add(pim);
   }
 
-  return { group, count: n, screens: screensAt.length, storefronts: fronts.length };
+  return { group, obstacles, count: n, screens: screensAt.length, storefronts: fronts.length };
 }
 
 // ---------------------------------------------------------------------------------------------

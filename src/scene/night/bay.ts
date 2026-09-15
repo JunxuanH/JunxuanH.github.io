@@ -74,6 +74,16 @@ export function createQuay(quayZ: number, ground?: { planks: THREE.Texture | nul
   const wall = new THREE.Mesh(new THREE.BoxGeometry(780, 3.2, 2.4), wallMat);
   wall.position.set(0, 1.4, quayZ - 1.2);
   group.add(wall);
+  // Street-to-quay ramp, aligned with the harbor deck. Ground collision uses this same linear slope.
+  const rise = 3 - 0.22, run = 12;
+  const ramp = new THREE.Mesh(new THREE.BoxGeometry(12, .18, Math.hypot(run, rise)), wallMat);
+  ramp.rotation.x = -Math.atan2(rise, run);
+  ramp.position.set(140, (3 + .22) / 2 - .09 * Math.cos(ramp.rotation.x), -28.4);
+  group.add(ramp);
+  for (const x of [134, 146]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(.14, .14, Math.hypot(run, rise)), wallMat);
+    rail.rotation.x = ramp.rotation.x; rail.position.set(x, 2.6, -28.4); group.add(rail);
+  }
   const edge = new THREE.Mesh(new THREE.BoxGeometry(780, 0.12, 0.12), glowMaterial(PAL.cyan, 1.5));
   edge.position.set(0, 3.05, quayZ - 2.35);
   group.add(edge);

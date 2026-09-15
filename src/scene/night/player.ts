@@ -9,7 +9,7 @@
  */
 import * as THREE from 'three/webgpu';
 import { instantiate, strideOf, type CharacterAsset, type Instance } from './characters';
-import { PAL } from './palette';
+import { reducedMotion } from './palette';
 import { limitCamera, resolve, groundY, type Area } from './walkable';
 import type { InputState } from './input';
 import { WALK_SPEED, RUN_SPEED, gaitForSpeed, gaitRate, gaitPhase } from './gait';
@@ -22,18 +22,24 @@ export interface PlayerOptions {
   asset: CharacterAsset;
   /** World height (default: the rig's rigs.ts height). */
   height?: number;
-  /** Neon rim colour (default: the CTA yellow). */
+  /** Subtle rim colour (default: neutral warm white). */
   rim?: THREE.ColorRepresentation;
   /** Footstep cue (stride phase). */
   onStep?: () => void;
+  onBump?: () => void;
 }
 
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 
 export function createPlayer(opts: PlayerOptions) {
-  const inst: Instance = instantiate(opts.asset, { height: opts.height, rim: opts.rim ?? PAL.yellow, rimStrength: 0.9 });
+  const inst: Instance = instantiate(opts.asset, { height: opts.height, rim: opts.rim ?? 0xe5e0d8, rimStrength: 0.16 });
   const root = inst.root;
   root.name = 'player';
+  const bumpMat = new THREE.MeshBasicMaterial({ color: 0xffce83, transparent: true, opacity: 0, depthWrite: false });
+  const bumpRing = new THREE.Mesh(new THREE.RingGeometry(.45, .5, 24), bumpMat);
+  bumpRing.rotation.x = -Math.PI / 2; bumpRing.position.y = .04; bumpRing.visible = false;
+  root.add(bumpRing);
+  let bumpTime = 0, bumpCooldown = 0;
   inst.play('idle', 0);
   // Rig-specific numbers (rigs.ts row scaled to the instance): clip stride speeds at timeScale 1 (u/s),
   // head height (camera focus) and the distance between footfalls (step cue).
@@ -93,6 +99,7 @@ export function createPlayer(opts: PlayerOptions) {
     if (area) pos.y = groundY(area, x, z);
     prev.copy(pos);
     vel.set(0, 0, 0); speed = 0;
+    bumpTime = bumpCooldown = 0; bumpRing.visible = false;
     yaw = camYaw = facing; pitch = PITCH0;
     root.rotation.y = yaw;
     desiredCamera();
@@ -136,6 +143,11 @@ export function createPlayer(opts: PlayerOptions) {
    * damped camera keep running (dock, transitions).
    */
   function update(dt: number, input: InputState, control: boolean) {
+    bumpCooldown = Math.max(0, bumpCooldown - dt);
+    bumpTime = Math.max(0, bumpTime - dt);
+    bumpRing.visible = bumpTime > 0;
+    bumpMat.opacity = bumpTime / .3 * .6;
+    bumpRing.scale.setScalar(reducedMotion ? 1 : 1 + (1 - bumpTime / .3) * .8);
     if (control) {
       camYaw -= input.orbitX * 0.005;
       pitch = THREE.MathUtils.clamp(pitch + input.orbitY * 0.004, PITCH_MIN, PITCH_MAX);
@@ -156,9 +168,16 @@ export function createPlayer(opts: PlayerOptions) {
     if (speed > 1e-3) {
       prev.copy(pos);
       pos.x += vel.x * dt; pos.z += vel.z * dt;
-      if (area) resolve(area, pos, prev);
+      const hit = area ? resolve(area, pos, prev) : false;
+      if (hit && speed > .8 && bumpCooldown === 0) {
+        bumpTime = .3; bumpCooldown = .55; opts.onBump?.();
+      }
       // Sliding along a wall: keep the visible speed honest.
-      speed = Math.min(speed, pos.distanceTo(prev) / Math.max(dt, 1e-4));
+      vel.x = (pos.x - prev.x) / Math.max(dt, 1e-4);
+      vel.z = (pos.z - prev.z) / Math.max(dt, 1e-4);
+      const actualSpeed = Math.hypot(vel.x, vel.z);
+      if (actualSpeed > speed) vel.multiplyScalar(speed / actualSpeed);
+      speed = Math.min(speed, actualSpeed);
     }
     if (speed > 0.08) {
       // Face actual travel during reversals, not an input direction the body has not reached yet.

@@ -146,6 +146,15 @@ export function createStreets(tex: GroundTextures) {
   mesh.position.set(0, 0, (QUAY_Z - 640) / 2);
   group.add(mesh);
 
+  // Visible map perimeter: the ground ends against retaining walls, never an invisible district fence.
+  const boundaryMat = new THREE.MeshStandardNodeMaterial({ color: 0x252935, roughness: .85 });
+  for (const x of [-380, 380]) {
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4, 620), boundaryMat);
+    wall.position.set(x, 2, -330); group.add(wall);
+  }
+  const northWall = new THREE.Mesh(new THREE.BoxGeometry(760, 4, 1.2), boundaryMat);
+  northWall.position.set(0, 2, -640); group.add(northWall);
+
   // Sidewalk slabs (raised by the curb height) so walkers and props sit above the road.
   const walkMat = groundMaterial(tex.pavers, tex.paversN, tileP, { roughness: 0.7 });
   const addWalk = (w: number, d: number, cx: number, cz: number) => {

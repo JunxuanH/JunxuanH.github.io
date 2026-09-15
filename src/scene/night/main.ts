@@ -34,7 +34,7 @@ import { createInput } from './input';
 import { createHud } from './hud';
 import { createInteractables } from './interactables';
 import { createDialogue, walkerTargets, carrierTarget, type Target } from './dialogue';
-import { buildAreas, type WalkSection } from './walkable';
+import { buildAreas, buildWorldArea, sectionAt as walkSectionAt, type Obstacle, type WalkSection } from './walkable';
 import { THEMES } from './theme';
 import type { PropPlacement } from './props';
 
@@ -112,8 +112,8 @@ export async function start(root: HTMLElement) {
   scene.add(camera);
 
   // Ambient is what makes the façades read as surfaces instead of black outlines.
-  scene.add(new THREE.HemisphereLight(0x3d4f86, 0x2a1230, Number(params.get('amb')) || 2.0));
-  const moon = new THREE.DirectionalLight(0x9ab0ff, Number(params.get('moon')) || 1.2);
+  scene.add(new THREE.HemisphereLight(0x626773, 0x302a30, Number(params.get('amb')) || 2.0));
+  const moon = new THREE.DirectionalLight(0xeee8df, Number(params.get('moon')) || 1.2);
   moon.position.set(-300, 400, -500);
   scene.add(moon);
   // Local street light: point lights where the camera stops, requested by each district (theme.ts palettes).
@@ -182,6 +182,7 @@ export async function start(root: HTMLElement) {
   if (kit) scene.add(kit.group);
 
   // Signature (fal) towers first, playweave set as mid-ground fill.
+  const buildingObstacles: Obstacle[] = [...(kit?.obstacles ?? [])];
   if (!params.has('noglb')) {
     pending.push(loadGlbTowers([
       { file: 'tower-a', x: ANCHORS.towerA.x, z: ANCHORS.towerA.z, height: 84, tint: PAL.cyan },
@@ -194,7 +195,10 @@ export async function start(root: HTMLElement) {
       { file: 'tower-04', x: 90, z: -120, height: 54, yaw: 0.3, tint: PAL.magenta },
       { file: 'tower-05', x: -96, z: -180, height: 60, yaw: -0.2, tint: PAL.cyan },
       { file: 'tower-06', x: 40, z: -260, height: 70, yaw: 0.5, tint: PAL.yellow },
-    ]).then((g) => scene.add(g)));
+    ], (_t, obj) => {
+      const b = new THREE.Box3().setFromObject(obj);
+      buildingObstacles.push({ kind: 'box', x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, h: b.max.y });
+    }).then((g) => scene.add(g)));
   }
 
   // ---------- bay
@@ -315,6 +319,7 @@ export async function start(root: HTMLElement) {
   const propsBuilt = await propsReady.catch(() => null);
   const placements = (propsBuilt as unknown as { placements?: PropPlacement[] } | null)?.placements ?? null;
   const areas = buildAreas(placements);
+  const worldArea = buildWorldArea(areas, buildingObstacles, placements ?? []);
   const protagonist = params.has('nopeople') ? null : await loadCharacter(PROTAGONIST).then((asset) => {
     if (!['idle', 'walk', 'run'].every((name) => asset.clips.has(name))) throw new Error('Ronin locomotion clips missing');
     return asset;
@@ -323,10 +328,10 @@ export async function start(root: HTMLElement) {
     return loadCharacter('soldier').catch(() => null);
   });
   const footstep = (audio as unknown as { step?: () => void }).step; // audio.ts grows `step()` with the interactions pass
-  const player = protagonist ? createPlayer({ asset: protagonist, rim: PAL.cyan, onStep: () => footstep?.call(audio) }) : null;
+  const player = protagonist ? createPlayer({ asset: protagonist, onStep: () => footstep?.call(audio), onBump: () => audio.bump() }) : null;
   if (player) {
     scene.add(player.root);
-    player.setArea(areas.education);
+    player.setArea(worldArea);
     player.teleport(...SPAWN.education.pos, SPAWN.education.yaw); // in view of the pre-warm poses so its skin compiles now
   }
   const playerPos = new THREE.Vector3(); // player feet, or the spawn when there is no character (`?nopeople`)
@@ -347,7 +352,7 @@ export async function start(root: HTMLElement) {
     onEnterWalk: (id) => {
       const s = SPAWN[id];
       playerPos.fromArray(s.pos);
-      if (player) { player.setArea(areas[id]); player.teleport(...s.pos, s.yaw); }
+      if (player) { player.setArea(worldArea); player.teleport(...s.pos, s.yaw); }
       hud.showHintOnce();
     },
     // The camera has settled on the district's establishing shot (the cutscene's hold): the title card.
@@ -633,13 +638,17 @@ export async function start(root: HTMLElement) {
     const inp = input.poll();
     if (inp.skip) nav.skip(); // Esc / Enter / Space / a tap on the stage: cut the transition cutscene to its arrival
     nav.tick(dt);             // advance the cutscene: journey.p along the paced move, the beats, the hand-over to the character
-    const p = journey.p;
+    let p = journey.p;
     const mode = nav.mode;
-    const walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
+    let walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
     if (mode === 'dock' && inp.walkIntent) nav.undock(); // walking away leaves the carrier
     if (player) {
       player.update(dt, inp, nav.mode === 'walk' && !nav.cutscene);
       if (nav.mode !== 'ride') playerPos.copy(player.position);
+      if (nav.mode === 'walk' && !nav.cutscene) {
+        walkSec = walkSectionAt(playerPos.x, playerPos.z);
+        nav.exploreSection(walkSec); p = journey.p;
+      }
     }
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
     // Residents first: a box open or a resident in reach takes E (and the prompt slot) from the carriers; never docked or mid-cutscene.
@@ -673,7 +682,7 @@ export async function start(root: HTMLElement) {
     // Opacity does not remove invisible links from keyboard navigation or the accessibility tree.
     heroCopy.inert = !heroOn;
     heroCopy.style.transform = innerWidth <= 760 ? 'none' : `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
-    if (water) water.visible = walkSec ? walkSec === 'contact' : p < 0.14 || p > 0.86; // bay vista and the pier; hidden in between (reflector cost)
+    if (water) water.visible = walkSec ? playerPos.z > -60 : p < 0.14 || p > 0.86;
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
     timed('traffic', () => traffic.update(dt, t, camera.position));
     landingFlyby?.update(dt);

@@ -425,6 +425,10 @@ export function createNav(opts: NavOptions) {
     get coverHook() { return coverHook; },
     set coverHook(fn: NavOptions['cover'] | null) { coverHook = fn; },
     panTo, enterWalk, dock, undock, resolveCamera, samplePath, tick, skip,
+    exploreSection(id: WalkSection) {
+      if (mode !== 'walk' || cut || section === id) return;
+      setSection(id); journey.p = NAV_TARGET[id];
+    },
     /** Initial state from a `?p=` override: ride at that p, no character. */
     start() { section = sectionAt(journey.p); opts.onSection?.(section); (window as any).__mode = mode; opts.onMode?.(mode, mode); },
   };

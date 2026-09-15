@@ -18,6 +18,8 @@ export interface NightAudio {
   clack(count?: number, interval?: number): void;
   /** Footstep: a soft 120 Hz thump, 40 ms, very quiet (player.ts calls it on each stride). */
   step(): void;
+  /** Quiet solid-contact cue, throttled by the player's collision response. */
+  bump(): void;
   /** Menu cursor move: 1.2 kHz, 30 ms. */
   select(): void;
   /** Confirm: two blips, 900 → 1400 Hz. */
@@ -215,6 +217,7 @@ export function createAudio(opts: { base?: string; volume?: number } = {}): Nigh
   const api: NightAudio = {
     update(_p) { /* The soundtrack continues unchanged between locations. */ },
     clack, step, select, confirm, static: staticBurst,
+    bump: () => burst({ freq: 95, to: 45, gain: .09, dur: .1 }),
     setMuted(m) {
       muted = m;
       try { localStorage.setItem(STORAGE_KEY, m ? 'off' : 'on'); } catch { /* ignore */ }
