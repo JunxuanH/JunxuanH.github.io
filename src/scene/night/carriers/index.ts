@@ -12,6 +12,10 @@ import type { DistrictTextures, LightSpec } from '../districts/shared';
 import type { PropPlacement } from '../props';
 import type { SectionId } from '../journey';
 import type { TermDoc } from '../slabcanvas';
+import { create as createKiosk } from './kiosk';
+import { TERMINALS, type TerminalId } from '../terminal-layout';
+import { terminalScreen } from '../district-art';
+import { THEMES } from '../theme';
 
 export interface CarrierCtx {
   scene: THREE.Scene;
@@ -30,6 +34,9 @@ export interface Board {
 }
 
 export interface Carrier {
+  displayMount?: THREE.Object3D;
+  displayWidth?: number;
+  terminal?: boolean;
   group: THREE.Group;
   /** The board parents here at the origin; local +Z is the screen normal. */
   mount: THREE.Object3D;
@@ -119,6 +126,24 @@ export async function createCarriers(ctx: CarrierCtx) {
       console.warn(`[night] carrier ${id} failed`, e);
     }
   }));
+  // Keep the original architectural carriers as advertisements; reading happens at four matching kiosks.
+  for (const [id, c] of Object.entries(byId) as [CarrierId, Carrier][]) {
+    c.displayMount = c.mount; c.displayWidth = c.width;
+    if (!(id in TERMINALS)) { c.interact = undefined; continue; }
+    const spec = TERMINALS[id as TerminalId];
+    const kiosk = id === 'education' ? c : await createKiosk({ ...ctx, people: false }, THEMES[CARRIER_SECTION[id] as keyof typeof THEMES]);
+    if (id !== 'education') {
+      // An identity wrapper preserves the original carrier's world transform and updates.
+      const wrapper = new THREE.Group(); group.remove(c.group); wrapper.add(c.group, kiosk.group); group.add(wrapper);
+      c.group = wrapper;
+      c.mount = kiosk.mount; c.width = 3; c.dockPose = undefined;
+    }
+    kiosk.group.position.fromArray(spec.pos); kiosk.group.rotation.y = spec.yaw;
+    kiosk.fit?.(2);
+    c.terminal = true; c.node = `${spec.label} TERMINAL`;
+    c.interact = undefined; // native accessible reading controls replace carrier-specific minigames
+    const screen = terminalScreen(id as TerminalId); screen.position.z = 0.025; c.mount.add(screen);
+  }
   /** `section` (walk / dock mode) keeps every carrier of that section drawn whatever p says; the rest follow their windows. */
   const update = (t: number, dt: number, p: number, section?: SectionId) => {
     for (const id in byId) {

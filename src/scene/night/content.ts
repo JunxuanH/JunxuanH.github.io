@@ -8,7 +8,7 @@
  * (`dock` / `undock` / `onKey`); the board repaints after every action so it mirrors the session's cursor.
  */
 import * as THREE from 'three/webgpu';
-import { texture, float, fract, uv, time, smoothstep, abs } from './tsl';
+import { texture, uniform } from './tsl';
 import { ANCHORS, followWeight, type SectionId } from './journey';
 import { params, reducedMotion, type Tier } from './palette';
 import { createCarriers, type Board, type Carrier, type CarrierId, type CarrierCtx } from './carriers/index';
@@ -16,8 +16,9 @@ import type { DistrictTextures } from './districts/shared';
 import type { Mode } from './nav';
 import { DOCK_EVENT, UNDOCK_EVENT, type DockEventDetail } from './hud';
 import type { DockActions } from './carriers/dock';
-import { docFromSlab, paintTerminal, slabFontsReady, type TermDoc } from './slabcanvas';
+import { slabFontsReady } from './slabcanvas';
 import { createSession } from './session';
+import { adCanvas } from './district-art';
 
 export interface ContentOptions {
   scene: THREE.Scene;
@@ -60,8 +61,7 @@ const FADE = 0.012;
 const WALK_RANGE: Partial<Record<string, [number, number]>> = { kioxia: [40, 70], 'amd-dc': [20, 45] };
 const WALK_DEFAULT: [number, number] = [6, 14];
 /** Board texture pixels per layout px: crisp on desktop, lean on phones. */
-const TEX_SCALE = (narrow: boolean) => (narrow ? 1 : 1.5);
-const ORDER: CarrierId[] = ['education', 'amd-intern', 'kioxia', 'amd-dc', 'apple', 'projects', 'contact'];
+const ORDER: CarrierId[] = ['education', 'amd-intern', 'projects', 'contact'];
 
 /** Where a board goes if its carrier module is missing (the pre-carrier placements). */
 const SIGN_YAW = (x: number) => (x < 0 ? Math.PI / 2 - 0.35 : -Math.PI / 2 + 0.35);
@@ -79,19 +79,17 @@ function fallbackMount(id: string): { obj: THREE.Object3D; w: number; px: number
 }
 
 /**
- * The boards' shared material recipe — identical node graph per board, only the bound texture differs, so three
- * compiles ONE program for all of them. Phosphor gain for the bloom, a slow refresh band rolling down the screen,
- * `material.opacity` for the window / proximity fades.
+ * Self-lit advertising displays, independent of scene lights. Lift the dark artwork's midtones before
+ * the HDR gain so it reads at a distance without needing an excessive bloom halo. No flashing refresh band.
  */
 function boardMaterial(tex: THREE.CanvasTexture) {
-  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, opacity: 0 });
-  const band = float(1).sub(smoothstep(0, 0.08, abs(fract(uv().y.add(time.mul(0.11))).sub(0.5))));
-  m.colorNode = texture(tex).mul(float(1.15).add(band.mul(0.25)));
+  const m = new THREE.MeshBasicNodeMaterial({ map: tex, transparent: true, opacity: 0 });
+  m.colorNode = texture(tex).rgb.pow(uniform(0.8)).mul(uniform(2.2));
   return m;
 }
 
 export async function createContent(opts: ContentOptions) {
-  const { scene, narrow } = opts;
+  const { scene } = opts;
   const carriers = await createCarriers({ scene, tier: opts.tier, tex: opts.tex, people: opts.people, reducedMotion, onFlap: opts.onFlap } satisfies CarrierCtx);
   scene.add(carriers.group);
   const slabs: Slab[] = [];
@@ -100,11 +98,11 @@ export async function createContent(opts: ContentOptions) {
   const winOf = (el: HTMLElement) => (el.dataset.window || '0,0').split(',').map(Number) as [number, number];
   const session = createSession();
   if (els.length) await slabFontsReady();
-  const scale = TEX_SCALE(narrow);
 
   const parentFor = (id: string): { parent: THREE.Object3D; w: number; px: number; carrier?: Carrier } | null => {
     const c = carriers.byId[id as CarrierId];
-    if (c) return { parent: c.mount, w: c.width, px: c.px, carrier: c };
+    if (c && id !== 'education') return { parent: c.displayMount ?? c.mount, w: c.displayWidth ?? c.width, px: c.px, carrier: c };
+    if (id === 'education') return null; // the Campus kiosk has its own concise access screen
     // No carrier (it failed to build): no board. The old free-floating fallback mounts put a 15 u wall over the plaza.
     // `?fallbackboards` restores them for debugging.
     if (!params.has('fallbackboards')) { console.warn('[night] no carrier for', id); return null; }
@@ -122,8 +120,8 @@ export async function createContent(opts: ContentOptions) {
     let board: BoardMesh | undefined;
     let handle: Board = { repaint() {} };
     if (target) {
-      const paintOpts = { scale, aspect: target.carrier?.aspect, minAspect: 0.45 };
-      const canvas = paintTerminal(docFromSlab(el), target.px, paintOpts);
+      const art = adCanvas(id, target.carrier?.aspect ?? 0.65);
+      const canvas = art.canvas;
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 4;
@@ -135,8 +133,8 @@ export async function createContent(opts: ContentOptions) {
       target.parent.add(board);
       target.carrier?.fit?.(h);
       // Repaints keep the first paint's layout height so the geometry (and the carrier's fit) never change.
-      const height = canvas.height / scale;
-      handle = { repaint(mutate?: (d: TermDoc) => TermDoc) { const doc = docFromSlab(el); paintTerminal(mutate ? mutate(doc) : doc, target.px, { ...paintOpts, height, canvas }); tex.needsUpdate = true; } };
+      handle = { repaint() {} };
+      art.load(() => { tex.needsUpdate = true; });
       // Project screenshots (`.card img`, eager) may land after the first paint: repaint when they do.
       for (const img of el.querySelectorAll<HTMLImageElement>('img')) if (!(img.complete && img.naturalWidth > 0)) img.addEventListener('load', () => handle.repaint(), { once: true });
     }

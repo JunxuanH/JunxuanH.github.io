@@ -26,7 +26,7 @@ export interface Pose { pos: THREE.Vector3; look: THREE.Vector3 }
 /** Where the protagonist appears on arrival (feet), facing `yaw` (radians, 0 = +z). */
 export const SPAWN: Record<WalkSection, { pos: [number, number, number]; yaw: number }> = {
   education: { pos: [-80, 0.22, -90], yaw: Math.PI },              // on the plaza axis, facing the terminal
-  work: { pos: [-14.5, 0.22, -84], yaw: Math.PI },                  // west sidewalk, facing down the avenue
+  work: { pos: [-18, 0.22, -83], yaw: Math.PI },                    // aligned with the kiosk, clear of avenue lamps
   projects: { pos: [54, 0, -226], yaw: Math.PI / 2 },               // market street, facing the holo stall
   contact: { pos: [140, 2.9, 4], yaw: 0 },                          // pier deck, facing the departures board
 };

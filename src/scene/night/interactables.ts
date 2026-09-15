@@ -126,7 +126,7 @@ export function createInteractables(opts: InteractablesOptions) {
 
   // ---- carriers
   for (const [key, c] of Object.entries(opts.carriers) as [CarrierId, Carrier][]) {
-    if (!c) continue;
+    if (!c?.terminal) continue;
     const ga = GROUND_ANCHOR[key];
     const anchor = new THREE.Vector3();
     if (ga) anchor.fromArray(ga); else { c.mount.updateWorldMatrix(true, false); c.mount.getWorldPosition(anchor); }
@@ -143,8 +143,8 @@ export function createInteractables(opts: InteractablesOptions) {
       hot = [...neonOf(spot), ...hot];
     }
     items.push({
-      id: key, section: CARRIER_SECTION[key], anchor, radius: key === 'amd-dc' ? 3 : 6,
-      label: c.interact?.label ?? LABELS[key], hot,
+      id: key, section: CARRIER_SECTION[key], anchor, radius: key === 'education' ? 12 : 6,
+      label: `Open ${c.node?.replace(' TERMINAL', '').toLowerCase()} terminal`, hot,
       action: () => nav.dock(key as DockId),
     });
   }

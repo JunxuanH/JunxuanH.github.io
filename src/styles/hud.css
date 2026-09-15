@@ -20,6 +20,7 @@ html.no-3d #hud { display: none; }
 
 /* Interaction prompt: bottom centre pill */
 .hud-prompt {
+  pointer-events: auto; cursor: pointer; font-family: inherit; color: inherit;
   left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); transform: translateX(-50%);
   display: flex; align-items: center; gap: 12px; padding: 9px 18px 9px 10px; border-radius: 999px;
   font-size: 17px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;

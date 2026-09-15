@@ -6,6 +6,7 @@
  * camera out of buildings. Positions mirror the district builders (districts/*.ts, carriers/*.ts, props.ts).
  */
 import * as THREE from 'three/webgpu';
+import { TERMINALS } from './terminal-layout';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
 import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, QUAY_Z, isRoad, isSidewalk } from './streets';
@@ -177,6 +178,12 @@ export function buildWorldArea(areas: Record<WalkSection, Area>, buildings: Obst
   ];
   const obstacles = buildings; // shared: late GLB loads append their actual bounds here too
   obstacles.push(...Object.values(areas).flatMap((a) => a.obstacles));
+  for (const [id, terminal] of Object.entries(TERMINALS)) {
+    if (id === 'education') continue; // original Campus kiosk is already included
+    const [x, , z] = terminal.pos;
+    const sideways = Math.abs(Math.sin(terminal.yaw)) > 0.5;
+    obstacles.push(centred(x, z, sideways ? 1.2 : 3.6, sideways ? 3.6 : 1.2, 3.4));
+  }
   // Add every placed prop, including those outside the former district pockets.
   for (const pl of placements) {
     const r = PROP_RADIUS[pl.kind];

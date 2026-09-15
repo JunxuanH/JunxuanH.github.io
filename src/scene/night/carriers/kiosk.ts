@@ -26,8 +26,7 @@ function faceZ(y: number) {
   return FACE_Z + yl * s + 0.15 * c;
 }
 
-export async function create(ctx: CarrierCtx): Promise<Carrier> {
-  const T = THEMES.education;
+export async function create(ctx: CarrierCtx, T = THEMES.education): Promise<Carrier> {
   const group = new THREE.Group();
   group.position.set(-80, CURB_H, -100);
   const metal = new THREE.MeshStandardNodeMaterial({ color: 0x14161f, roughness: 0.5, metalness: 0.7 });

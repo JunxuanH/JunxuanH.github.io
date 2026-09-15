@@ -82,3 +82,33 @@ html.reduce-motion .sheet.is-on, html.reduce-motion .sheet.is-on .term-body *, h
 html.reduce-motion .sheet.is-on .term-body * { clip-path: none; }
 html.reduce-motion .stage::after { transition: none; }
 
+/* Public-access terminals: readable content, not an emissive billboard. */
+.sheet.term { color: #ede6d2; text-shadow: none; text-transform: none; font-size: 16px; line-height: 1.65; }
+.sheet.term .term-body::after { display: none; }
+.sheet.term.is-on .term-body * { animation: none !important; clip-path: none !important; }
+.sheet.term :is(.kicker, h2, h3, .meta, .team) { text-shadow: none; }
+.sheet.term .slab h2::after { display: none; }
+.sheet.term .slab .meta, .sheet.term .slab .team { color: #c7c2b2; font-size: 14px; }
+.sheet.term .bullets li, .sheet.term .chips li { font-size: 15px; line-height: 1.65; }
+.sheet.term .page { display: block; margin-bottom: 20px; }
+.terminal-employers { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 20px 0; }
+.terminal-employers button, .terminal-project-toggle {
+  min-height: 44px; padding: 10px 14px; border: 1px solid #70643e; background: #151a21;
+  color: #eee5ca; font: 500 14px/1.4 var(--mono); cursor: pointer; text-align: left;
+}
+.terminal-employers button[aria-pressed="true"] { background: #f3ce7d; color: #17150f; border-color: #f3ce7d; }
+.sheet.term :is(button, a, summary):focus-visible { outline: 2px solid #82d6da; outline-offset: 4px; }
+.sheet.term summary { cursor: pointer; min-height: 44px; padding: 8px 0; }
+.sheet.term details p { color: #ddd9cd; margin: 0 0 12px; text-indent: 0; }
+.sheet.term [data-detail] { padding: 0; text-indent: 0; border-bottom: 1px solid #302d24; }
+.sheet.term [data-detail]::before, .sheet.term [data-detail]::after { display: none; }
+.sheet.term [data-slab="education"] .chips { display: block; }
+.sheet.term .card { margin-bottom: 14px; }
+.sheet.term .terminal-project-toggle { display: block; margin-top: 12px; text-indent: 0; }
+.sheet.term .card.is-open .links { flex-wrap: wrap; }
+.sheet.term .card.is-open .links a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 760px), (pointer: coarse) {
+  .sheet.term { height: 72dvh; max-height: calc(100dvh - 100px); }
+  .terminal-employers { padding: 12px 14px 0; }
+  .sheet.term .term-body { padding-bottom: 90px; }
+}

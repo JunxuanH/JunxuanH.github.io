@@ -12,6 +12,18 @@ globalThis.matchMedia = () => ({ matches: false });
 const bundled = await build({ entryPoints: ['src/scene/night/walkable.ts'], bundle: true, write: false, format: 'esm', platform: 'node' });
 const { buildAreas, buildWorldArea, resolve, groundY, rectAt, sectionAt } = await import(`data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString('base64')}`);
 const area = buildWorldArea(buildAreas(), []);
+const layout = await build({ entryPoints: ['src/scene/night/terminal-layout.ts'], bundle: true, write: false, format: 'esm', platform: 'node' });
+const { TERMINALS } = await import(`data:text/javascript;base64,${Buffer.from(layout.outputFiles[0].text).toString('base64')}`);
+assert.equal(Object.keys(TERMINALS).length, 4);
+for (const [id, terminal] of Object.entries(TERMINALS)) {
+  const [x, , z] = terminal.pos;
+  const dx = Math.sin(terminal.yaw), dz = Math.cos(terminal.yaw);
+  const previous = new Vector3(x + dx * 2, groundY(area, x, z), z + dz * 2);
+  const next = new Vector3(x, previous.y, z);
+  assert(resolve(area, next, previous), `${id} kiosk must block the player`);
+  assert(Math.hypot(next.x - x, next.z - z) > .7, `${id} has a solid housing`);
+  assert(rectAt(area, previous.x, previous.z), `${id} approach stays on dry ground`);
+}
 function walk(x, z, dx, dz, steps) {
   const p = new Vector3(x, groundY(area, x, z), z);
   let hit = false;

@@ -370,7 +370,7 @@ export async function start(root: HTMLElement) {
       const c = content.carriers[id];
       // Phones have no CSS3D slab to frame: the dwell poses would stare at an empty panel. The camera stays over the
       // character's shoulder, looking at the carrier (the blimp's formation flight is the view on every device).
-      if (narrow && player && c && id !== 'amd-dc') { c.mount.getWorldPosition(dockTarget); c.mount.getWorldDirection(dockNormal); player.frame(dockTarget, dockNormal, c.width, pos, look); return true; }
+      if (player && c?.terminal) { c.mount.getWorldPosition(dockTarget); c.mount.getWorldDirection(dockNormal); player.frame(dockTarget, dockNormal, c.width, pos, look); return true; }
       if (!c?.dockPose) return false;
       c.dockPose(pos, look);
       if (narrow) {
@@ -384,6 +384,9 @@ export async function start(root: HTMLElement) {
     },
   });
   hud.onBack(() => nav.undock());
+  content.session.el?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); nav.undock(); }
+  });
   hud.onSkip(() => nav.skip());
   const input = createInput({
     stage: root, touch: hud.touch,
@@ -402,6 +405,9 @@ export async function start(root: HTMLElement) {
   let dialogueOpen: () => boolean = () => false; // bound once the dialogue exists (below)
   const publishPrompt = () => hud.prompt(prompts.talk ?? prompts.use);
   const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => { prompts.use = l; publishPrompt(); }, landingCar });
+  document.querySelector('.hud-prompt')?.addEventListener('click', () => {
+    if (nav.mode === 'walk' && !nav.cutscene) input.press('interact');
+  });
   // ---------- talking to the residents (dialogue.ts): every crowd walker, plus the two carrier NPCs matched by where they stand
   const NPC_RIGS: [x: number, z: number, rig: string, section: WalkSection][] = [[-81.6, -97.4, 'schoolgirl-hacker', 'education'], [-16.4, -100.3, 'oni-bouncer', 'work']];
   const npcAt = new THREE.Vector3();
