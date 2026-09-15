@@ -265,42 +265,41 @@ html.reduce-motion .boot[data-landing='poster'] .boot-warp { display: none; }
 html.reduce-motion .boot.is-done { animation: none; display: none; }
 html.reduce-motion .neon-btn { transition: none; }
 
-/* ---------- Landing gate (gate.ts): static, over everything, until Enter */
-.gate { position: fixed; inset: 0; z-index: 31; display: none; place-items: center; overflow-y: auto; overscroll-behavior: contain;
-  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); background: #050509; color: var(--ink); }
-.gate[data-state='open'], .gate[data-state='closing'] { display: grid; }
+/* ---------- Landing gate (gate.ts): static, over everything, until Enter. Name at the top, the way in at the bottom
+   (the thumb zone), over a sharp but darkened still of the warp. */
+.gate { position: fixed; inset: 0; z-index: 31; display: none; flex-direction: column; justify-content: space-between; overflow-y: auto; overscroll-behavior: contain;
+  padding: max(28px, calc(env(safe-area-inset-top) + 20px)) clamp(20px, 7vw, 96px) max(24px, calc(env(safe-area-inset-bottom) + 16px)); background: #050509; color: var(--ink); }
+.gate[data-state='open'], .gate[data-state='closing'] { display: flex; }
 .gate[data-state='closing'] { opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-.gate-bg { position: fixed; inset: -48px; background: #050509 url(/night/landing/warp-poster.jpg) center / cover no-repeat; filter: blur(16px) brightness(0.3) saturate(0.85); }
-.gate-card { position: relative; width: min(740px, 100%); padding: clamp(24px, 5vw, 44px); background: var(--holo); border: 1px solid rgb(0 229 255 / 0.55);
-  box-shadow: 0 0 40px rgb(0 229 255 / 0.14); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  background-image: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px); }
-.gate-card::before, .gate-card::after { content: ''; position: absolute; width: 16px; height: 16px; border: 2px solid var(--cyan); }
-.gate-card::before { left: -4px; top: -4px; border-right: 0; border-bottom: 0; }
-.gate-card::after { right: -4px; bottom: -4px; border-left: 0; border-top: 0; }
-.gate-kicker { margin: 0 0 12px; font: 500 11px var(--mono); letter-spacing: 0.3em; text-transform: uppercase; color: rgb(0 229 255 / 0.8); }
-.gate-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(40px, 8vw, 64px); line-height: 1; letter-spacing: 0.04em; text-transform: uppercase; }
-.gate-role { margin: 10px 0 18px; font-family: var(--mono); font-size: clamp(14px, 2.4vw, 19px); color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; }
-.gate-summary { margin: 0 0 16px; font-size: 17px; line-height: 1.5; color: rgb(234 252 255 / 0.9); }
-.gate-links { margin: 0 0 22px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: 0.08em; text-transform: uppercase; }
-.gate-links a { color: var(--cyan); text-decoration: none; }
-.gate-links a:hover { text-shadow: 0 0 10px var(--cyan); }
+.gate-bg { position: fixed; inset: 0; background: #050509 url(/night/landing/warp-poster.jpg) center / cover no-repeat; filter: brightness(0.55) saturate(0.9); }
+.gate-bg::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgb(5 5 9 / 0.85) 0%, rgb(5 5 9 / 0.2) 30%, rgb(5 5 9 / 0.15) 55%, rgb(5 5 9 / 0.9) 100%); }
+.gate-top, .gate-bottom { position: relative; width: min(560px, 100%); }
+.gate-kicker { margin: 0 0 10px; font: 500 12px var(--mono); letter-spacing: 0.3em; text-transform: uppercase; color: rgb(0 229 255 / 0.85); }
+.gate-name { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(48px, 11vw, 88px); line-height: 0.95; letter-spacing: 0.03em; text-transform: uppercase;
+  text-shadow: 0 2px 24px rgb(0 0 0 / 0.6); }
+.gate-role { margin: 12px 0 0; font-family: var(--mono); font-size: clamp(13px, 2.2vw, 17px); color: var(--cyan); letter-spacing: 0.1em; text-transform: uppercase; }
+.gate-enter { display: block; width: 100%; cursor: pointer; font-size: clamp(19px, 3vw, 23px); padding: 15px 26px; text-align: center; }
+.gate-notice { margin: 16px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 15px; color: rgb(234 252 255 / 0.85); }
+.gate-warn { color: var(--sodium); font-weight: 600; }
+.gate-reduce { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-height: 44px; user-select: none; }
+.gate-reduce input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.gate-switch { position: relative; width: 42px; height: 24px; border-radius: 999px; border: 1px solid rgb(0 229 255 / 0.6); background: rgb(8 10 20 / 0.6); transition: background 0.2s ease; }
+.gate-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--cyan); transition: transform 0.2s ease; }
+.gate-reduce input:checked + .gate-switch { background: rgb(0 229 255 / 0.3); }
+.gate-reduce input:checked + .gate-switch::after { transform: translateX(18px); background: var(--yellow); }
+.gate-reduce input:focus-visible + .gate-switch { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.gate-links { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid rgb(0 229 255 / 0.2); display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: 0.12em; text-transform: uppercase; }
+.gate-links a { color: var(--cyan); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+.gate-icons { display: inline-flex; gap: 8px; }
+.gate-icons a { justify-content: center; min-width: 44px; }
+.gate-links a:hover { text-shadow: 0 0 10px var(--cyan); color: #fff; }
 .gate-links a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
-.gate-notice { margin: 0 0 22px; padding: 10px 14px; border-left: 3px solid var(--sodium); background: rgb(255 154 61 / 0.08); font-size: 15px; line-height: 1.45; color: var(--ink); }
-.gate-notice strong { color: var(--sodium); }
-.gate-notice-short, .gate.is-returning .gate-notice-long { display: none; }
-.gate.is-returning .gate-notice-short { display: inline; }
-.gate-actions { display: flex; flex-wrap: wrap; gap: 14px; }
-.gate-actions .neon-btn { cursor: pointer; font-size: 21px; padding: 12px 26px; }
-.gate-actions .neon-btn.outline { background: transparent; }
 @media (max-width: 760px) {
-  .gate { place-items: start center; }
   .gate-bg { background-image: url(/night/landing/warp-poster-p.jpg); }
-  .gate-summary { font-size: 15px; }
-  .gate-links { font-size: 17px; }
-  .gate-actions { flex-direction: column; }
-  .gate-actions .neon-btn { width: 100%; text-align: center; font-size: 18px; }
 }
-@media (prefers-reduced-motion: reduce) { .gate[data-state='closing'] { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .gate[data-state='closing'], .gate-switch, .gate-switch::after { transition: none; } }
 
 /* Hero slab as a fixed 2D overlay (camera-locked; see main.ts) */
 .hero-copy.is-fixed {

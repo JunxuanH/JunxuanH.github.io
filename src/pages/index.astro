@@ -47,26 +47,26 @@ const win = (k: string) => WINDOWS[k].join(',');
     <!-- Landing gate (scene/night/gate.ts): static on first paint, nothing 3D runs behind it. Enter starts the load. -->
     <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-h" aria-describedby="gate-notice">
       <div class="gate-bg" aria-hidden="true"></div>
-      <div class="gate-card">
-        <p class="gate-kicker">Neon Harbor · an interactive résumé</p>
+      <header class="gate-top">
+        <p class="gate-kicker">Interactive résumé</p>
         <h2 id="gate-h" class="gate-name">{profile.name}</h2>
         <p class="gate-role">{profile.title}</p>
-        <p class="gate-summary">{profile.summary}</p>
-        <p class="gate-links">
-          <a href="/resume">Résumé</a>
-          <a href={profile.links.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
-          <a href={profile.links.github} target="_blank" rel="noopener">GitHub ↗</a>
-          <a href="?flat">Text version</a>
-        </p>
+      </header>
+      <div class="gate-bottom">
+        <button class="neon-btn primary gate-enter" type="button" data-choice="full">Enter the city</button>
         <p id="gate-notice" class="gate-notice">
-          <span class="gate-notice-long"><strong>Motion warning.</strong> This experience contains fast motion and flashing lights. If you are sensitive to flashing images, choose reduced motion.</span>
-          <span class="gate-notice-short"><strong>Motion warning:</strong> fast motion and flashing lights.</span>
+          <span class="gate-warn"><span aria-hidden="true">⚠&#xFE0E;</span> Flashing lights<span class="visually-hidden"> and fast motion. If you are sensitive to flashing images, turn on reduced motion.</span></span>
+          <label class="gate-reduce"><input id="gate-reduce" type="checkbox" role="switch" /><span class="gate-switch" aria-hidden="true"></span> Reduce motion</label>
         </p>
-        <div class="gate-actions">
-          <button class="neon-btn primary gate-enter" type="button" data-choice="full">Enter the city</button>
-          <button class="neon-btn outline gate-enter" type="button" data-choice="reduced">Enter with reduced motion</button>
-        </div>
+        <nav class="gate-links" aria-label="Profile links">
+          <a href="/resume">Résumé</a>
+          <span class="gate-icons">
+            <a href={profile.links.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn (opens in a new tab)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5A2.5 2.5 0 1 1 5 8.5a2.5 2.5 0 0 1-.02-5ZM3 9.75h4v11H3v-11Zm6.5 0h3.8v1.5h.06c.53-1 1.83-1.75 3.34-1.75 3.57 0 4.3 2.2 4.3 5.3v5.95h-4v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8v5.4h-3.7v-11Z"/></svg></a>
+            <a href={profile.links.github} target="_blank" rel="noopener" aria-label="GitHub (opens in a new tab)"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 .8a11.2 11.2 0 0 0-3.54 21.83c.56.1.76-.24.76-.54v-1.9c-3.12.68-3.78-1.5-3.78-1.5-.51-1.3-1.25-1.64-1.25-1.64-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.4-1.22.72-1.5-2.5-.28-5.12-1.24-5.12-5.54 0-1.22.44-2.22 1.15-3-.11-.29-.5-1.43.11-2.97 0 0 .94-.3 3.08 1.14a10.6 10.6 0 0 1 5.6 0c2.14-1.45 3.08-1.14 3.08-1.14.61 1.54.23 2.68.11 2.97.72.78 1.15 1.78 1.15 3 0 4.31-2.63 5.26-5.13 5.53.4.35.76 1.03.76 2.08v3.09c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z"/></svg></a>
+          </span>
+        </nav>
       </div>
+    </div>
     </div>
     <!-- Boot + warp landing (scene/night/boot.ts, landing.ts): after Enter, the light-speed loop while the city builds (or
          the poster for reduced motion); when the first frame is up the arrival clip plays and fades onto the live vista. -->
@@ -107,13 +107,12 @@ const win = (k: string) => WINDOWS[k].join(',');
         gate.dataset.pre = pre;
         gate.dataset.state = 'open';
         if (saved) gate.classList.add('is-returning');
-        var btns = gate.querySelectorAll('.gate-enter');
-        for (var i = 0; i < btns.length; i++) {
-          var on = btns[i].getAttribute('data-choice') === pre;
-          btns[i].classList.toggle('primary', on); btns[i].classList.toggle('outline', !on);
-        }
-        if (pre === 'reduced') btns[0].parentNode.insertBefore(btns[1], btns[0]);
-        gate.querySelector('.gate-enter.primary').focus({ preventScroll: true });
+        // One Enter button; the Reduce motion switch decides the choice (mirrored on the button's data-choice).
+        var enter = gate.querySelector('.gate-enter'), sw = document.getElementById('gate-reduce');
+        var sync = function () { enter.setAttribute('data-choice', sw.checked ? 'reduced' : 'full'); };
+        sw.checked = pre === 'reduced'; sync();
+        sw.addEventListener('change', sync);
+        enter.focus({ preventScroll: true });
         gate.addEventListener('click', function (e) {
           var b = e.target.closest && e.target.closest('.gate-enter');
           if (!b || window.__gateModule || window.__gateChoice) return; // gate.ts handles it once loaded

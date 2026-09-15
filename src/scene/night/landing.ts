@@ -280,6 +280,20 @@ export const landing = {
   configure(o: { onLand?: () => void }) { if (o.onLand) onLand = o.onLand; },
   warm,
   begin,
+  /**
+   * Let the loading video breathe between blocking chunks of work (the shader pre-warm): resolves once the loop has
+   * presented a new frame, or after `maxMs` when no video is playing / the frame never comes. Cheap no-op otherwise.
+   */
+  breathe(maxMs = 80): Promise<void> {
+    const playing = !!loop && el?.dataset.landing === 'video' && !loop.paused;
+    if (!playing) return new Promise((r) => setTimeout(r, 0));
+    return new Promise((r) => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; r(); } };
+      onFrame(loop!, () => onFrame(loop!, finish)); // two presented frames: the compositor really got a turn
+      setTimeout(finish, maxMs);
+    });
+  },
   /** boot.done(): the first frame is up. */
   ready,
   /** boot.fail(): stop the videos and downloads; boot shows the error and the text page takes over. */

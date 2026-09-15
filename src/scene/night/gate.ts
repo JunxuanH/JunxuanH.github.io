@@ -1,6 +1,7 @@
 /**
- * The landing gate (`#gate` in index.astro): a static page on first paint — name, title, résumé links, the
- * photosensitivity notice and two ways in, **Enter the city** / **Enter with reduced motion**. Nothing 3D runs behind
+ * The landing gate (`#gate` in index.astro): a static page on first paint — name and title over a still of the warp,
+ * one **Enter the city** button, a one-line flashing-lights notice with a **Reduce motion** switch, the résumé link and
+ * LinkedIn / GitHub icons. Nothing 3D runs behind
  * it: index.astro calls `start()` only once `wait()` resolves. Meanwhile the network warms up (the chosen variant's
  * warp clips as blobs, then the heaviest scene assets into the HTTP cache at low priority).
  *
@@ -82,6 +83,8 @@ if (el && enabled) {
       const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.gate-enter');
       if (b) choose(b.dataset.choice === 'reduced' ? 'reduced' : 'full', true);
     });
+    // Turning Reduce motion off behind the gate starts warming the warp clips (they were skipped when it was on).
+    document.getElementById('gate-reduce')?.addEventListener('change', (e) => { if (!(e.target as HTMLInputElement).checked) landing.warm(); });
     const conn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
     if (el.dataset.pre === 'full') landing.warm();
     if (!conn?.saveData) {

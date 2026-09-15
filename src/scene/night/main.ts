@@ -446,22 +446,55 @@ export async function start(root: HTMLElement) {
   {
     const t0 = performance.now();
     const meshes: THREE.Object3D[] = [];
-    scene.traverse((o: any) => { if (o.isMesh || o.isPoints || o.isLine) meshes.push(o); });
+    scene.traverse((o: any) => { if (o.isMesh || o.isPoints || o.isLine || o.isSprite) meshes.push(o); });
     const culled = meshes.map((o) => o.frustumCulled);
     for (const o of meshes) o.frustumCulled = false;
     boot.allowSkip();
     const poses = [0, 0.10, 0.19, 0.31, 0.42, 0.535, 0.66, 0.82, 0.94, 1.0]; // 0.10: campus appears while the water still reflects
+    // Chunked so the landing video keeps moving: one render that compiled every new program of a pose held the main
+    // thread (and on iPhones the GPU process that also presents video) for seconds, freezing the warp loop. Each pose now
+    // reveals its not-yet-compiled materials a few at a time (everything else hidden, so a render compiles only that
+    // chunk), yields until the loop has presented new frames, then renders the whole pose once for the combinations.
+    // Visibility only toggles meshes; lights stay put, so program keys are unchanged.
+    const CHUNK = narrow || tier === 'low' ? 3 : 8;
+    const seen = new Set<string>();
+    const keyOf = (o: any) => {
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      return mats.map((m: any) => m?.uuid).join('+') + (o.isSkinnedMesh ? ':s' : o.isInstancedMesh ? ':i' : o.isPoints ? ':p' : o.isLine ? ':l' : o.isSprite ? ':sp' : '');
+    };
+    const visibleInScene = (o: THREE.Object3D) => { for (let a: THREE.Object3D | null = o; a; a = a.parent) if (!a.visible) return false; return true; };
     for (let i = 0; i < poses.length; i++) {
       boot.phase(`compiling shaders ${i + 1}/${poses.length}`, 0.86 + (0.1 * i) / poses.length);
-      await new Promise((r) => setTimeout(r, 16)); // paint the label before the (synchronous) frame
+      await landing.breathe(); // paint the label, keep the video presenting
       const pp = poses[i];
       districts.update(0, pp);
       content.update(pp, 0, 0);
       if (water) water.visible = pp < 0.14 || pp > 0.86;
       poseAt(pp, pos, look); camera.position.copy(pos); camera.lookAt(look); camera.updateMatrixWorld(true);
       const tp = performance.now();
+      // The pose's visible meshes whose material + kind is new.
+      const fresh: THREE.Object3D[] = [];
+      // The water stays on through the chunks: its reflector renders the scene a second time with its own programs, so a
+      // chunk must compile for both passes (otherwise the pose's final render compiled every reflection program at once).
+      const inWater = (o: THREE.Object3D) => { for (let a: THREE.Object3D | null = o; a; a = a.parent) if (a === water) return true; return false; };
+      const shown = meshes.filter((o) => o.visible && visibleInScene(o) && !inWater(o));
+      const pass = water?.visible ? '|w' : ''; // a program compiled without the reflector still needs its reflection-pass twin
+      for (const o of shown) { const k = keyOf(o); if (!seen.has(k + pass)) { seen.add(k + pass); seen.add(k); fresh.push(o); } }
+      if (fresh.length > CHUNK) {
+        for (const o of shown) o.visible = false;
+        for (let c = 0; c < fresh.length; c += CHUNK) {
+          const batch = fresh.slice(c, c + CHUNK);
+          for (const o of batch) o.visible = true;
+          const tc = performance.now();
+          pipeline.render();
+          if (params.has('prof') && performance.now() - tc > 150) console.info('[night] pre-warm chunk', Math.round(performance.now() - tc), 'ms', batch.map((o: any) => `${o.name || o.type}/${(Array.isArray(o.material) ? o.material[0] : o.material)?.type}`).join(', '));
+          for (const o of batch) o.visible = false;
+          await landing.breathe();
+        }
+        for (const o of shown) o.visible = true;
+      }
       pipeline.render();
-      if (params.has('prof')) console.info('[night] pre-warm pose', pp, Math.round(performance.now() - tp), 'ms');
+      if (params.has('prof')) console.info('[night] pre-warm pose', pp, Math.round(performance.now() - tp), 'ms', fresh.length, 'new');
     }
     meshes.forEach((o, i) => { o.frustumCulled = culled[i]; });
     console.info('[night] pre-warm', Math.round(performance.now() - t0), 'ms', params.has('prof') ? Object.entries(stages).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ') : '');
