@@ -32,12 +32,13 @@ const Y = 0.22; // sidewalk / plaza slab height (streets.ts CURB_H)
 export const EDUCATION_PLAZA: PathDef = {
   id: 'education-plaza', closed: true, y: Y,
   // Japantown campus: plaza centred (−80, −102); the torii approach runs north to the z −60 street.
-  points: [[-80, Y, -70], [-66, Y, -80], [-58, Y, -96], [-64, Y, -118], [-84, Y, -124], [-100, Y, -114], [-104, Y, -96], [-94, Y, -78]],
+  // Inner promenade: outside the pond, kiosk and the three campus building footprints.
+  points: [[-80, Y, -82], [-69, Y, -85], [-65, Y, -96], [-68, Y, -109], [-82, Y, -109], [-84, Y, -102], [-83, Y, -90]],
   stalls: [
-    { pos: [-80, Y, -76], face: [-80, Y, -60], clip: 'idle' },   // under the torii, looking out
-    { pos: [-70, Y, -104], face: [-68, Y, -102], clip: 'talk' },
-    { pos: [-68, Y, -102], face: [-70, Y, -104], clip: 'talk' },
-    { pos: [-92, Y, -92], face: [-92, Y, -92], clip: 'idle' },   // by the koi pond
+    { pos: [-80, Y, -82], face: [-80, Y, -60], clip: 'idle' },
+    { pos: [-65, Y, -96], face: [-68, Y, -96], clip: 'talk' },
+    { pos: [-68, Y, -109], face: [-80, Y, -109], clip: 'talk' },
+    { pos: [-83, Y, -90], face: [-92, Y, -92], clip: 'idle' },
   ],
 };
 
@@ -55,12 +56,12 @@ export const WORK_WALK_RIGHT: PathDef = {
 
 export const PROJECTS_MARKET: PathDef = {
   id: 'projects-market', closed: true, y: Y,
-  points: [[24, Y, -217], [48, Y, -216], [76, Y, -217], [80, Y, -228], [76, Y, -239], [48, Y, -240], [24, Y, -239], [20, Y, -228]],
+  points: [[24, 0, -221], [48, 0, -221], [65, 0, -221], [80, 0, -222], [80, 0, -232], [64, 0, -235], [48, 0, -235], [24, 0, -235], [21, 0, -228]],
   stalls: [
-    { pos: [36, Y, -242], face: [36, Y, -230], clip: 'wave' },   // vendor behind a stall
-    { pos: [58, Y, -215], face: [60, Y, -215], clip: 'talk' },
-    { pos: [60, Y, -215], face: [58, Y, -215], clip: 'talk' },
-    { pos: [66, Y, -234], face: [72, Y, -228], clip: 'idle' },   // watching the holo stall (off the camera sightline)
+    { pos: [36, 0, -221], face: [36, Y, -217], clip: 'wave' },
+    { pos: [58, 0, -221], face: [60, 0, -221], clip: 'talk' },
+    { pos: [60, 0, -221], face: [58, 0, -221], clip: 'talk' },
+    { pos: [64, 0, -235], face: [72, Y, -228], clip: 'idle' },
   ],
 };
 

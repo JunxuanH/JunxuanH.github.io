@@ -37,6 +37,11 @@ try {
         await page.screenshot({ path: `${out}/${name}-gate.png` });
         await page.getByRole('button', { name: 'Enter the city', exact: true }).click();
         await page.locator('#boot .gate-car canvas').waitFor({ timeout: 10000 });
+        await page.locator(`#boot .gate-car[data-phase="${name === 'reduced' ? 'still' : 'hyperspace'}"]`).waitFor({ timeout: 10000 });
+        if (['desktop', 'phone'].includes(name)) {
+          await page.waitForTimeout(1800);
+          await page.screenshot({ path: `${out}/${name}-hyperspace.png` });
+        }
       }
       await page.waitForFunction(() => document.documentElement.classList.contains('is-landed'), null, { timeout: 120000 });
       assert.equal(await page.locator('#boot').count(), 0);

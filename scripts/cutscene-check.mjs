@@ -72,6 +72,8 @@ async function desktop() {
   await boot(page);
   const enabled = await page.evaluate(() => window.__cine?.enabled);
   check('desktop: __cine.enabled', enabled === true, String(enabled));
+  // The manifest intentionally loads at browser idle (up to 2 s), not at is-booted.
+  await page.waitForFunction(() => !!window.__cine?.manifest, null, { timeout: 10000 });
   const manifest = await page.evaluate(() => window.__cine?.manifest ? Object.keys(window.__cine.manifest.clips) : null);
   check('desktop: manifest fetched', manifest && manifest.length > 0, manifest ? `${manifest.length} clips` : 'none');
   await page.waitForTimeout(6000); // idle preload of the four hops out of the city

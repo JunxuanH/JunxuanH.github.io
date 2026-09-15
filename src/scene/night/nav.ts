@@ -214,13 +214,12 @@ export function createNav(opts: NavOptions) {
    */
   function panTo(id: SectionId) {
     if (mode === 'dock' && !reducedMotion) undock();
-    if (mode === 'walk' && id === section) return;               // already there
-    if (cut && id === section) return;                             // already on the way there
+    if (mode === 'walk' && id === section && !cut) return;       // already there (unless cancelling a pending fade)
+    if (cut && id === cut.to) return;                             // already on the way there
     const fromId = section, to = NAV_TARGET[id];
     const wasFlying = move?.kind === 'flyover';
     const redirect = cut !== null;
     dropCover();
-    setSection(id);
     inFlight = true;
     rig.navFlight = true;
     if (reducedMotion) {
@@ -229,6 +228,7 @@ export function createNav(opts: NavOptions) {
       beginCut('fade', fromId, id, null);
       return;
     }
+    setSection(id);
     const cover = !redirect && fromId !== id ? ((coverHook ?? opts.cover)?.(fromId, id) ?? null) : null;
     // Where the new move starts: the source's wide shot (cover), the camera itself (a redirect mid-air or off a parked
     // shot: the fly-over departs from `last`), or the rail at the current p.
@@ -320,6 +320,7 @@ export function createNav(opts: NavOptions) {
           // Behind the black: leave the carrier / the walk, jump the rail, place the character, all in one frame.
           if (mode === 'dock') undock();
           if (mode !== 'ride') { setMode('ride', 0); opts.onLeaveWalk?.(); }
+          setSection(id); // switch districts behind black, not at the start of the fade
           journey.p = NAV_TARGET[id]; move = null;
           rig.reset(); rig.navFlight = false; inFlight = false;
           opts.onArrive?.(id);
@@ -359,7 +360,7 @@ export function createNav(opts: NavOptions) {
   }
 
   function dock(id: DockId) {
-    if (mode !== 'walk') return;
+    if (mode !== 'walk' || cut) return;
     docked = id;
     setMode('dock', 1.0);
     opts.onDock?.(id);

@@ -285,7 +285,7 @@ export async function start(root: HTMLElement) {
   // ---------- résumé content: slabs on their carriers (kiosk, bus stop, LED wall, blimp, hologram, stall, departures board)
   boot.phase('mounting the résumé', 0.82);
   const content = await createContent({
-    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople') && !lite, // carrier NPCs are desktop-only
+    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople'), // both resident rigs are already cached in the phone roster
     onFlap: () => audio.clack(6, 0.07),
   });
   // District + carrier lights go through a fixed-size pool (constant light count → no shader rebuilds).
@@ -391,7 +391,10 @@ export async function start(root: HTMLElement) {
     const row = NPC_RIGS.find(([x, z]) => Math.hypot(npcAt.x - x, npcAt.z - z) < 3);
     if (row) dialogueTargets.push(carrierTarget(npc, row[2], row[3]));
   }
-  const dialogue = createDialogue({ hud, prompt: (l) => { prompts.talk = l; publishPrompt(); }, getTargets: () => dialogueTargets, playerYaw: () => player?.yaw ?? null });
+  const dialogue = createDialogue({ hud, prompt: (l) => { prompts.talk = l; publishPrompt(); }, getTargets: () => dialogueTargets, playerYaw: () => player?.yaw ?? null,
+    onOpen: (target) => { if (target) player?.focusResident(target.root.getWorldPosition(new THREE.Vector3())); },
+    onClose: () => player?.focusResident(null),
+  });
   dialogueOpen = () => dialogue.open;
   const jumpLinks = [...document.querySelectorAll<HTMLAnchorElement>('a[data-section]')]; // nav + the hero's "Enter the city"
   jumpLinks.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); a.blur(); nav.panTo(a.dataset.section as SectionId); }));
@@ -616,7 +619,7 @@ export async function start(root: HTMLElement) {
     const walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
     if (mode === 'dock' && inp.walkIntent) nav.undock(); // walking away leaves the carrier
     if (player) {
-      player.update(dt, inp, nav.mode === 'walk');
+      player.update(dt, inp, nav.mode === 'walk' && !nav.cutscene);
       if (nav.mode !== 'ride') playerPos.copy(player.position);
     }
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
@@ -624,7 +627,7 @@ export async function start(root: HTMLElement) {
     const talkSec = nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null;
     let talk = false;
     timed('talk', () => { talk = dialogue.update(talkSec ? playerPos : null, talkSec, inp.interact, inp.back, inp.walkIntent, dt); });
-    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk, nav.mode === 'walk' ? walkSec ?? null : null, talk));
+    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk && !nav.cutscene, nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null, talk));
     const rigP = nav.samplePath(pos, look); // rail pose, or the fly-over's during a non-adjacent jump
     content.followOffset(p, off);
     pos.add(off); look.add(off);

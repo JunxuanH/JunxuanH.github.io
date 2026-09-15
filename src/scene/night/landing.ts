@@ -7,6 +7,8 @@ const enabled = !!el?.dataset.landing && el.dataset.landing !== 'off';
 let covering = enabled, arriving = false, leaving = false, begun = false;
 let onLand: (() => void) | undefined;
 let cleanup: (() => void) | undefined;
+let readyRequested = false;
+let arrivalTimer: ReturnType<typeof setTimeout> | undefined;
 const times: Record<string, number | string> = {};
 
 export const landing = {
@@ -25,8 +27,12 @@ export const landing = {
   },
   breathe(): Promise<void> { return new Promise((resolve) => setTimeout(resolve, 16)); },
   ready() {
-    if (!enabled || !el || leaving) return;
+    if (!enabled || !el || leaving || readyRequested) return;
+    readyRequested = true;
     times.ready = performance.now();
+    // Even a warm cache gets a readable acceleration beat; slow loads sustain the tunnel until ready.
+    const delay = reducedMotion ? 0 : Math.max(0, 2400 - (performance.now() - Number(times.begin ?? 0)));
+    arrivalTimer = setTimeout(() => {
     leaving = arriving = true;
     el.classList.add('is-arriving');
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('is-leaving')));
@@ -40,8 +46,9 @@ export const landing = {
       const hero = document.querySelector<HTMLAnchorElement>('#hero-copy .neon-btn.primary');
       if (hero) { hero.textContent = 'Start the tour →'; hero.focus({ preventScroll: true }); }
     }, reducedMotion ? 0 : 500);
+    }, delay);
   },
-  fail() { cleanup?.(); cleanup = undefined; covering = false; },
+  fail() { clearTimeout(arrivalTimer); cleanup?.(); cleanup = undefined; covering = false; },
 };
 if (typeof window !== 'undefined') (window as any).__landing = {
   enabled, times,

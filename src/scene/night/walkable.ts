@@ -253,7 +253,7 @@ export function limitCamera(area: Area, pivot: THREE.Vector3, desired: THREE.Vec
   const len = pivot.distanceTo(desired);
   if (len <= minLen) return;
   const steps = Math.ceil(len / 0.4);
-  let ok = 1;
+  let ok = 0; // no segment is clear until sampled (the first sample can already hit a wall)
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
     const x = pivot.x + (desired.x - pivot.x) * t, z = pivot.z + (desired.z - pivot.z) * t, y = pivot.y + (desired.y - pivot.y) * t;

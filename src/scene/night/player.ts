@@ -65,6 +65,7 @@ export function createPlayer(opts: PlayerOptions) {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const camOut = new THREE.Vector3(); // camPos + the stride bob (the bob never feeds back into the damped state)
   let bobAmp = 0;
+  let resident: THREE.Vector3 | null = null;
   const desired = new THREE.Vector3(), pivot = new THREE.Vector3(), lookT = new THREE.Vector3();
 
   const camDir = () => dir.set(Math.sin(camYaw), 0, Math.cos(camYaw));
@@ -72,13 +73,21 @@ export function createPlayer(opts: PlayerOptions) {
     camDir();
     pivot.set(pos.x, pos.y + 0.6, pos.z);
     desired.set(-dir.x * Math.cos(pitch), Math.sin(pitch), -dir.z * Math.cos(pitch)).multiplyScalar(BOOM).add(pivot);
+    if (resident) {
+      // A side-on two-shot keeps the person speaking from disappearing behind the protagonist.
+      const dx = resident.x - pos.x, dz = resident.z - pos.z, distance = Math.hypot(dx, dz) || 1;
+      const fx = dx / distance, fz = dz / distance;
+      desired.set(pos.x - fx * 3.8 + fz * 3.4, pos.y + 2.3, pos.z - fz * 3.8 - fx * 3.4);
+    }
     if (area) limitCamera(area, pivot, desired);
     desired.y = Math.max(desired.y, pos.y + 0.5);
     lookT.set(pos.x + dir.x * 2, pos.y + HEAD, pos.z + dir.z * 2);
+    if (resident) lookT.set((pos.x + resident.x) * .5, pos.y + HEAD * .85, (pos.z + resident.z) * .5);
   };
 
   /** Drop the character at (x, y, z) facing `facing` (radians, +z = 0); the camera snaps behind it. */
   function teleport(x: number, y: number, z: number, facing: number) {
+    resident = null;
     pos.set(x, y, z);
     if (area) pos.y = groundY(area, x, z);
     prev.copy(pos);
@@ -187,6 +196,7 @@ export function createPlayer(opts: PlayerOptions) {
     get camera() { return { pos: camOut, look: camLook }; },
     setArea(a: Area | null) { area = a; },
     teleport, face, frame, update,
+    focusResident(target: THREE.Vector3 | null) { resident = target?.clone() ?? null; },
   };
 }
 

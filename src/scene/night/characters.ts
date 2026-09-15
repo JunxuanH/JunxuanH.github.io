@@ -359,6 +359,7 @@ export function createCrowd(opts: CrowdOptions) {
   const walkers: Walker[] = [];
   const tmp = new THREE.Vector3(), tan = new THREE.Vector3(), target = new THREE.Quaternion(), m = new THREE.Matrix4();
   const wp = new THREE.Vector3();
+  const face = new THREE.Vector3();
   const okAssets = opts.assets.filter((a) => rigMeta(a.name, a).ok);
   // Shuffle the roster per path (own rng: speeds/phases stay as before) so a tier whose count is smaller than the
   // roster still mixes rigs from every batch instead of always taking the first `count` names in paths.ts.
@@ -377,7 +378,7 @@ export function createCrowd(opts: CrowdOptions) {
       hold(face) {
         if (w.stall >= 0) { occupied.delete(w.stall); vacantSince[w.stall] = elapsed; w.stall = -1; }
         w.held = true; w.state = 'hold';
-        w.faceTarget = face ? face.clone() : null;
+        w.faceTarget = face ? group.worldToLocal(face.clone()) : null;
         w.inst.play(w.inst.actions.has('talk') ? 'talk' : 'idle', 0.25);
       },
       release() {
@@ -389,6 +390,9 @@ export function createCrowd(opts: CrowdOptions) {
     inst.play('walk', 0);
     const a = inst.actions.get('walk');
     if (a) { a.timeScale = speed / stride; a.time = rand() * (a.getClip().duration || 1); }
+    curve.getPointAt(w.t, inst.root.position);
+    curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
+    inst.root.rotation.y = Math.atan2(tan.x, tan.z);
     group.add(inst.root);
     walkers.push(w);
   }
@@ -402,15 +406,22 @@ export function createCrowd(opts: CrowdOptions) {
       if (w.held) {
         // Parked for dialogue: no path motion (walkers behind ignore non-walking peers and pass), turn to the face point.
         if (w.faceTarget && w.faceTarget.distanceToSquared(r.position) > 1e-4) {
-          m.lookAt(w.faceTarget, r.position, THREE.Object3D.DEFAULT_UP);
+          face.copy(w.faceTarget); face.y = r.position.y; // turn on the ground, never pitch the whole body toward a head
+          m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);
           target.setFromRotationMatrix(m);
           r.quaternion.slerp(target, 1 - Math.exp(-8 * dt)); // ~96 % of the turn in 0.4 s
         }
       } else if (w.state === 'stall') {
+        if (w.faceTarget) {
+          face.copy(w.faceTarget); face.y = r.position.y;
+          m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);
+          target.setFromRotationMatrix(m);
+          r.quaternion.slerp(target, 1 - Math.exp(-8 * dt));
+        }
         if (elapsed > w.until) {
           w.state = 'walk';
           if (w.stall >= 0) { occupied.delete(w.stall); vacantSince[w.stall] = elapsed; }
-          w.stall = -1;
+          w.stall = -1; w.faceTarget = null;
           w.inst.play('walk');
         }
       } else {
@@ -422,15 +433,19 @@ export function createCrowd(opts: CrowdOptions) {
           if (opts.path.closed) d = ((d % 1) + 1) % 1;
           if (d > 0 && d * length < 1.6) w.speed = Math.min(w.speed, o.baseSpeed * 0.9);
         }
-        w.t += (w.dir * w.speed * dt) / length;
+        curve.getPointAt(w.t, tmp);
+        // Return to the saved path point first; otherwise the target runs away while rejoining.
+        if (r.position.distanceTo(tmp) < 0.05) w.t += (w.dir * w.speed * dt) / length;
         if (opts.path.closed) w.t = ((w.t % 1) + 1) % 1;
         else if (w.t > 1 || w.t < 0) { w.dir = (w.dir * -1) as 1 | -1; w.t = THREE.MathUtils.clamp(w.t, 0, 1); }
         curve.getPointAt(w.t, tmp);
         curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
-        r.position.copy(tmp);
-        m.lookAt(tan.clone().add(tmp), tmp, THREE.Object3D.DEFAULT_UP);
+        // Ease back from an off-path stall instead of snapping a metre sideways on release.
+        r.position.lerp(tmp, Math.min(1, w.speed * dt / Math.max(r.position.distanceTo(tmp), 1e-6)));
+        face.copy(tan).add(r.position); face.y = r.position.y;
+        m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);
         target.setFromRotationMatrix(m);
-        r.quaternion.slerp(target, 0.15);
+        r.quaternion.slerp(target, 1 - Math.exp(-9.75 * dt));
         const a = w.inst.actions.get('walk');
         if (a) a.timeScale = w.speed / w.stride;
 
@@ -443,8 +458,8 @@ export function createCrowd(opts: CrowdOptions) {
           if (!w.inst.actions.has(clip) && elapsed - vacantSince[si] < STALL_OWNER_WAIT) continue;
           if (tmp.distanceTo(new THREE.Vector3(...s.pos)) < 1.2 && rand() < 0.5 * dt) {
             occupied.add(si); w.stall = si; w.state = 'stall'; w.until = elapsed + 8 + rand() * 12;
-            r.position.set(...s.pos);
-            if (s.face) { m.lookAt(new THREE.Vector3(...s.face), r.position, THREE.Object3D.DEFAULT_UP); r.quaternion.setFromRotationMatrix(m); }
+            // Stop where we reached the waypoint; snapping to its centre caused visible sideways jumps.
+            w.faceTarget = s.face ? new THREE.Vector3(...s.face) : null;
             w.inst.play(clip);
             break;
           }
