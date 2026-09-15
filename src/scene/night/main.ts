@@ -95,10 +95,10 @@ export async function start(root: HTMLElement) {
 
   const scene = new THREE.Scene();
   const landingFlyby = landing.enabled ? createLandingFlyby(scene) : null;
-  // Default: the night gradient sky + the aerial skyline plate (Ivan preferred it). `?pano=1` shows the 360° river-city
-  // panorama (scripts/pano-build.sh), `?pano=<url>` another equirect.
+  // A continuous, undisplaced panorama has no exposed billboard edges when the player turns.
+  // Keep the old plates behind ?pano=0 for comparisons; custom equirectangular URLs still work.
   const panoParam = params.get('pano');
-  const panoUrl = panoParam ? (panoParam === '1' ? '/night/backdrop/pano.webp' : panoParam) : null;
+  const panoUrl = panoParam === '0' ? null : (!panoParam || panoParam === '1' ? '/night/backdrop/pano.webp' : panoParam);
   scene.fogNode = createHaze(Number(params.get('haze')) || 0.0032, !!panoUrl);
   const camera = new THREE.PerspectiveCamera(narrow ? 62 : 50, innerWidth / innerHeight, 0.5, 2600);
   scene.add(camera);
@@ -130,8 +130,7 @@ export async function start(root: HTMLElement) {
   }
   // The sky loads after the URL rewrite, so phones fetch the half-size panorama.
   scene.add(createSky(tier, panoUrl ? {
-    url: panoUrl, depth: panoParam === '1' ? '/night/backdrop/pano-depth.png' : undefined,
-    depthScale: Number(params.get('panoDepth')) || 0.42, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
+    url: panoUrl, rotation: Number(params.get('panoRot')) || 0, gain: Number(params.get('panoGain')) || 1.15,
   } : undefined));
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
   const PROTAGONIST = 'soldier'; // the player's rig (rigs.ts row: height 1.85, cyan rim); agent + netrunner stay on disk / in the crowd
