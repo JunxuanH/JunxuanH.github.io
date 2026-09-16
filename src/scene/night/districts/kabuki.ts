@@ -111,13 +111,14 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
         box(p,panel,.22,.8,.24,x+.42,2.05,-.65,0,-.2);
       }
     } else if(s.kind==='audio') {
-      for(let k=0;k<3;k++) {
-        add(new THREE.TorusGeometry(.29,.035,6,16),trim,p,-1.8+k*1.7,1.6,1.05);
-        for(const dx of [-.26,.26]) box(p,rubber,.14,.3,.2,-1.8+k*1.7+dx,1.48,1.05);
-        box(p,metal,.06,.4,.06,-1.8+k*1.7,1.32,.94);
+      for(const x of [-1.8,1.8]) {
+        add(new THREE.TorusGeometry(.29,.035,6,16),trim,p,x,1.6,1.05);
+        for(const dx of [-.26,.26]) box(p,rubber,.14,.3,.2,x+dx,1.48,1.05);
+        box(p,metal,.06,.4,.06,x,1.32,.94);
       }
     } else {
       for(let k=0;k<4;k++) {
+        if(s.kind==='games' && (k===1||k===2))continue; // centre reserved for the generated handheld
         box(p,metal,.9,.09,.55,-2+k*1.3,1.18,1,0,.12);
         box(p,trim,.55,.015,.36,-2+k*1.3,1.235,1,0,.12);
       }

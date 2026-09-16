@@ -1,6 +1,7 @@
 import { MARKET_STALLS } from './market-layout';
 
 export type ShopKind = typeof MARKET_STALLS[number]['kind'];
+export const ITEM_MODELS: Partial<Record<number,'mask'|'headphones'|'console'>> = {4:'mask',3:'headphones',2:'console'};
 export const SHOP_ATLAS = '/night/ads/market-items-atlas.webp';
 export const SHOP_ATLASES = [SHOP_ATLAS, '/night/ads/market-items-atlas-2.webp', '/night/ads/market-items-atlas-3.webp'];
 export function itemArtwork(index: number) {

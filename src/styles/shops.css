@@ -14,4 +14,6 @@
 .shop-items span { font-size:15px; line-height:1.4; color:#bdcbd3; }
 .shop-item-art { width:min(100%,280px); aspect-ratio:1; margin:12px auto; background-size:300% 200%; background-repeat:no-repeat; }
 .shop-open #hud .hud-prompt,.shop-open .dlg { visibility:hidden; }
+.shop-model-preview canvas { display:block; width:100%; touch-action:none; border:1px solid var(--shop-accent); border-radius:4px; }
+.shop-model-preview p { font-size:14px; color:#bdcbd3; }
 @media(max-width:420px) { .shop-panel {padding:16px;} .shop-items {gap:8px;} .shop-items button {padding:8px;} }

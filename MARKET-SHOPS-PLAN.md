@@ -1,5 +1,13 @@
 # Market shops: interaction and inventory plan
 
+## Generated 3D products
+
+- Three Fal/Meshy models: fox mask, Quietline headphones and Pocket Arcade. New geometry is a 3D interpretation, not an exact reconstruction of the earlier illustrations.
+- Estimated generation cost $2.40; cumulative item-art spend $2.85 of the original $5 allowance. Detailed requests and original URLs are in `public/night/shop-models/provenance.json`.
+- Roughly 4,000 triangles each, 230 KB combined, no texture payloads. Colours are applied locally through vertex colours and Three.js materials; the console also has a fitted glass screen.
+- Counter props load on first entry to the market. Item details offer an on-demand rotatable preview with keyboard rotation buttons. Illustrations remain as fallbacks; no model preloading on the landing screen.
+- Only these three featured items are 3D in this first batch; the other 15 retain their illustrations. Browser preview checks verify nonblank rendering, colour and model switching; full mobile-world performance still needs device verification.
+
 ## Latest revision: inventory first and distinct products
 
 - Owner interaction now opens inventory immediately. Talk is optional; conversation and item-detail Back buttons return to inventory.

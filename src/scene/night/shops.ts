@@ -1,5 +1,5 @@
 import { MARKET_STALLS } from './market-layout';
-import { SHOPS, itemArtwork, shopInReach } from './shop-catalogue';
+import { SHOPS, itemArtwork, shopInReach, ITEM_MODELS } from './shop-catalogue';
 import '../../styles/shops.css';
 
 export function createShops(opts: { prompt(s:string|null):void; available(i:number):boolean; owner(i:number,active:boolean):void }) {
@@ -7,9 +7,13 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
   dialog.setAttribute('aria-labelledby','shop-heading'); document.body.append(dialog);
   let active=-1, page:'talk'|'browse'|'detail'='browse';
   let restore:HTMLElement|null=null;
+  let disposePreview:(()=>void)|undefined;
+  let previewVersion=0;
+  const clearPreview=()=>{previewVersion++;disposePreview?.();disposePreview=undefined;};
   const el=(tag:string,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
   const button=(text:string,fn:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
   function close() {
+    clearPreview();
     if(active>=0) opts.owner(active,false);
     active=-1; dialog.close(); document.documentElement.classList.remove('shop-open');
     restore?.focus({preventScroll:true}); opts.prompt(null);
@@ -22,6 +26,7 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
     return n;
   }
   function render(next:typeof page, item=0) {
+    clearPreview();
     page=next; dialog.replaceChildren();
     const stall=MARKET_STALLS[active], shop=SHOPS[stall.kind];
     dialog.style.setProperty('--shop-accent','#'+stall.accent.toString(16).padStart(6,'0'));
@@ -40,7 +45,21 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
         shop.items.forEach((entry,i)=>{const b=button('',()=>render('detail',i));b.append(art(entry.art),el('strong',entry.name),el('span',entry.description));grid.append(b);});
         dialog.append(grid);
       } else {
-        const entry=shop.items[item];dialog.append(art(entry.art),el('h3',entry.name),el('p',entry.description),el('p',`${shop.owner}: “${entry.remark}”`,'shop-speech'));
+        const entry=shop.items[item], illustration=art(entry.art);dialog.append(illustration,el('h3',entry.name),el('p',entry.description),el('p',`${shop.owner}: “${entry.remark}”`,'shop-speech'));
+        const model=ITEM_MODELS[entry.art];
+        if(model) {
+          const host=el('div','','shop-model-preview');
+          const version=previewVersion;
+          const view=button('View coloured 3D model',async()=>{
+            view.disabled=true;
+            try {
+              const {showShopModel}=await import('./shop-model-viewer');
+              if(version!==previewVersion)return;
+              disposePreview=showShopModel(host,model,()=>{illustration.hidden=true;host.scrollIntoView({block:'nearest'});});
+            } catch {if(version===previewVersion){host.textContent='3D preview unavailable. Please try again.';view.disabled=false;}}
+          });
+          dialog.append(view,host);
+        }
       }
     }
     dialog.querySelector<HTMLButtonElement>('button')?.focus();

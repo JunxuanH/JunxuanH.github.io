@@ -256,6 +256,7 @@ export async function start(root: HTMLElement) {
   const life: { group?: THREE.Group; update(dt: number, cam: THREE.Camera): void }[] = [];
   const crowds: { id: string; walkers: ReturnType<typeof createCrowd>['walkers'] }[] = []; // the walkers, for the dialogue
   const shopOwners = new Map<number, ReturnType<typeof instantiate>>();
+  let shopPropsRequested=false;
   if (!params.has('nopeople')) {
     try {
       boot.phase('waking the residents', 0.62);
@@ -675,6 +676,19 @@ export async function start(root: HTMLElement) {
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
     // Residents first: a box open or a resident in reach takes F (and the prompt slot) from the carriers; never docked or mid-fade.
     const talkSec = nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null;
+    if(talkSec==='projects' && !shopPropsRequested) {
+      shopPropsRequested=true;
+      void import('./shop-models').then(async ({loadShopModel})=>{
+        for(const [kind,id] of [['wear','mask'],['audio','headphones'],['games','console']] as const) {
+          try {
+            const model=await loadShopModel(id), s=MARKET_STALLS.find(s=>s.kind===kind)!;
+            model.scale.setScalar(.7); model.rotation.y=s.yaw;
+            model.position.set(s.x,1.72,s.z+Math.cos(s.yaw));
+            noReflect(model); districts.group.children[2].add(model);
+          } catch(error) {console.warn('[shop display]',error);}
+        }
+      }).catch(error=>console.warn('[shop displays]',error));
+    }
     const shopping = shops.update(playerPos,player?.yaw ?? 0,talkSec==='projects',inp.interact);
     let talk = false;
     timed('talk', () => { talk = dialogue.update(talkSec && !shopping ? playerPos : null, shopping ? null : talkSec, inp.interact && !shopping, inp.back, inp.walkIntent, dt); });

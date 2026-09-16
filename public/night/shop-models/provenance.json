@@ -1,0 +1,54 @@
+{
+  "estimated_total_usd": 2.4,
+  "remaining_budget_usd": 2.15,
+  "assets": [
+    {
+      "id": "mask",
+      "endpoint": "meshy/v7/text-to-3d",
+      "request_id": "01a0a848-bd72-7982-8b81-8f21c85bcca6",
+      "url": "https://v3b.fal.media/files/b/0aaa9b0e/HZSD9Mzr7qKfJS61F6P7e_model.glb",
+      "estimated_cost_usd": 0.8,
+      "input": {
+        "prompt": "A standalone wearable cyberpunk fox mask, no head or person. Symmetric angular fox ears, narrow eye openings, short faceted muzzle, two small side respirator filters. Separate hard shell and filter parts. Clean chunky readable game prop, smooth bevels, no stand, no text.",
+        "mode": "preview",
+        "model_type": "smart-topology",
+        "target_polycount": 4000,
+        "enable_pbr": false,
+        "enable_rigging": false,
+        "enable_animation": false
+      }
+    },
+    {
+      "id": "headphones",
+      "endpoint": "meshy/v7/text-to-3d",
+      "request_id": "01a0a848-cd74-72c3-a1d0-55f86f227efc",
+      "url": "https://v3b.fal.media/files/b/0aaa9b0f/O6WbBUzCJcObY0hJ_cNiv_model.glb",
+      "estimated_cost_usd": 0.8,
+      "input": {
+        "prompt": "One pair of premium over-ear cyberpunk headphones. Curved padded headband connecting two large round earcups with thick cushions and separate outer metal panels. Folded inward slightly, clean symmetric industrial product, no person, no wires, no display stand, no text.",
+        "mode": "preview",
+        "model_type": "smart-topology",
+        "target_polycount": 4000,
+        "enable_pbr": false,
+        "enable_rigging": false,
+        "enable_animation": false
+      }
+    },
+    {
+      "id": "console",
+      "endpoint": "meshy/v7/text-to-3d",
+      "request_id": "01a0a848-df49-7cf3-af92-7194e2821bda",
+      "url": "https://v3b.fal.media/files/b/0aaa9b10/ocROZT6IWDLaDzpItxHCs_model.glb",
+      "estimated_cost_usd": 0.8,
+      "input": {
+        "prompt": "A small portrait handheld games console, rounded rectangular body, large inset screen on upper front, cross-shaped directional pad lower left, four circular buttons lower right, two small start buttons near bottom. Separate screen and button parts, chunky beveled industrial design, no stand, no text.",
+        "mode": "preview",
+        "model_type": "smart-topology",
+        "target_polycount": 4000,
+        "enable_pbr": false,
+        "enable_rigging": false,
+        "enable_animation": false
+      }
+    }
+  ]
+}
