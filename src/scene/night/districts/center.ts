@@ -5,7 +5,7 @@ import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';
 import { AVENUE_HALF, SIDEWALK, CURB_H, PATCH_LIFT } from '../streets';
 import { THEMES } from '../theme';
-import { DOWNTOWN_LOBBIES } from '../building-layout';
+import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_CENTER_X } from '../building-layout';
 import { downtownDetail } from './downtown-detail';
 import { type DistrictBuild, type DistrictCtx } from './shared';
 
@@ -96,11 +96,10 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   group.add(logos);
 
   // Glass lobbies on both sides of the avenue, set back behind the sidewalk.
-  const setback = AVENUE_HALF + SIDEWALK + 0.6;
   for (const [side, z, w] of DOWNTOWN_LOBBIES) {
-    const d = 12;
+    const d = DOWNTOWN_DEPTH;
     const lobby = glassLobby(w, 7, d, side < 0 ? T.secondary : 0xdfe8ff);
-    lobby.position.set(side * (setback + d / 2 + 3), CURB_H, z);
+    lobby.position.set(side * DOWNTOWN_CENTER_X, CURB_H, z);
     lobby.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
     group.add(lobby);
   }

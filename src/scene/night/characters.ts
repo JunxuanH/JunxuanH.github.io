@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import type { PathDef } from './paths';
+import { pedestrianMustWait } from './crossing-logic';
 import { refineRoninRun } from './ronin-run';
 import { rigMeta, groundOffsetFor, type RigMeta } from './rigs';
 
@@ -434,6 +435,7 @@ export function createCrowd(opts: CrowdOptions) {
   let elapsed = 0;
   const cull = opts.cullDistance ?? 90;
   const update = (dt: number, camera: THREE.Camera) => {
+    dt=Math.min(dt,.1);
     elapsed += dt;
     for (const w of walkers) {
       const r = w.inst.root;
@@ -461,11 +463,17 @@ export function createCrowd(opts: CrowdOptions) {
       } else {
         // Keep spacing on one-way loops: slow to the walker ahead when closer than 1.6 u.
         w.speed = w.baseSpeed;
+        curve.getTangentAt(w.t,tan).multiplyScalar(w.dir);
+        const waiting=pedestrianMustWait(r.position.x,r.position.z,tan.x,tan.z);
+        if(waiting) {
+          w.speed=0;
+        }
+        w.inst.play(waiting?'idle':'walk');
         for (const o of walkers) {
           if (o === w || o.dir !== w.dir || o.state !== 'walk') continue;
           let d = (o.t - w.t) * w.dir;
           if (opts.path.closed) d = ((d % 1) + 1) % 1;
-          if (d > 0 && d * length < 1.6) w.speed = Math.min(w.speed, o.baseSpeed * 0.9);
+          if (d > 0 && d * length < 1.6) w.speed = Math.min(w.speed, o.speed * 0.9);
         }
         curve.getPointAt(w.t, tmp);
         // Return to the saved path point first; otherwise the target runs away while rejoining.

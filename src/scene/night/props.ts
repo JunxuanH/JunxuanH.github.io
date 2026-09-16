@@ -151,7 +151,7 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
       if (r() < 0.4 * density) add('lamp2', x + 8, cz - CROSS_HALF - 2, 0);
       if (r() < 0.3 * density) add('fence', x + (r() - 0.5) * 10, cz - CROSS_HALF - 4, r() < 0.5 ? 0 : Math.PI / 2);
     }
-    for (const side of [-1, 1]) add('traffic', side * (AVENUE_HALF + 0.8), cz + side * (CROSS_HALF + 0.8), side > 0 ? Math.PI : 0, 1.1, 0);
+    // Functional crossing-signals.ts replaces the decorative traffic-light models.
   }
   for (const p of extra) add(p.kind, p.x, p.z, p.yaw ?? 0, p.s ?? 1, p.y ?? CURB_H);
 

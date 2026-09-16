@@ -1,8 +1,8 @@
 import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { DOWNTOWN_LOBBIES } from '../building-layout';
-import { DOWNTOWN_ASSETS, DOWNTOWN_PROPS } from '../downtown-layout';
+import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_CENTER_X } from '../building-layout';
+import { DOWNTOWN_ASSETS, DOWNTOWN_PROPS, DOWNTOWN_INFILL } from '../downtown-layout';
 import { CURB_H } from '../streets';
 import { facadeBlock, type DistrictCtx } from './shared';
 
@@ -32,29 +32,34 @@ export async function downtownDetail(ctx: DistrictCtx) {
     mesh.position.set(x,y,z);p.add(mesh);
   }
   for(const [i,[side,z,w]] of DOWNTOWN_LOBBIES.entries()) {
-    const p=new THREE.Group();p.position.set(side*27.6,CURB_H,z);p.rotation.y=side<0?Math.PI/2:-Math.PI/2;group.add(p);
+    const p=new THREE.Group();p.position.set(side*DOWNTOWN_CENTER_X,CURB_H,z);p.rotation.y=side<0?Math.PI/2:-Math.PI/2;group.add(p);
     // Stack within the existing lobby footprint, not new lots beside the campus.
     // Elevated floors use only the window atlas; storefront doors belong at street level.
-    const upper=facadeBlock(w,12+i*3,12,ctx.tex,i,null,side<0?0x9364a7:0x63b9c6);
+    const upperHeight=30+i*3;
+    const upper=facadeBlock(w,upperHeight,DOWNTOWN_DEPTH,ctx.tex,i,null,side<0?0x9364a7:0x63b9c6);
     upper.position.y=7;p.add(upper);
-    const crown=facadeBlock(w*.68,5,8,ctx.tex,i+1,null,0x628b9c);crown.position.set(0,19+i*3,-1);p.add(crown);
-    box(p,metal,w*.72,.35,3,0,4.8,6.5);
-    box(p,side<0?pink:cyan,w*.72,.06,.08,0,4.65,8.02);
+    const crown=facadeBlock(w*.68,5,8,ctx.tex,i+1,null,0x628b9c);crown.position.set(0,7+upperHeight,-1);p.add(crown);
+    box(p,metal,w*.72,.35,3,0,4.8,7.5);
+    box(p,side<0?pink:cyan,w*.72,.06,.08,0,4.65,9.02);
     for(const dx of [-w*.28,w*.28]) {
-      box(p,metal,2.4,1.1,2,dx,20+i*3,0);
-      for(let k=0;k<5;k++) box(p,dark,1.9,.07,.12,dx,20.57+i*3,-.7+k*.35);
+      box(p,metal,2.4,1.1,2,dx,8+upperHeight,0);
+      for(let k=0;k<5;k++) box(p,dark,1.9,.07,.12,dx,8.57+upperHeight,-.7+k*.35);
     }
     sign(p,['NORTHSTAR / HQ','VECTOR SYSTEMS','NEXUS / OFFICES','ARC / LOGISTICS'][i],
-      i===1?'AUDIO · COMPUTE · PERSONAL TECH':'CORPORATE CAMPUS / AUTHORIZED ENTRY',Math.min(w-3,12),0,6.1,6.12);
+      i===1?'AUDIO · COMPUTE · PERSONAL TECH':'CORPORATE CAMPUS / AUTHORIZED ENTRY',Math.min(w-3,12),0,6.1,7.12);
     for(const dx of [-w*.32,w*.32]) {
-      box(p,dark,3,2.2,.25,dx,2.1,6.15);
-      box(p,warm,2.65,.08,.25,dx,3.16,6.32);
-      box(p,metal,2.65,.15,.65,dx,1.05,6.4);
+      box(p,dark,3,2.2,.25,dx,2.1,7.15);
+      box(p,warm,2.65,.08,.25,dx,3.16,7.32);
+      box(p,metal,2.65,.15,.65,dx,1.05,7.4);
       for(let j=0;j<3;j++) {
-        box(p,metal,.48,.55,.22,dx-.8+j*.8,1.42,6.55);
-        box(p,j===1?pink:cyan,.36,.3,.03,dx-.8+j*.8,1.46,6.68);
+        box(p,metal,.48,.55,.22,dx-.8+j*.8,1.42,7.55);
+        box(p,j===1?pink:cyan,.36,.3,.03,dx-.8+j*.8,1.46,7.68);
       }
     }
+  }
+  for(const [i,s] of DOWNTOWN_INFILL.entries()) {
+    const tower=facadeBlock(s.w,s.h,s.d,ctx.tex,i+2,null,i%2?0x63b9c6:0x9364a7);
+    tower.position.set(s.x,CURB_H,s.z);group.add(tower);
   }
   for(const s of DOWNTOWN_PROPS) {
     const p=new THREE.Group();p.position.set(s.x,CURB_H,s.z);group.add(p);

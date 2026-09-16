@@ -55,7 +55,7 @@ export const WORK_WALK_RIGHT: PathDef = {
   stalls: [
     { pos: [18.3, Y, -90], face: [21, Y, -90], clip: 'idle' },
     { pos: [18, Y, -94], face: [18.3, Y, -90], clip: 'idle' },
-    { pos: [17.5, Y, -174], face: [21, Y, -174], clip: 'idle' },
+    { pos: [16.2, Y, -174], face: [18.2, Y, -174], clip: 'idle' },
   ],
 };
 

@@ -49,3 +49,7 @@ export function streetLot(x: number, z: number, width: number, depth: number) {
 
 // side, centre z, frontage width. Shared by meshes, forecourts, props and collisions.
 export const DOWNTOWN_LOBBIES = [[-1, -110, 22], [1, -174, 20], [-1, -174, 22], [1, -202, 18]] as const;
+// Reclaim the narrower avenue's two units per side for deeper buildings, not wider pavements.
+export const DOWNTOWN_DEPTH = 14;
+export const DOWNTOWN_CENTER_X = 26.6;
+export const DOWNTOWN_FRONT_X = DOWNTOWN_CENTER_X-DOWNTOWN_DEPTH/2;

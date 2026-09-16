@@ -4,6 +4,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, params, rng, type Tier } from './palette';
+import { signalStopDistance } from './crossing-logic';
+import { AVENUE_HALF,CROSS_HALF,CROSS_Z } from './streets';
 
 export interface Lane { pts: [number, number, number][]; speed: number; ground?: boolean }
 
@@ -150,7 +152,8 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
   const group = new THREE.Group();
   const curves = lanes.map((l) => new THREE.CatmullRomCurve3(l.pts.map((p) => new THREE.Vector3(...p)), false, 'centripetal'));
   const { hover, ground } = await loadCarModels();
-  const cars: { root: THREE.Object3D; lane: number; t: number; speed: number; ground: boolean; hover: number; extras: THREE.Object3D[] }[] = [];
+  const cars: { root: THREE.Object3D; lane: number; t: number; speed: number; velocity:number; length:number; ground: boolean; hover: number; extras: THREE.Object3D[] }[] = [];
+  const lengths=curves.map(c=>c.getLength());
   const perLane = { high: 9, med: 6, low: 3 }[tier];
   const r = rng(99);
   // Light quads share materials (one pipeline each) and are hidden beyond LIGHT_RANGE — from the vista they are sub-pixel.
@@ -193,7 +196,7 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
       head.position.set(0, model.hover + model.head, nose + 0.02);
       extras.push(tail, head);
       root.add(...extras);
-      cars.push({ root, lane: li, t: (k + r() * 0.5) / n, speed: lane.speed * (0.8 + r() * 0.5), ground: !!lane.ground, hover: model.hover, extras });
+      cars.push({ root, lane: li, t: (k + r() * 0.5) / n, speed: lane.speed * (0.8 + r() * 0.5), velocity:0,length:model.length, ground: !!lane.ground, hover: model.hover, extras });
       group.add(root);
     }
   });
@@ -211,14 +214,41 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
       group.add(mesh);
     }
   });
-  const tmp = new THREE.Vector3(), ahead = new THREE.Vector3();
-  const update = (dt: number, t: number, viewer?: THREE.Vector3) => {
+  const tmp = new THREE.Vector3(), ahead = new THREE.Vector3(), otherPos=new THREE.Vector3(),otherDir=new THREE.Vector3();
+  const update = (dt: number, t: number, viewer?: THREE.Vector3, pedestrians:readonly THREE.Vector3[]=[] ) => {
+    dt=Math.min(dt,.1);
     for (const c of cars) {
-      c.t = (c.t + c.speed * dt) % 1;
-      if (viewer) { const near = c.root.position.distanceToSquared(viewer) < LIGHT_RANGE2; if (c.extras[0].visible !== near) for (const e of c.extras) e.visible = near; }
       const curve = curves[c.lane];
+      if(c.ground) {
+        curve.getPointAt(c.t,tmp);curve.getTangentAt(c.t,ahead);
+        let gap=signalStopDistance(tmp.x,tmp.z,ahead.x,ahead.z,c.length/2,t);
+        // Same-lane following distance, including the route's wrap seam.
+        for(const other of cars) if(other!==c && other.lane===c.lane) {
+          const separation=((other.t-c.t+1)%1)*lengths[c.lane]-(c.length+other.length)/2-2;
+          gap=Math.min(gap,Math.max(0,separation));
+        }
+        // A car held in the junction (for example yielding to the player) keeps
+        // conflicting approaches at their stop line even after the timer changes.
+        for(const other of cars) if(other!==c && other.ground && other.lane!==c.lane) {
+          curves[other.lane].getPointAt(other.t,otherPos);
+          curves[other.lane].getTangentAt(other.t,otherDir);
+          if(Math.abs(otherDir.dot(ahead))>.5 || Math.abs(otherPos.y-tmp.y)>2) continue;
+          if(Math.abs(otherPos.x)<AVENUE_HALF+4 && CROSS_Z.some(z=>Math.abs(otherPos.z-z)<CROSS_HALF+4))
+            gap=Math.min(gap,signalStopDistance(tmp.x,tmp.z,ahead.x,ahead.z,c.length/2,44));
+        }
+        // Yield to the player on foot without putting an invisible barrier around roads.
+        for(const pedestrian of pedestrians) if(Math.abs(pedestrian.y-tmp.y)<2) {
+          const dx=pedestrian.x-tmp.x,dz=pedestrian.z-tmp.z;
+          const forward=dx*ahead.x+dz*ahead.z,lateral=Math.abs(dx*ahead.z-dz*ahead.x);
+          if(forward>0 && lateral<2.5) gap=Math.min(gap,Math.max(0,forward-c.length/2-1.5));
+        }
+        const desired=Math.min(c.speed*lengths[c.lane],Math.sqrt(2*4*gap));
+        c.velocity=Math.max(0,Math.min(desired,c.velocity+2.5*dt));
+        c.t=(c.t+Math.min(c.velocity*dt,gap)/lengths[c.lane])%1;
+      } else c.t = (c.t + c.speed * dt) % 1;
+      if (viewer) { const near = c.root.position.distanceToSquared(viewer) < LIGHT_RANGE2; if (c.extras[0].visible !== near) for (const e of c.extras) e.visible = near; }
       curve.getPointAt(c.t, tmp);
-      curve.getPointAt((c.t + 0.005) % 1, ahead);
+      curve.getTangentAt(c.t,ahead).add(tmp);
       c.root.position.copy(tmp);
       c.root.lookAt(ahead); // +z (the nose) toward the next point on the lane
       if (!c.ground) c.root.position.y += Math.sin(t * 2 + c.t * 20) * 0.15;

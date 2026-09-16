@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import { texture, uv, float, step, fract, hash, floor, time, vec2, uniform } from './tsl';
 import { PAL, params, loadSRGB } from './palette';
 
-export interface AdSpot { x: number; y: number; z: number; yaw?: number; h?: number }
+export interface AdSpot { x: number; y: number; z: number; yaw?: number; h?: number; mounted?: boolean }
 
 /** Holographic ad panel material: scanlines + occasional glitch offset, additive-looking brightness. */
 export function adMaterial(t: THREE.Texture, id: number) {
@@ -46,7 +46,11 @@ export async function createAds(spots: AdSpot[], files = ['ad-1', 'ad-2', 'ad-3'
       edge.position.z = -0.02;
       frame.add(edge);
       group.add(frame);
-      items.push({ mesh: frame, base: frame.position.clone(), phase: i * 1.7 });
+      if(sp.mounted) {
+        const backing=new THREE.Mesh(new THREE.BoxGeometry(h*9/16+.5,h+.5,.16),
+          new THREE.MeshStandardNodeMaterial({color:0x111c27,roughness:.7,metalness:.3}));
+        backing.position.z=-.1;frame.add(backing);
+      } else items.push({ mesh: frame, base: frame.position.clone(), phase: i * 1.7 });
     } catch { /* not generated */ }
   }));
   const update = (t: number) => {
@@ -55,5 +59,5 @@ export async function createAds(spots: AdSpot[], files = ['ad-1', 'ad-2', 'ad-3'
       a.mesh.position.x = a.base.x + Math.sin(t * 0.3 + a.phase) * 0.4;
     }
   };
-  return { group, update, count: items.length };
+  return { group, update, count: group.children.length };
 }

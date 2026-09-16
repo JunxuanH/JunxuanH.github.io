@@ -27,6 +27,8 @@ import { createKeyedSigns, neonText, signRegistryGroup } from './signs';
 import { createAudio, bindAudioToggle } from './audio';
 import { createInteract } from './interact';
 import { createAds } from './ads';
+import { DOWNTOWN_ADS } from './downtown-layout';
+import { createCrossingSignals } from './crossing-signals';
 import { createTraffic } from './traffic';
 import { createRain } from './rain';
 import { createDistricts } from './districts';
@@ -205,14 +207,13 @@ export async function start(root: HTMLElement) {
 
   // ---------- life
   const signs = await createKeyedSigns([
-    { x: -16, y: 20, z: -60, yaw: 0.5 }, { x: 17, y: 24, z: -78, yaw: -0.6 }, { x: -28, y: 34, z: -114, yaw: 0.7 },
-    { x: 30, y: 30, z: -140, yaw: -0.8 }, { x: -20, y: 44, z: -170, yaw: 0.5 }, { x: 18, y: 46, z: -200, yaw: -0.4 },
+    ...DOWNTOWN_ADS.map(s=>({x:s.x,y:s.y+10,z:s.z,yaw:s.yaw,w:4})),
     { x: -60, y: 12, z: -60, yaw: 0.9, w: 6 }, { x: 30, y: 7, z: -238, yaw: 0.2, w: 4 }, { x: 58, y: 7.5, z: -218, yaw: Math.PI, w: 4 },
     { x: 72, y: 6.5, z: -238, yaw: 0.3, w: 3.5 }, { x: -20, y: 8, z: -70, yaw: Math.PI / 2, w: 4 }, { x: 20, y: 9, z: -140, yaw: -Math.PI / 2, w: 4 },
-  ]);
+  ], [1,2,3,4,7,8,9,10,11,12]);
   scene.add(signs);
   if (lite || reducedMotion) params.set('novideo', '1'); // phones and reduced motion: still ads
-  const ads = await createAds([{ x: -12, y: 38, z: -70 }, { x: 14, y: 42, z: -104 }, { x: -14, y: 30, z: -168 }, { x: 16, y: 48, z: -180 }]);
+  const ads = await createAds(DOWNTOWN_ADS);
   scene.add(ads.group);
   const traffic = await createTraffic([
     // Street level: avenue and the parallel Downtown cross street; Market is pedestrian-only.
@@ -227,6 +228,7 @@ export async function start(root: HTMLElement) {
     { pts: [[-300, 13.5, 70], [300, 13.5, 70]], speed: 0.03, ground: true },
   ], tier);
   scene.add(traffic.group);
+  const crossingSignals=createCrossingSignals();scene.add(crossingSignals.group);
   const rainCount = params.has('norain') || reducedMotion ? 0 : { high: 5000, med: 2500, low: 0 }[tier];
   if (rainCount) scene.add(createRain(rainCount));
 
@@ -722,7 +724,9 @@ export async function start(root: HTMLElement) {
     heroCopy.style.transform = innerWidth <= 760 ? 'none' : `translate(${(-eased.x * 14).toFixed(1)}px, ${(-eased.y * 8 + Math.sin(t * 0.6) * 3).toFixed(1)}px) scale(var(--hero-scale))`;
     if (water) water.visible = walkSec ? playerPos.z > -60 : p < 0.14 || p > 0.86;
     // Each subsystem's update is timed; anything over 40 ms is reported (`[slow]`) so hitches can be attributed.
-    timed('traffic', () => traffic.update(dt, t, camera.position));
+    crossingSignals.update(t);
+    timed('traffic', () => traffic.update(dt, t, camera.position,
+      [...crowds.flatMap(c=>c.walkers.map(w=>w.root.position)),...(nav.mode==='walk'?[playerPos]:[])]));
     landingFlyby?.update(dt);
     timed('ads', () => ads.update(t));
     timed('life', () => { for (const l of life) l.update(dt, camera); });

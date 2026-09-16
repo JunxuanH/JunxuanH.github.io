@@ -12,7 +12,7 @@ import { MARKET, isMarketLane } from './market-layout';
  * maps) when present, else canvas fallbacks. CPU helpers (isRoad / isSidewalk) let props, curbs,
  * traffic and people agree with the shader.
  */
-export const AVENUE_HALF = 12;
+export const AVENUE_HALF = 10;
 export const SIDEWALK = 6;
 export const CROSS_Z = [-60, -144, -228];
 export const CROSS_HALF = 8;
@@ -120,9 +120,12 @@ export function createStreets(tex: GroundTextures) {
   const edgeLine = step(abs(ax.sub(AVENUE_HALF - 0.5)), 0.12);
   const crossDash = step(nearest, 0.18).mul(step(fract(x.mul(1 / 6)), 0.5));
   const nearX = step(ax, AVENUE_HALF).mul(step(abs(nearest.sub(CROSS_HALF + 2.2)), 1.4));
-  const zebra = nearX.mul(step(fract(x.mul(1 / 1.6)), 0.55));
+  const nearZ=step(nearest,CROSS_HALF).mul(step(abs(ax.sub(AVENUE_HALF+3.8)),2.6));
+  const zebra = max(nearX.mul(step(fract(x.mul(1 / 1.6)), 0.55)),nearZ.mul(step(fract(z.mul(1 / 1.6)),.55)));
   const paintY = centreDash.mul(road);
-  const paintW = max(edgeLine.mul(step(ax, AVENUE_HALF)), max(crossDash, zebra)).mul(road);
+  const stopBars=max(step(ax,AVENUE_HALF).mul(step(abs(nearest.sub(CROSS_HALF+SIDEWALK+1)),.18)),
+    step(nearest,CROSS_HALF).mul(step(abs(ax.sub(AVENUE_HALF+SIDEWALK+1)),.18)));
+  const paintW = max(stopBars,max(edgeLine.mul(step(ax, AVENUE_HALF)), max(crossDash, zebra))).mul(road);
 
   // Wet puddles on the asphalt (hash cells, cheap).
   const cell = floor(positionWorld.xz.mul(0.18));
