@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import {
   positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, uniform,
 } from './tsl';
-import { loader, rng } from './palette';
+import { loader, params, rng } from './palette';
 import { MARKET, isMarketLane } from './market-layout';
 
 /*
@@ -63,40 +63,66 @@ const paverFallback = () => canvasTex(512, (g, s, r) => {
 }, 22);
 
 export interface GroundTextures {
-  asphalt: THREE.Texture; asphaltN: THREE.Texture | null;
-  pavers: THREE.Texture; paversN: THREE.Texture | null;
-  plaza: THREE.Texture | null; plazaN: THREE.Texture | null;
-  planks: THREE.Texture | null; planksN: THREE.Texture | null;
+  asphalt: THREE.Texture; asphaltN: THREE.Texture | null; asphaltR: THREE.Texture | null; asphaltAO: THREE.Texture | null;
+  pavers: THREE.Texture; paversN: THREE.Texture | null; paversR: THREE.Texture | null; paversAO: THREE.Texture | null;
+  plaza: THREE.Texture | null; plazaN: THREE.Texture | null; plazaR: THREE.Texture | null; plazaAO: THREE.Texture | null;
+  planks: THREE.Texture | null; planksN: THREE.Texture | null; planksR: THREE.Texture | null; planksAO: THREE.Texture | null;
 }
 
 /** Tiling + sRGB, and 4× anisotropy: the ground is seen at grazing angles from the follow camera (a sampler setting, no new program). */
 const rep = (t: THREE.Texture, srgb = true) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
 const tryLoad = (p: string, srgb = true) => loader.loadAsync(p).then((t) => rep(t, srgb)).catch(() => null);
 
-/** Loads the fal ground set (public/night/ground/*.jpg + *-n.jpg), falling back to canvas textures. */
+/**
+ * Loads the fal ground set (public/night/ground/*.jpg + *-n/-r/-ao.jpg), falling back to canvas
+ * textures. The roughness and occlusion maps are derived from the albedo by scripts/texture-maps.py
+ * and ship at half its resolution; `?norough` and `?noao` drop them for A/B comparison.
+ */
 export async function loadGroundTextures(): Promise<GroundTextures> {
-  const [asphalt, asphaltN, pavers, paversN, plaza, plazaN, planks, planksN] = await Promise.all([
+  const wantR = !params.has('norough'), wantAO = !params.has('noao');
+  const data = (p: string, want: boolean) => (want ? tryLoad(p, false) : Promise.resolve(null));
+  const [asphalt, asphaltN, asphaltR, asphaltAO, pavers, paversN, paversR, paversAO,
+    plaza, plazaN, plazaR, plazaAO, planks, planksN, planksR, planksAO] = await Promise.all([
     tryLoad('/night/ground/asphalt.jpg'), tryLoad('/night/ground/asphalt-n.jpg', false),
+    data('/night/ground/asphalt-r.jpg', wantR), data('/night/ground/asphalt-ao.jpg', wantAO),
     tryLoad('/night/ground/pavers.jpg'), tryLoad('/night/ground/pavers-n.jpg', false),
+    data('/night/ground/pavers-r.jpg', wantR), data('/night/ground/pavers-ao.jpg', wantAO),
     tryLoad('/night/ground/plaza.jpg'), tryLoad('/night/ground/plaza-n.jpg', false),
+    data('/night/ground/plaza-r.jpg', wantR), data('/night/ground/plaza-ao.jpg', wantAO),
     tryLoad('/night/ground/planks.jpg'), tryLoad('/night/ground/planks-n.jpg', false),
+    data('/night/ground/planks-r.jpg', wantR), data('/night/ground/planks-ao.jpg', wantAO),
   ]);
   return {
-    asphalt: asphalt ?? asphaltFallback(), asphaltN, pavers: pavers ?? paverFallback(), paversN, plaza, plazaN, planks, planksN,
+    asphalt: asphalt ?? asphaltFallback(), asphaltN, asphaltR, asphaltAO,
+    pavers: pavers ?? paverFallback(), paversN, paversR, paversAO,
+    plaza, plazaN, plazaR, plazaAO, planks, planksN, planksR, planksAO,
   };
 }
+
+/** How far a derived roughness map may swing a surface either side of its authored value. */
+const ROUGH_VARIATION = 0.55;
 
 /**
  * Standard "wet surface" material from an albedo + normal pair, tiled per world unit. Tile, axis swap,
  * tint and normal scale are uniforms, so every ground surface in the city shares one program.
  */
-export function groundMaterial(map: THREE.Texture, normal: THREE.Texture | null, tile: number, opts: { roughness?: number; tint?: number; normalScale?: number; rotate?: boolean } = {}) {
-  const m = new THREE.MeshStandardNodeMaterial({ roughness: opts.roughness ?? 0.55, metalness: 0.08 });
+export function groundMaterial(
+  map: THREE.Texture,
+  normal: THREE.Texture | null,
+  tile: number,
+  opts: { roughness?: number; tint?: number; normalScale?: number; rotate?: boolean; rough?: THREE.Texture | null; ao?: THREE.Texture | null } = {},
+) {
+  const base = opts.roughness ?? 0.55;
+  const m = new THREE.MeshStandardNodeMaterial({ roughness: base, metalness: 0.08 });
   // `rotate` swaps the tiling axes so a directional texture (planks) runs along world X instead of Z.
   const uvw = mix(positionWorld.xz, positionWorld.zx, uniform(opts.rotate ? 1 : 0)).mul(uniform(1 / tile));
   m.colorNode = texture(map, uvw).rgb.mul(color(opts.tint ?? 0xffffff));
   const ns = opts.normalScale ?? 0.8;
   if (normal) m.normalNode = normalMap(texture(normal, uvw), uniform(new THREE.Vector2(ns, ns)));
+  // The derived map modulates the per-surface roughness around its own midpoint rather than
+  // replacing it, so each call site keeps the look it was tuned for and only gains variation.
+  if (opts.rough) m.roughnessNode = texture(opts.rough, uvw).r.sub(0.5).mul(uniform(ROUGH_VARIATION)).add(uniform(base)).clamp(0.04, 1);
+  if (opts.ao) m.aoNode = texture(opts.ao, uvw).r;
   return m;
 }
 
@@ -140,7 +166,20 @@ export function createStreets(tex: GroundTextures) {
   col = mix(col, color(0xd9c56a), paintY.mul(0.9));
   col = mix(col, color(0xd8dde8), paintW.mul(0.85));
   m.colorNode = col;
-  m.roughnessNode = mix(mix(float(0.8), float(0.45), road), float(0.06), puddle);
+  // Zone roughness stays authored (plaza 0.8 → road 0.45 → puddle 0.06). The derived maps only add
+  // grain on top of it, and the puddle term is applied last so standing water stays a mirror.
+  const zoneRough = mix(float(0.8), float(0.45), road);
+  let roughN: any = zoneRough;
+  if (tex.asphaltR && tex.paversR) {
+    const grain = mix(texture(tex.paversR, uvP).r, texture(tex.asphaltR, uvA).r, road).sub(0.5);
+    roughN = zoneRough.add(grain.mul(ROUGH_VARIATION)).clamp(0.12, 1);
+  }
+  m.roughnessNode = mix(roughN, float(0.06), puddle);
+  // Occlusion darkens grout and pits, but never the lane paint or the wet patches that read as light.
+  if (tex.asphaltAO && tex.paversAO) {
+    const occ = mix(texture(tex.paversAO, uvP).r, texture(tex.asphaltAO, uvA).r, road);
+    m.aoNode = mix(occ, float(1), max(puddle, max(paintY, paintW)));
+  }
   m.emissiveNode = mix(color(0xd9c56a).mul(paintY), color(0xd8dde8).mul(paintW), paintW).mul(0.25);
   if (tex.asphaltN && tex.paversN) {
     const nA = texture(tex.asphaltN, uvA), nP = texture(tex.paversN, uvP);
@@ -161,7 +200,7 @@ export function createStreets(tex: GroundTextures) {
   northWall.position.set(0, 2, -640); group.add(northWall);
 
   // Sidewalk slabs (raised by the curb height) so walkers and props sit above the road.
-  const walkMat = groundMaterial(tex.pavers, tex.paversN, tileP, { roughness: 0.7 });
+  const walkMat = groundMaterial(tex.pavers, tex.paversN, tileP, { roughness: 0.7, rough: tex.paversR, ao: tex.paversAO });
   const addWalk = (w: number, d: number, cx: number, cz: number) => {
     const slab = new THREE.Mesh(new THREE.BoxGeometry(w, CURB_H, d), walkMat);
     slab.position.set(cx, CURB_H / 2, cz);
@@ -180,7 +219,7 @@ export function createStreets(tex: GroundTextures) {
   }
   // Fill the former road to sidewalk height; no markings or curb down the shopping lane.
   const marketPaving = new THREE.Mesh(new THREE.BoxGeometry(MARKET.x1-MARKET.x0,CURB_H,CROSS_HALF*2),
-    groundMaterial(tex.pavers,tex.paversN,3,{roughness:.65}));
+    groundMaterial(tex.pavers,tex.paversN,3,{roughness:.65,rough:tex.paversR,ao:tex.paversAO}));
   marketPaving.position.set((MARKET.x0+MARKET.x1)/2,CURB_H/2,MARKET.z);
   group.add(marketPaving);
   return group;

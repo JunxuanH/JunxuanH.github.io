@@ -59,7 +59,10 @@ function prefetchScene() {
   const narrow = matchMedia('(max-width: 760px)').matches;
   const lite = (u: string) => (narrow ? u.replace('/night/', '/night-lite/') : u);
   const urls = [
-    ...['asphalt', 'pavers', 'plaza', 'planks'].flatMap((n) => [lite(`/night/ground/${n}.jpg`), lite(`/night/ground/${n}-n.jpg`)]),
+    ...['asphalt', 'pavers', 'plaza', 'planks'].flatMap((n) => [
+      lite(`/night/ground/${n}.jpg`), lite(`/night/ground/${n}-n.jpg`),
+      lite(`/night/ground/${n}-r.jpg`), lite(`/night/ground/${n}-ao.jpg`),
+    ]),
     lite('/night/facades/facade-mix.jpg'), lite('/night/facades/storefronts.jpg'), lite('/night/ads/screens-atlas.jpg'),
     ...['a', 'b', 'c', 'd'].map((t) => lite(`/night/models/tower-${t}.glb`)),
     ...['01', '02', '03', '04', '05', '06'].map((t) => `/night/models/tower-${t}.glb`),

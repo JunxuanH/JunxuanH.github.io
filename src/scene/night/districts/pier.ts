@@ -70,7 +70,7 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
   // Deck + pilings + railings
   const gt = _ctx.tex.ground;
   // Planks run across the deck (world X) on three stringers; bolt heads pin every plank to each stringer.
-  const deckMat = gt?.planks ? groundMaterial(gt.planks, gt.planksN, 5, { roughness: 0.6, rotate: true }) : new THREE.MeshStandardNodeMaterial({ roughness: 0.75, map: plankTexture() });
+  const deckMat = gt?.planks ? groundMaterial(gt.planks, gt.planksN, 5, { roughness: 0.6, rotate: true, rough: gt.planksR, ao: gt.planksAO }) : new THREE.MeshStandardNodeMaterial({ roughness: 0.75, map: plankTexture() });
   const deck = new THREE.Mesh(new THREE.BoxGeometry(12, 0.5, len), deckMat);
   deck.position.set(x0, DECK_Y - 0.25, (zStart + zEnd) / 2);
   group.add(deck);

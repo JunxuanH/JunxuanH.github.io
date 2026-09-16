@@ -5,7 +5,7 @@ import {
   smoothstep, abs, reflect, glowMaterial, uniform,
 } from './tsl';
 import { PAL, loader, params } from './palette';
-import { groundMaterial } from './streets';
+import { groundMaterial, type GroundTextures } from './streets';
 
 /**
  * Hero bay: dark water with a planar reflection of the skyline, a cable-stayed bridge the camera
@@ -68,7 +68,7 @@ export function createWater(resolutionScale: number) {
 }
 
 /** Seawall where the city meets the bay: concrete quay with a cyan edge strip, bollard lights, three jetties on pilings. */
-export function createQuay(quayZ: number, ground?: { planks: THREE.Texture | null; planksN: THREE.Texture | null }) {
+export function createQuay(quayZ: number, ground?: Pick<GroundTextures, 'planks' | 'planksN' | 'planksR' | 'planksAO'>) {
   const group = new THREE.Group();
   const wallMat = new THREE.MeshStandardNodeMaterial({ color: 0x1a1c24, roughness: 0.85 });
   const wall = new THREE.Mesh(new THREE.BoxGeometry(780, 3.2, 2.4), wallMat);
@@ -97,7 +97,7 @@ export function createQuay(quayZ: number, ground?: { planks: THREE.Texture | nul
   bollards.forEach((m, i) => bim.setMatrixAt(i, m));
   group.add(bim);
   // Jetties: dark plank slabs on pilings reaching into the water (the avenue itself ends at the wall).
-  const deckMat = ground?.planks ? groundMaterial(ground.planks, ground.planksN, 5, { roughness: 0.65, rotate: true }) : new THREE.MeshStandardNodeMaterial({ color: 0x141620, roughness: 0.8 });
+  const deckMat = ground?.planks ? groundMaterial(ground.planks, ground.planksN, 5, { roughness: 0.65, rotate: true, rough: ground.planksR, ao: ground.planksAO }) : new THREE.MeshStandardNodeMaterial({ color: 0x141620, roughness: 0.8 });
   const pileGeo = new THREE.CylinderGeometry(0.35, 0.4, 5, 7).translate(0, 2.5, 0);
   const pileMat = new THREE.MeshStandardNodeMaterial({ color: 0x0c0d14, roughness: 0.9 });
   const piles: THREE.Matrix4[] = [];
