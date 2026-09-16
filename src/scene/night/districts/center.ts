@@ -6,6 +6,7 @@ import { createKeyedSigns } from '../signs';
 import { AVENUE_HALF, SIDEWALK, CURB_H, PATCH_LIFT } from '../streets';
 import { THEMES } from '../theme';
 import { DOWNTOWN_LOBBIES } from '../building-layout';
+import { downtownDetail } from './downtown-detail';
 import { type DistrictBuild, type DistrictCtx } from './shared';
 
 /*
@@ -64,6 +65,7 @@ function glassLobby(w: number, h: number, d: number, tint: number) {
 export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const T = THEMES.work;
   const group = new THREE.Group();
+  group.add(await downtownDetail(ctx));
   // Employer content now lives in the kiosk. Remove the four obsolete 14×8
   // panels and their connecting cables so they no longer obscure the product ads.
   // One small facade sign replaces the west-side display. Its left arrow points

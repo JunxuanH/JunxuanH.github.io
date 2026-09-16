@@ -1,0 +1,17 @@
+{
+  "endpoint": "meshy/v7/text-to-3d",
+  "estimatedUsd": 1.6,
+  "conceptEstimatedUsd": 0.15,
+  "assets": {
+    "entrance": {
+      "requestId": "01a0a89d-5898-7390-b385-dfc67816f3b0",
+      "url": "https://v3b.fal.media/files/b/0aaa9d39/MFcHNEN3dySRLFBs2_jOk_model.glb",
+      "prompt": "Single modular cyberpunk electronics showroom facade entrance, wide rectangular architectural module, closed recessed double doors centered, display windows either side, thick angular cantilever canopy, layered metal cladding, small roof ventilation boxes. Width 8 meters height 5 meters depth 2 meters. Front faces positive Z. Solid closed rear wall. Low poly hard surface game prop, no text, no people, no ground, no surrounding buildings. Distinct separate metal panels and window surfaces."
+    },
+    "shelter": {
+      "requestId": "01a0a89d-6a86-7413-bc63-ae003f474f29",
+      "url": "https://v3b.fal.media/files/b/0aaa9d3a/dkYGtaaQC8xFwIoUF07hz_model.glb",
+      "prompt": "Single cyberpunk bus stop shelter, width 6 meters height 3 meters depth 2 meters. Flat angular cantilever roof, two slim rear support columns, solid rear service panel with inset route screen, built-in bench along back. Completely open front facing positive Z and open sides, no front pillars, no glass enclosing front, no people, no ground, no text, no surrounding buildings. Low poly hard surface modular game asset with clean broad surfaces."
+    }
+  }
+}

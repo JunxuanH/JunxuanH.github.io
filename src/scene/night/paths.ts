@@ -52,7 +52,11 @@ export const WORK_WALK_LEFT: PathDef = {
 export const WORK_WALK_RIGHT: PathDef = {
   id: 'work-walk-right', closed: false, y: Y,
   points: [[15, Y, -184], [15, Y, -140], [15.5, Y, -100], [15, Y, -50]],
-  stalls: [{ pos: [15, Y, -140], face: [12, Y, -140], clip: 'idle' }],
+  stalls: [
+    { pos: [18.3, Y, -90], face: [21, Y, -90], clip: 'idle' },
+    { pos: [18, Y, -94], face: [18.3, Y, -90], clip: 'idle' },
+    { pos: [17.5, Y, -174], face: [21, Y, -174], clip: 'idle' },
+  ],
 };
 
 export const PROJECTS_MARKET: PathDef = {

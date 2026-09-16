@@ -8,6 +8,7 @@
 import * as THREE from 'three/webgpu';
 import { TERMINALS } from './terminal-layout';
 import { DOWNTOWN_LOBBIES } from './building-layout';
+import { DOWNTOWN_PROPS, DOWNTOWN_ASSETS } from './downtown-layout';
 import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from './market-layout';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
@@ -93,9 +94,12 @@ function downtown(placed: boolean): Area {
     box(27, 41, -129, -107, 46),               // media tower (carriers/megascreen.ts)
   ];
   // Glass lobbies (center.ts): outside the rects, but they bound the camera.
+  for (const s of DOWNTOWN_PROPS) obstacles.push(centred(s.x,s.z,s.w,s.d,s.h));
+  for (const s of DOWNTOWN_ASSETS) obstacles.push({kind:'obb',x:s.x,z:s.z,hw:s.w/2,hd:s.d/2,yaw:s.yaw,h:s.h});
   for (const [side, z, w] of DOWNTOWN_LOBBIES) {
     const x0 = side < 0 ? -33.6 : 21.6;
-    obstacles.push(box(x0, x0 + 12, z - w / 2, z + w / 2, 7));
+    obstacles.push(box(x0, x0 + 12, z - w / 2, z + w / 2, 34));
+    for (const offset of [-w*.32,w*.32]) obstacles.push(centred(side*21,z+offset,.8,3,3.3));
   }
   for (const cz of [CROSS_Z[0], CROSS_Z[1]]) {
     obstacles.push(circle(-(AVENUE_HALF + 0.8), cz - (8 + 0.8), 0.3, 6.5), circle(AVENUE_HALF + 0.8, cz + (8 + 0.8), 0.3, 6.5)); // traffic-light posts

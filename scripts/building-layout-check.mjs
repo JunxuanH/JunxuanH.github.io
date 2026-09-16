@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Matrix4 } from 'three';
 const require = createRequire(import.meta.url);
@@ -54,3 +55,26 @@ for (const [side,z,w] of DOWNTOWN_LOBBIES) {
   assert(work.obstacles.some(o => o.kind === 'box' && o.x0 === (side<0?-33.6:21.6) && o.z0 === z-w/2), 'lobby collision follows moved mesh');
 }
 console.log('PASS imported-tower lot fitting, lobby forecourts and synchronized collisions');
+const { DOWNTOWN_PROPS, DOWNTOWN_ASSETS } = await bundled('src/scene/night/downtown-layout.ts');
+const footprints = [...DOWNTOWN_PROPS.map(s=>({...s,hw:s.w/2,hd:s.d/2})),
+  ...DOWNTOWN_ASSETS.map(s=>({...s,hw:s.d/2,hd:s.w/2}))];
+for(const s of footprints) {
+  assert(Math.abs(s.x)-s.hw >= 18, 'downtown addition blocks through sidewalk');
+  assert([-60,-144,-228].every(cz=>Math.abs(s.z-cz)-s.hd>=14), 'downtown addition clips crosswalk');
+  assert(Math.hypot(s.x+18,s.z+84)>s.hw+2, 'terminal approach blocked');
+  for(const other of footprints) {
+    if(s===other) continue;
+    assert(Math.abs(s.x-other.x)>=s.hw+other.hw || Math.abs(s.z-other.z)>=s.hd+other.hd, 'new downtown objects overlap');
+  }
+}
+for(const a of DOWNTOWN_ASSETS) {
+  const data=readFileSync(`public/night/downtown/${a.file}.glb`);
+  assert(data.length<150000);assert.equal(data.toString('utf8',0,4),'glTF');
+  const json=JSON.parse(data.toString('utf8',20,20+data.readUInt32LE(12)));
+  assert(!json.images?.length, 'asset unexpectedly includes large textures');
+  const triangles=json.meshes.flatMap(m=>m.primitives).reduce((n,p)=>n+json.accessors[p.indices].count/3,0);
+  assert(triangles>0 && triangles<6000);
+  assert(work.obstacles.some(o=>o.kind==='obb' && o.x===a.x && o.z===a.z && o.hw===a.w/2 && o.hd===a.d/2));
+  console.log(`PASS ${a.file}: ${triangles} triangles, ${data.length} bytes, collision envelope matches`);
+}
+console.log('PASS downtown additions leave sidewalks, crosswalks and terminal approach clear');
