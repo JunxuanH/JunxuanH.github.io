@@ -1,7 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { SIGNAL_POSTS, crossingPhase, setCrossingTime } from './crossing-logic';
-import { glowMaterial } from './tsl';
+import { SIGNAL_POSTS, crossingPhase, secondsUntilChange, walkCountdown, setCrossingTime } from './crossing-logic';
+import { glowMaterial, texture, uniform } from './tsl';
 
 /** Hooded signal heads and pedestrian pictograms; no extra point lights or bloom-heavy text. */
 export function createCrossingSignals() {
@@ -10,18 +10,47 @@ export function createCrossingSignals() {
   const trim=new THREE.MeshBasicNodeMaterial({color:0x418e99});
   const lamps: {mesh:THREE.Mesh; axis:'avenue'|'cross'; state:'red'|'amber'|'green'}[]=[];
   const pedestrians:{walk:THREE.Group;stop:THREE.Mesh}[]=[];
+  const countdowns:Record<PanelKey,THREE.Mesh[]>={avenue:[],cross:[],walk:[]};
   const colors={red:0xff415f,amber:0xffbd40,green:0x57efb0};
   // Every light in this city is emissive and bloom is what makes it read as a light: a plain colour
   // tops out at 1.0 linear, under the 1.6 threshold in post.ts, so these lenses were flat discs that
   // never glowed and were easy to miss entirely from the pavement. glowMaterial multiplies past the
   // threshold and shares one cached program per colour.
-  const lit=Object.fromEntries(Object.entries(colors).map(([k,color])=>[k,glowMaterial(color,2.5)]));
+  const lit=Object.fromEntries(Object.entries(colors).map(([k,color])=>[k,glowMaterial(color,6.5)]));
   // A dark lens sits in every socket so a head still reads as a signal when that aspect is unlit,
   // instead of showing an empty hole. Static, so it merges into the housing draw below.
   const lens=new THREE.MeshStandardNodeMaterial({color:0x090d14,roughness:.35,metalness:.2});
   function box(parent:THREE.Object3D,w:number,h:number,d:number,x:number,y:number,z:number,material:THREE.Material=shell) {
     const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);parent.add(m);return m;
   }
+  // Countdown panels: one canvas per axis, redrawn only when the number changes, and every panel on
+  // that axis samples it. A generated image cannot do this job, since the digits change every second.
+  type PanelKey='avenue'|'cross'|'walk';
+  const panels: Record<PanelKey,{tex:THREE.CanvasTexture;ctx:CanvasRenderingContext2D;shown:string}> = {} as any;
+  const panelMat: Record<PanelKey,THREE.MeshBasicNodeMaterial> = {} as any;
+  for(const axis of ['avenue','cross','walk'] as const) {
+    const c=document.createElement('canvas');c.width=192;c.height=112;
+    const ctx=c.getContext('2d')!;
+    const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
+    panels[axis]={tex,ctx,shown:''};
+    const m=new THREE.MeshBasicNodeMaterial();
+    m.colorNode=texture(tex).rgb.mul(uniform(2.2)); // emissive enough for bloom to catch the digits
+    panelMat[axis]=m;
+  }
+  const drawPanel=(axis:PanelKey,secs:number,state:'red'|'amber'|'green')=>{
+    const p=panels[axis];const label=String(secs).padStart(2,'0');
+    if(p.shown===label+state) return;
+    p.shown=label+state;
+    const {ctx}=p;const w=192,h=112;
+    ctx.fillStyle='#05080d';ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='#1d2b3a';ctx.lineWidth=5;ctx.strokeRect(3,3,w-6,h-6);
+    ctx.fillStyle=state==='green'?'#57efb0':state==='amber'?'#ffbd40':'#ff415f';
+    ctx.font='bold 78px "IBM Plex Mono", monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,w/2,h/2+4);
+    p.tex.needsUpdate=true;
+  };
+  drawPanel('avenue',1,'red');drawPanel('cross',1,'red');drawPanel('walk',1,'red');
+
   for(const p of SIGNAL_POSTS) {
     const post=new THREE.Group();post.position.set(p.x,0,p.z);group.add(post);
     box(post,.22,6.2,.22,0,3.1,0);box(post,.34,.12,.34,0,6.2,0,trim);
@@ -39,8 +68,13 @@ export function createCrossingSignals() {
         const mesh=new THREE.Mesh(new THREE.CircleGeometry(.3,14),lit[state]);mesh.position.set(0,y,.34);mesh.userData.signal=`${axis}:${state}`;head.add(mesh);
         lamps.push({mesh,axis,state});
       }
+      const panel=new THREE.Mesh(new THREE.PlaneGeometry(.78,.46),panelMat[axis]);
+      panel.position.set(0,3.62,.34);head.add(panel);countdowns[axis].push(panel);
+
       const ped=new THREE.Group();ped.rotation.y=head.rotation.y+Math.PI;post.add(ped);
-      box(ped,.8,.95,.35,0,2.7,0);
+      box(ped,.86,1.55,.35,0,2.45,0);
+      const wpanel=new THREE.Mesh(new THREE.PlaneGeometry(.66,.4),panelMat.walk);
+      wpanel.position.set(0,2.06,.2);ped.add(wpanel);countdowns.walk.push(wpanel);
       const stop=box(ped,.4,.09,.02,0,2.7,.24,lit.red);
       const walk=new THREE.Group();ped.add(walk);
       box(walk,.11,.27,.02,0,2.7,.24,lit.green);
@@ -70,8 +104,19 @@ export function createCrossingSignals() {
     group.add(new THREE.Mesh(mergeGeometries(geos,false)!,material));
     geos.forEach(g=>g.dispose());
   }
+  for(const axis of ['avenue','cross','walk'] as const) {
+    const parts=countdowns[axis];
+    if(!parts.length) continue;
+    const geos=parts.map(m=>{m.updateMatrixWorld(true);return m.geometry.clone().applyMatrix4(m.matrixWorld);});
+    for(const part of parts) {part.removeFromParent();part.geometry.dispose();}
+    group.add(new THREE.Mesh(mergeGeometries(geos,false)!,panelMat[axis]));
+    geos.forEach(g=>g.dispose());
+  }
+
   const update=(t:number)=>{
     setCrossingTime(t);const phase=crossingPhase(t);
+    for(const axis of ['avenue','cross'] as const) drawPanel(axis,secondsUntilChange(axis,t),phase[axis]);
+    const wc=walkCountdown(t);drawPanel('walk',wc.secs,wc.walk?'green':'red');
     for(const l of lamps) l.mesh.visible=phase[l.axis]===l.state;
     for(const p of pedestrians) {p.walk.visible=phase.walk;p.stop.visible=!phase.walk;}
   };

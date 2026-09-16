@@ -47,3 +47,21 @@ export function pedestrianMustWait(x:number,z:number,dx:number,dz:number,t=clock
   }
   return false;
 }
+
+/**
+ * Seconds until this axis next changes aspect. Drives the countdown panels: a driver or a walker
+ * wants to know how long the current state lasts, which is the one number a real signal shows.
+ */
+export function secondsUntilChange(axis:'avenue'|'cross',seconds:number) {
+  const t=((seconds%SIGNAL_CYCLE)+SIGNAL_CYCLE)%SIGNAL_CYCLE;
+  const edges=axis==='avenue'?[14,17,SIGNAL_CYCLE]:[22,36,39,SIGNAL_CYCLE];
+  for(const e of edges) if(t<e) return Math.max(1,Math.ceil(e-t));
+  return 1;
+}
+
+/** Seconds left of the walk window, or until it opens. The number a pedestrian actually wants. */
+export function walkCountdown(seconds:number) {
+  const t=((seconds%SIGNAL_CYCLE)+SIGNAL_CYCLE)%SIGNAL_CYCLE;
+  if(t>=44&&t<52) return {secs:Math.max(1,Math.ceil(52-t)),walk:true};
+  return {secs:Math.max(1,Math.ceil(t<44?44-t:SIGNAL_CYCLE+44-t)),walk:false};
+}
