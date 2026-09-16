@@ -9,6 +9,8 @@
 .shop-items { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .shop-items button { margin:0; padding:10px; text-align:left; }
 .shop-items strong,.shop-items span { display:block; margin-top:10px; }
+.shop-items button { display:flex; flex-direction:column; justify-content:flex-start; }
+.shop-items .shop-item-art { flex-shrink:0; }
 .shop-items span { font-size:15px; line-height:1.4; color:#bdcbd3; }
 .shop-item-art { width:min(100%,280px); aspect-ratio:1; margin:12px auto; background-size:300% 200%; background-repeat:no-repeat; }
 .shop-open #hud .hud-prompt,.shop-open .dlg { visibility:hidden; }

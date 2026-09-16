@@ -1,11 +1,11 @@
 import { MARKET_STALLS } from './market-layout';
-import { SHOPS, SHOP_ATLAS, shopInReach } from './shop-catalogue';
+import { SHOPS, itemArtwork, shopInReach } from './shop-catalogue';
 import '../../styles/shops.css';
 
 export function createShops(opts: { prompt(s:string|null):void; available(i:number):boolean; owner(i:number,active:boolean):void }) {
   const dialog=document.createElement('dialog'); dialog.className='shop-panel';
   dialog.setAttribute('aria-labelledby','shop-heading'); document.body.append(dialog);
-  let active=-1, page:'menu'|'talk'|'browse'|'detail'='menu';
+  let active=-1, page:'talk'|'browse'|'detail'='browse';
   let restore:HTMLElement|null=null;
   const el=(tag:string,text='',cls='')=>{const n=document.createElement(tag);n.textContent=text;n.className=cls;return n;};
   const button=(text:string,fn:()=>void)=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=fn;return b;};
@@ -16,8 +16,9 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
   }
   function art(index:number) {
     const n=el('div','','shop-item-art'); n.setAttribute('aria-hidden','true');
-    n.style.backgroundImage=`url("${SHOP_ATLAS}")`;
-    n.style.backgroundPosition=`${(index%3)*50}% ${Math.floor(index/3)*100}%`;
+    const artwork=itemArtwork(index);
+    n.style.backgroundImage=`url("${artwork.url}")`;
+    n.style.backgroundPosition=artwork.position;
     return n;
   }
   function render(next:typeof page, item=0) {
@@ -27,16 +28,14 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
     dialog.append(el('p',`${shop.owner} / AFTERHOURS MARKET`,'shop-kicker'));
     const h=el('h2',stall.name);h.id='shop-heading';dialog.append(h);
     dialog.append(button('Leave shop',close));
-    if(page==='menu') {
-      dialog.append(el('p',shop.greeting,'shop-speech'),button('Talk',()=>render('talk')),button('Browse items',()=>render('browse')));
-    } else {
-      dialog.append(button(page==='detail'?'← Back to items':'← Back to owner',()=>render(page==='detail'?'browse':'menu')));
+    {
+      dialog.append(page==='browse' ? button(`Talk to ${shop.owner}`,()=>render('talk')) : button('← Back to inventory',()=>render('browse')));
       if(page==='talk') {
         const speech=el('p','What would you like to know?','shop-speech');speech.setAttribute('aria-live','polite');
         for(const [topic,line] of shop.topics) dialog.append(button(topic,()=>{speech.textContent=line;}));
         dialog.append(speech);
       } else if(page==='browse') {
-        dialog.append(el('p','FICTIONAL GOODS / TAKE A CLOSER LOOK','shop-kicker'));
+        dialog.append(el('p',shop.greeting,'shop-greeting'),el('p','INVENTORY / TAKE A CLOSER LOOK','shop-kicker'));
         const grid=el('div','','shop-items');
         shop.items.forEach((entry,i)=>{const b=button('',()=>render('detail',i));b.append(art(entry.art),el('strong',entry.name),el('span',entry.description));grid.append(b);});
         dialog.append(grid);
@@ -64,7 +63,7 @@ export function createShops(opts: { prompt(s:string|null):void; available(i:numb
       if(interact) {
         active=i; restore=document.activeElement as HTMLElement;
         opts.owner(i,true);document.documentElement.classList.add('shop-open');
-        render('menu');dialog.showModal();dialog.querySelector<HTMLButtonElement>('button')?.focus();opts.prompt(null);
+        render('browse');dialog.showModal();dialog.querySelector<HTMLButtonElement>('button')?.focus();opts.prompt(null);
       }
       return true;
     },

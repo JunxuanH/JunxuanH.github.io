@@ -1,5 +1,14 @@
 # Market shops: interaction and inventory plan
 
+## Latest revision: inventory first and distinct products
+
+- Owner interaction now opens inventory immediately. Talk is optional; conversation and item-detail Back buttons return to inventory.
+- Three genuinely different products per shop, 18 items total, each with its own illustration. The former same-art variants below are superseded.
+- Added two 1K Fal atlases with six items each, estimated $0.30 additional / $0.45 cumulative of the $5 item-art budget.
+- Endpoint `fal-ai/nano-banana-pro/edit`; requests `01a0a7eb-5c49-74c2-a66d-b7476d3ca697` and `01a0a7eb-bf77-7c32-aeb7-98cda3b82275`.
+- Originals: https://v3b.fal.media/files/b/0aaa98a9/DwMau06xd52XAqP2d1xYQ_JLq18aSp.webp and https://v3b.fal.media/files/b/0aaa98ac/AAxEBXO3Xhyf8oDogC8bv_0FbjCiFP.webp
+- Local assets: `public/night/ads/market-items-atlas-2.webp` and `market-items-atlas-3.webp`.
+
 ## Immediate visual correction
 
 - Move the ramen, drink and streetwear posters off the serving openings and onto the rear walls; reduce width from 2.4 to 1.75 units.

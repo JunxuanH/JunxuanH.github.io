@@ -16,14 +16,20 @@ const {MARKET_STALLS,MARKET_BOLLARDS}=await load('src/scene/night/market-layout.
 const {PROJECTS_MARKET}=await load('src/scene/night/paths.ts');
 const {buildAreas,buildWorldArea,resolve,groundY}=await load('src/scene/night/walkable.ts');
 const {TERMINALS}=await load('src/scene/night/terminal-layout.ts');
-const {SHOPS,shopInReach}=await load('src/scene/night/shop-catalogue.ts');
+const {SHOPS,shopInReach,itemArtwork}=await load('src/scene/night/shop-catalogue.ts');
 for(const [i,s] of MARKET_STALLS.entries()) {
   const front={x:s.x,z:s.z+3.7*Math.cos(s.yaw)};
   assert.equal(shopInReach(front,s.yaw+Math.PI),i,'each owner reachable from the aisle');
   assert.equal(shopInReach(front,s.yaw),-1,'facing away does not capture interaction');
   assert.equal(shopInReach({x:s.x,z:s.z-3*Math.cos(s.yaw)},s.yaw),-1,'no talking through rear walls');
   assert.equal(shopInReach(front,s.yaw+Math.PI,()=>false),-1,'hidden owners are unavailable');
-  assert(SHOPS[s.kind].items.length>=2 && SHOPS[s.kind].topics.length>=2);
+  assert.equal(SHOPS[s.kind].items.length,3);
+  assert.equal(new Set(SHOPS[s.kind].items.map(item=>item.art)).size,3,'every shop has distinct item art');
+  for(const item of SHOPS[s.kind].items) {
+    const art=itemArtwork(item.art);
+    assert(art.url && readFileSync('public'+art.url).length>0,'item artwork exists');
+  }
+  assert(SHOPS[s.kind].topics.length>=2);
 }
 assert.equal(shopInReach({x:52,z:-224},Math.PI),-1,'central terminal retains priority');
 const area=buildWorldArea(buildAreas(),[]);
