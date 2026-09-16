@@ -165,7 +165,7 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
     boats.push({ m: buoy, base, ph: r() * 6 });
   }
 
-  // Harbour shack at the quay end with keyed neon, PIER 9 in canvas neon, contact neon on poles.
+  // Harbour shack at the quay end with keyed neon and PIER 9 in canvas neon.
   const shack = new THREE.Mesh(new THREE.BoxGeometry(14, 6, 8).translate(0, 3, 0), new THREE.MeshStandardNodeMaterial({ color: 0x1a1c24, roughness: 0.8 }));
   shack.position.set(x0 - 16, 0.2, zStart - 10);
   group.add(shack);
@@ -179,16 +179,6 @@ export async function create(_ctx: DistrictCtx): Promise<DistrictBuild & { padRi
     { x: x0 + 8, y: 5, z: zStart - 6, yaw: Math.PI - 0.6, w: 3 },
   ], ['harbour-2', 'harbour-3', 'harbour-4']);
   group.add(harbour);
-  const poleMat = new THREE.MeshStandardNodeMaterial({ color: 0x1a1c26, roughness: 0.6, metalness: 0.5 });
-  // Poles flank the departures board (carriers/flapboard.ts); the neon sits above its top edge.
-  for (const [dx, txt, col] of [[-5.4, 'LINKEDIN', '#00e5ff'], [5.4, 'GITHUB', '#ff2bd6']] as const) {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 10.6, 6).translate(0, 5.3, 0), poleMat);
-    pole.position.set(p.x + dx, DECK_Y, zEnd - 1.5);
-    const s = neonText(txt, col, 5.2, { gain: 1.15 });
-    s.position.set(p.x + dx, DECK_Y + 10.2, zEnd - 1.5);
-    s.rotation.y = Math.PI; // faces the pier (camera comes from the quay side)
-    group.add(pole, s);
-  }
 
   const props: DistrictBuild['props'] = [
     { kind: 'lamp2', x: x0 - 9, z: zStart - 4, yaw: 0 }, { kind: 'lamp2', x: x0 + 9, z: zStart - 4, yaw: Math.PI },

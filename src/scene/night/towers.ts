@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { PAL, rng, type Tier } from './palette';
+import { streetLot } from './building-layout';
 
 /*
  * Kitbash city. Four archetypes × three heights = 12 variant geometries, each built from real-size
@@ -80,6 +81,7 @@ function buildVariant(name: string, kind: number, height: number, seed: number):
     screen = { y: hB * 0.6, w: w * 0.45, h: hB * 0.2, z: d * 0.05 + d * 0.4 };
   }
   const geo = mergeGeometries(parts, false)!;
+  geo.computeBoundingBox();
   geo.computeBoundingSphere();
   return { name, height, geo, base: { w: kind === 3 ? w * 1.1 : w, d }, screen };
 }
@@ -182,12 +184,16 @@ export function createKitbash(opts: KitbashOptions) {
     const v = variants[vi];
     const s = want / v.height;
     // Keep footprints clear of the roads and sidewalks (streets.ts zones).
-    const halfW = v.base.w * s / 2, halfD = v.base.d * s / 2;
-    if (opts.clear && !opts.clear(x, z, halfW, halfD)) continue;
     const yaw = (r() - 0.5) * 0.1 + (r() < 0.5 ? 0 : Math.PI);
     q.setFromAxisAngle(up, yaw);
     const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(s, s, s));
-    obstacles.push({ kind: 'obb', x, z, hw: halfW, hd: halfD, yaw, h: want });
+    const bounds = v.geo.boundingBox!.clone().applyMatrix4(m);
+    const centre = bounds.getCenter(new THREE.Vector3());
+    const size = bounds.getSize(new THREE.Vector3());
+    if (opts.clear && !opts.clear(centre.x, centre.z, size.x / 2, size.z / 2)) continue;
+    const localCentre = v.geo.boundingBox!.getCenter(new THREE.Vector3()).applyMatrix4(m);
+    const localSize = v.geo.boundingBox!.getSize(new THREE.Vector3()).multiplyScalar(s);
+    obstacles.push({ kind: 'obb', x: localCentre.x, z: localCentre.z, hw: localSize.x / 2, hd: localSize.z / 2, yaw, h: size.y });
     perVariant[vi].push(m);
     // Ground-floor storefront on the face that looks onto a street.
     const hw = v.base.w * s / 2, hd = v.base.d * s / 2;
@@ -306,6 +312,17 @@ export async function loadGlbTowers(list: GlbTower[], onEach?: (t: GlbTower, obj
       g.scene.scale.setScalar(k);
       g.scene.position.set(t.x, -box.min.y * k, t.z);
       g.scene.rotation.y = t.yaw ?? 0;
+      g.scene.updateMatrixWorld(true);
+      // Generated models have different pivots and proportions. Measure AFTER rotation,
+      // then relocate the whole model before publishing its collision bounds.
+      const measured = new THREE.Box3().setFromObject(g.scene);
+      const size = measured.getSize(new THREE.Vector3());
+      const lot = streetLot(t.x, t.z, size.x, size.z);
+      g.scene.scale.multiplyScalar(lot.scale);
+      g.scene.updateMatrixWorld(true);
+      const fitted = new THREE.Box3().setFromObject(g.scene);
+      const centre = fitted.getCenter(new THREE.Vector3());
+      g.scene.position.add(new THREE.Vector3(lot.x - centre.x, -fitted.min.y, lot.z - centre.z));
       g.scene.updateMatrixWorld(true);
       g.scene.traverse((o: any) => {
         if (!o.isMesh) return;

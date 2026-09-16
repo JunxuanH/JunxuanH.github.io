@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { facadeBlock, stringLights, type DistrictBuild, type DistrictCtx } from './shared';
 import { CURB_H } from '../streets';
-import { MARKET_STALLS, MARKET_BOLLARDS } from '../market-layout';
+import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from '../market-layout';
 import { loader } from '../palette';
 
 /** Pedestrian bazaar around a central public terminal, with clear circulation on both sides. */
@@ -39,9 +39,9 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
     return new THREE.Mesh(new THREE.PlaneGeometry(w,w*.67),new THREE.MeshBasicNodeMaterial({map:t}));
   };
   // Existing skyline/storefront architecture stays behind the counters.
-  for (const [dx,side,w,h,seed] of [[-14,1,30,14,2],[18,1,26,11,3],[-10,-1,34,12,1],[24,-1,22,16,0]]) {
+  for (const [x,z,w,h,seed,side] of MARKET_BUILDINGS) {
     const b=facadeBlock(w,h,16,ctx.tex,seed,side>0?'nz':'pz',side>0?0xc867c4:0x5fced8);
-    b.position.set(50+dx,CURB_H,-228+side*22.5); group.add(b);
+    b.position.set(x,CURB_H,z); group.add(b);
   }
   const lights: DistrictBuild['lights']=[];
   for (const [i,s] of MARKET_STALLS.entries()) {

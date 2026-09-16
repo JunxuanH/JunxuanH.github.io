@@ -7,7 +7,8 @@
  */
 import * as THREE from 'three/webgpu';
 import { TERMINALS } from './terminal-layout';
-import { MARKET_STALLS, MARKET_BOLLARDS } from './market-layout';
+import { DOWNTOWN_LOBBIES } from './building-layout';
+import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from './market-layout';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
 import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, QUAY_Z, isRoad, isSidewalk } from './streets';
@@ -44,7 +45,7 @@ function campus(): Area {
   const streetZ = CROSS_Z[0]; // −60
   const rects: Rect[] = [
     { x0: c.x - 42, x1: c.x + 42, z0: c.z - 31, z1: c.z + 31, y: CURB_H },   // plaza slab (japantown.ts)
-    { x0: c.x - 9, x1: c.x + 9, z0: streetZ - 18.5, z1: streetZ - 0.5, y: CURB_H }, // stepped approach through the torii
+    { x0: c.x - 9, x1: c.x + 9, z0: c.z + 31, z1: streetZ - 8, y: CURB_H }, // approach ends at the curb, not in the road
     { x0: c.x + 9, x1: c.x + 24, z0: streetZ - 14, z1: streetZ - 6 },        // cross-street pavement to the taxi pad
   ];
   const obstacles: Obstacle[] = [
@@ -75,7 +76,7 @@ function downtown(placed: boolean): Area {
     { x0: AVENUE_HALF, x1: AVENUE_HALF + SIDEWALK, z0: -210, z1: -60 },     // east sidewalk
   ];
   // Lobby forecourts (center.ts: black marble in front of each glass lobby), w + 6 along the avenue.
-  for (const [side, z, w] of [[-1, -110, 22], [1, -140, 20], [-1, -172, 22], [1, -196, 18]] as const) {
+  for (const [side, z, w] of DOWNTOWN_LOBBIES) {
     const x0 = side < 0 ? -21.6 : 15.6;
     rects.push({ x0, x1: x0 + 6, z0: z - (w + 6) / 2, z1: z + (w + 6) / 2 });
   }
@@ -92,7 +93,7 @@ function downtown(placed: boolean): Area {
     box(27, 41, -129, -107, 46),               // media tower (carriers/megascreen.ts)
   ];
   // Glass lobbies (center.ts): outside the rects, but they bound the camera.
-  for (const [side, z, w] of [[-1, -110, 22], [1, -140, 20], [-1, -172, 22], [1, -196, 18]] as const) {
+  for (const [side, z, w] of DOWNTOWN_LOBBIES) {
     const x0 = side < 0 ? -33.6 : 21.6;
     obstacles.push(box(x0, x0 + 12, z - w / 2, z + w / 2, 7));
   }
@@ -109,7 +110,8 @@ function downtown(placed: boolean): Area {
       const side = ((z / 14) | 0) % 2 ? 1 : -1;
       obstacles.push(circle(side * inner, z, 0.3, 6.5));
     }
-    for (const [side, z] of [[-1, -110], [1, -140], [-1, -172]] as const) {
+    for (const [side, z] of DOWNTOWN_LOBBIES) {
+      if (side > 0 && z === -202) continue;
       obstacles.push(circle(side * inner, z + 9, 0.3, 4.5));
       for (let k = -2; k <= 2; k++) obstacles.push(circle(side * (AVENUE_HALF + SIDEWALK - 0.6), z + k * 3.2, 0.3, 0.6));
     }
@@ -121,9 +123,7 @@ function downtown(placed: boolean): Area {
 function market(placed: boolean): Area {
   const m = ANCHORS.market; // (50, 0, −228)
   const rects: Rect[] = [{ x0: 14, x1: 86, z0: m.z - 14, z1: m.z + 14 }];
-  const obstacles: Obstacle[] = [
-    box(10, 90, -262, m.z - 14.5, 12), box(10, 90, m.z + 14.5, -194, 12), // façade rows (camera bounds)
-  ];
+  const obstacles: Obstacle[] = MARKET_BUILDINGS.map(([x,z,w,h]) => centred(x,z,w,16,h));
   for (const s of MARKET_STALLS) {
     obstacles.push(centred(s.x, s.z, 6.3, 3.8, 3.8));
     if(s.kind==='food') for(const dx of [-1.9,0,1.9]) obstacles.push(circle(s.x+dx,s.z+2.7,.32,.85));

@@ -5,6 +5,7 @@ import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';
 import { AVENUE_HALF, SIDEWALK, CURB_H, PATCH_LIFT } from '../streets';
 import { THEMES } from '../theme';
+import { DOWNTOWN_LOBBIES } from '../building-layout';
 import { type DistrictBuild, type DistrictCtx } from './shared';
 
 /*
@@ -94,7 +95,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
 
   // Glass lobbies on both sides of the avenue, set back behind the sidewalk.
   const setback = AVENUE_HALF + SIDEWALK + 0.6;
-  for (const [side, z, w] of [[-1, -110, 22], [1, -140, 20], [-1, -172, 22], [1, -196, 18]] as const) {
+  for (const [side, z, w] of DOWNTOWN_LOBBIES) {
     const d = 12;
     const lobby = glassLobby(w, 7, d, side < 0 ? T.secondary : 0xdfe8ff);
     lobby.position.set(side * (setback + d / 2 + 3), CURB_H, z);
@@ -103,9 +104,9 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   }
 
   const props: DistrictBuild['props'] = [];
-  for (const [side, z] of [[-1, -110], [1, -140], [-1, -172], [1, -196]] as const) {
-    if (!(side > 0 && z === -196)) props.push({ kind: 'hanging', x: side * (AVENUE_HALF + 1.2), z: z + 9, yaw: side > 0 ? 0 : Math.PI }); // the hologram forecourt stays clear
-    if (!(side > 0 && z === -196)) for (let k = -2; k <= 2; k++) props.push({ kind: 'cone', x: side * (AVENUE_HALF + SIDEWALK - 0.6), z: z + k * 3.2, yaw: 0, s: 0.7 });
+  for (const [side, z] of DOWNTOWN_LOBBIES) {
+    if (!(side > 0 && z === -202)) props.push({ kind: 'hanging', x: side * (AVENUE_HALF + 1.2), z: z + 9, yaw: side > 0 ? 0 : Math.PI });
+    if (!(side > 0 && z === -202)) for (let k = -2; k <= 2; k++) props.push({ kind: 'cone', x: side * (AVENUE_HALF + SIDEWALK - 0.6), z: z + k * 3.2, yaw: 0, s: 0.7 });
   }
   const lights: DistrictBuild['lights'] = [
     [-10, 7, -80, 0xffb070, 700], [0, 14, -120, 0xdfe8ff, 700], [8, 9, -125, T.secondary, 500],

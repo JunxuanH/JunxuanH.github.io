@@ -147,7 +147,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const plaza = new THREE.Mesh(new THREE.BoxGeometry(84, CURB_H + PATCH_LIFT, 62), plazaMat);
   plaza.position.set(c.x, (CURB_H + PATCH_LIFT) / 2, c.z);
   group.add(plaza);
-  const plazaNorth = c.z + 31, approachEnd = streetZ - 0.5;
+  const plazaNorth = c.z + 31, approachEnd = streetZ - 8;
   const approach = new THREE.Mesh(new THREE.BoxGeometry(18, CURB_H + PATCH_LIFT, approachEnd - plazaNorth), plazaMat);
   approach.position.set(c.x, (CURB_H + PATCH_LIFT) / 2, (plazaNorth + approachEnd) / 2);
   group.add(approach);
@@ -168,7 +168,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
     group.add(roof);
   }
   // Main hall signage
-  const sign = neonText('UC BERKELEY', T.signGlow, 16, { gain: 1.3 });
+  const sign = neonText('UNIVERSITY', T.signGlow, 16, { gain: 1.3 });
   sign.position.set(c.x, CURB_H + 11.0, c.z - 20 + 9.05);
   group.add(sign);
 
