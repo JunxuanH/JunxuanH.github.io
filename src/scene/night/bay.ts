@@ -36,6 +36,13 @@ export function createWater(resolutionScale: number) {
     dhx = dhx.add(cos(arg).mul(a * kx));
     dhy = dhy.add(cos(arg).mul(a * ky));
   }
+  // The plane reaches 110 u inland of the quay, where the street covers it. Its crests sum to
+  // +1.07 u against a body sitting at −0.5, so unchecked they rose 0.57 u through the road and
+  // read as slabs of water lying on the tarmac. Flatten the swell as it approaches the shore,
+  // which is also what real water does. After the −90° tilt, world z = 190 − localY, so localY
+  // 210 is the quay at z −20 and localY 160 is open water at z 30.
+  const shore = smoothstep(float(210), float(160), py);
+  h = h.mul(shore); dhx = dhx.mul(shore); dhy = dhy.mul(shore);
   mat.positionNode = positionLocal.add(vec3(0, 0, h));
 
   const getNoise = (p: any) => {

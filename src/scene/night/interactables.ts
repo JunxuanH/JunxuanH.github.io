@@ -96,7 +96,9 @@ export function createInteractables(opts: InteractablesOptions) {
     const anchor = new THREE.Vector3();
     c.mount.updateWorldMatrix(true, false); c.mount.getWorldPosition(anchor);
     items.push({
-      id: key, section: CARRIER_SECTION[key] as WalkSection, anchor, radius: key === 'education' ? 12 : 6,
+      // Close enough that the prompt reads as "this terminal", not "somewhere in this plaza".
+      // The campus kiosk stands in open ground and used to offer itself from 12 u away.
+      id: key, section: CARRIER_SECTION[key] as WalkSection, anchor, radius: key === 'education' ? 6.5 : 5,
       label: `Open ${c.node?.replace(' TERMINAL', '').toLowerCase()} terminal`, hot: neonOf(c.group),
       action: () => nav.dock(key as DockId),
     });

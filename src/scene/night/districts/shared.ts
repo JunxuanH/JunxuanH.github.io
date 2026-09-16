@@ -40,7 +40,10 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
     const rep = uv().mul(uniform(new THREE.Vector2(w / 9, h / 9)));
     const s = texture(tex.facade, fract(rep).mul(0.5).add(cellUV));
     m.colorNode = mix(color(0x1a1c26), s.rgb.mul(1.4).add(0.2), wall);
-    m.emissiveNode = s.rgb.mul(smoothstep(0.35, 0.65, luminance(s.rgb))).mul(2.2).mul(wall);
+    // Portrait phones fill the frame with facade where a desktop window shows street and neon
+    // too, so the same buildings read as dark slabs. Widen what counts as a lit window and
+    // raise the gain: the sheet is mostly dark, and only about 6 % of it ever passed 0.35.
+    m.emissiveNode = s.rgb.mul(smoothstep(0.26, 0.56, luminance(s.rgb))).mul(2.7).mul(wall);
     // Surface relief from the concrete set, tiled by world size rather than by atlas cell, so the
     // wall has grain and cavity shading between the windows instead of reading as printed card.
     const cw = tex.walls?.[grain];
@@ -75,7 +78,7 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
     const fuv = vec2(fract(ux).mul(0.5), uv().y.mul(0.5)).add(bayUV);
     const s = texture(tex.storefronts, fuv);
     fm.colorNode = s.rgb.mul(1.0);
-    fm.emissiveNode = s.rgb.mul(smoothstep(0.45, 0.7, luminance(s.rgb))).mul(2.0);
+    fm.emissiveNode = s.rgb.mul(smoothstep(0.36, 0.62, luminance(s.rgb))).mul(2.4);
     const fw = front === 'pz' || front === 'nz' ? w : d;
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(fw, 5.2), fm);
     plane.position.y = 2.6;

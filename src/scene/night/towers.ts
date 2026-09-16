@@ -132,7 +132,7 @@ export function createKitbash(opts: KitbashOptions) {
   const across = mix(positionLocal.x, positionLocal.z, abs(normalLocal.x));
   const pitch = hash(bId.mul(0.731)).mul(0.5).add(0.45); // cells per unit: 0.45–0.95
   const pitchY = pitch.mul(0.85);
-  const occupancy = hash(bId.mul(0.413)).mul(0.4).add(0.3);
+  const occupancy = hash(bId.mul(0.413)).mul(0.42).add(0.4); // 0.40–0.82 of cells lit, was 0.30–0.70
   const cx = floor(across.mul(pitch)), cy = floor(positionLocal.y.mul(pitchY));
   const seedN = cx.mul(13.1).add(cy.mul(7.3)).add(bId.mul(0.37));
   const lit = step(float(1).sub(occupancy), hash(seedN));
@@ -143,8 +143,8 @@ export function createKitbash(opts: KitbashOptions) {
   const warm = hash(seedN.add(99.0));
   const winCol = mix(color(PAL.sodium), mix(color(PAL.cyan), color(0xdfe8ff), step(0.5, warm)), step(0.35, warm));
   const bright = hash(seedN.add(7.0)).mul(0.8).add(0.6);
-  const dark = step(0.15, hash(bId.mul(5.1))); // 15 % fully dark buildings
-  let winE = winCol.mul(max(lit, band)).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.2).mul(dark);
+  const dark = step(0.08, hash(bId.mul(5.1))); // 8 % fully dark buildings, was 15 %
+  let winE = winCol.mul(max(lit, band)).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.6).mul(dark);
   let albedo: any = color(0x0c0d16);
 
   if (opts.atlas) {
@@ -158,7 +158,7 @@ export function createKitbash(opts: KitbashOptions) {
     const useAtlas = near.mul(wall); // every near building wears the sheet; the grid takes over far away
     // The sheet is painted near-black; lift it so hemisphere light shows panel structure.
     albedo = mix(albedo, a.rgb.mul(1.4).add(0.2), useAtlas);
-    const atlasE = a.rgb.mul(smoothstep(0.35, 0.65, luminance(a.rgb))).mul(2.2).mul(dark);
+    const atlasE = a.rgb.mul(smoothstep(0.26, 0.56, luminance(a.rgb))).mul(2.7).mul(dark);
     winE = mix(winE, atlasE, useAtlas);
   }
   mat.colorNode = mix(albedo, mix(color(0x1a1c26), stripColY.mul(0.25), stripsOn), isStrip);
