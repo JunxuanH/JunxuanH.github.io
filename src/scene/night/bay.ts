@@ -5,7 +5,7 @@ import {
   smoothstep, abs, reflect, glowMaterial, uniform,
 } from './tsl';
 import { PAL, loader, params } from './palette';
-import { groundMaterial, type GroundTextures } from './streets';
+import { groundMaterial, wallMaterial, type GroundTextures, type WallSets } from './streets';
 
 /**
  * Hero bay: dark water with a planar reflection of the skyline, a cable-stayed bridge the camera
@@ -68,9 +68,13 @@ export function createWater(resolutionScale: number) {
 }
 
 /** Seawall where the city meets the bay: concrete quay with a cyan edge strip, bollard lights, three jetties on pilings. */
-export function createQuay(quayZ: number, ground?: Pick<GroundTextures, 'planks' | 'planksN' | 'planksR' | 'planksAO'>) {
+export function createQuay(quayZ: number, ground?: Pick<GroundTextures, 'planks' | 'planksN' | 'planksR' | 'planksAO'>, walls?: WallSets) {
   const group = new THREE.Group();
-  const wallMat = new THREE.MeshStandardNodeMaterial({ color: 0x1a1c24, roughness: 0.85 });
+  // The seawall runs 780 u along the waterfront and was a single flat colour. Concrete, tinted
+  // down hard: it faces the dark bay and only the quay edge strip and bollards light it.
+  const wallMat = walls
+    ? wallMaterial(walls['wall-concrete'], 6, { roughness: 0.85, tint: 0x3d4250 })
+    : new THREE.MeshStandardNodeMaterial({ color: 0x1a1c24, roughness: 0.85 });
   const wall = new THREE.Mesh(new THREE.BoxGeometry(780, 3.2, 2.4), wallMat);
   wall.position.set(0, 1.4, quayZ - 1.2);
   group.add(wall);
@@ -122,17 +126,21 @@ export function createQuay(quayZ: number, ground?: Pick<GroundTextures, 'planks'
 
 /** Cable-stayed bridge across the bay mouth (z = BRIDGE_Z); the camera flies over it around p ≈ 0.09. */
 export const BRIDGE_Z = 70;
-export function createBridge() {
+export function createBridge(walls?: WallSets) {
   const group = new THREE.Group();
   const Z = BRIDGE_Z;
-  const deckMat = new THREE.MeshStandardNodeMaterial({ color: 0x101420, roughness: 0.6, metalness: 0.3 });
+  const deckMat = walls
+    ? wallMaterial(walls['wall-metal'], 8, { roughness: 0.6, metalness: 0.3, tint: 0x2b3245 })
+    : new THREE.MeshStandardNodeMaterial({ color: 0x101420, roughness: 0.6, metalness: 0.3 });
   // The deck runs the full width of the bay (it used to stop mid-water, visible from the pier).
   const SPAN = 1400;
   const deck = new THREE.Mesh(new THREE.BoxGeometry(SPAN, 1.6, 8), deckMat);
   deck.position.set(0, 12, Z);
   group.add(deck);
   const pylonGeo = new THREE.BoxGeometry(1.8, 46, 1.8);
-  const pylonMat = new THREE.MeshStandardNodeMaterial({ color: 0x0e1018, roughness: 0.7 });
+  const pylonMat = walls
+    ? wallMaterial(walls['wall-metal'], 6, { roughness: 0.7, metalness: 0.25, tint: 0x262c3c })
+    : new THREE.MeshStandardNodeMaterial({ color: 0x0e1018, roughness: 0.7 });
   const pylonEdge = glowMaterial(PAL.cyan, 1.8);
   // Main cable-stayed span at ±62; plain support pylons carry the approaches out to the shores.
   for (const px of [-62, 62, -300, 300, -540, 540]) {

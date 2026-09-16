@@ -1,11 +1,11 @@
 import * as THREE from 'three/webgpu';
-import { color, smoothstep, fract, mix, uv, float, texture, luminance, vec2, normalLocal, abs, uniform, glowMaterial } from '../tsl';
+import { color, smoothstep, fract, mix, uv, float, texture, luminance, vec2, normalLocal, normalMap, abs, uniform, glowMaterial } from '../tsl';
 import { PAL } from '../palette';
 import type { PropPlacement } from '../props';
 import type { PathDef } from '../paths';
 
-import type { GroundTextures } from '../streets';
-export interface DistrictTextures { facade: THREE.Texture | null; storefronts: THREE.Texture | null; ground?: GroundTextures }
+import type { GroundTextures, WallSets } from '../streets';
+export interface DistrictTextures { facade: THREE.Texture | null; storefronts: THREE.Texture | null; ground?: GroundTextures; walls?: WallSets }
 
 /** A point light the district wants: [x, y, z, colour, intensity, distance?] */
 export type LightSpec = [number, number, number, number, number, number?];
@@ -41,6 +41,16 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
     const s = texture(tex.facade, fract(rep).mul(0.5).add(cellUV));
     m.colorNode = mix(color(0x1a1c26), s.rgb.mul(1.4).add(0.2), wall);
     m.emissiveNode = s.rgb.mul(smoothstep(0.35, 0.65, luminance(s.rgb))).mul(2.2).mul(wall);
+    // Surface relief from the concrete set, tiled by world size rather than by atlas cell, so the
+    // wall has grain and cavity shading between the windows instead of reading as printed card.
+    const cw = tex.walls?.['wall-concrete'];
+    if (cw?.normal || cw?.rough || cw?.ao) {
+      const grain = uv().mul(uniform(new THREE.Vector2(w / 4, h / 4)));
+      if (cw.normal) m.normalNode = normalMap(texture(cw.normal, grain), uniform(new THREE.Vector2(0.5, 0.5)));
+      if (cw.rough) m.roughnessNode = texture(cw.rough, grain).r.sub(0.5).mul(uniform(0.4)).add(uniform(0.7)).clamp(0.08, 1);
+      // Windows must not be occluded: they are the light sources on this wall.
+      if (cw.ao) m.aoNode = mix(float(1), texture(cw.ao, grain).r, wall.mul(float(1).sub(smoothstep(0.35, 0.65, luminance(s.rgb)))));
+    }
   } else {
     m.colorNode = color(0x1a1c26);
   }

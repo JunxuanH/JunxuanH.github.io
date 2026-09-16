@@ -103,6 +103,32 @@ export async function loadGroundTextures(): Promise<GroundTextures> {
 const ROUGH_VARIATION = 0.55;
 
 /**
+ * The generated wall sets. Loaded once and shared, because a material per surface would opt every
+ * one of them out of `dedupeMaterials` and multiply the shader pre-warm.
+ */
+export type WallKind = 'wall-concrete' | 'wall-metal' | 'wall-corrugated' | 'roof-gravel';
+export type WallSets = Record<WallKind, WallSet>;
+
+const EMPTY_WALL: WallSet = { map: null, normal: null, rough: null, ao: null };
+
+export async function loadWallSets(kinds: readonly WallKind[]): Promise<WallSets> {
+  const wantR = !params.has('norough'), wantAO = !params.has('noao');
+  const sets = Object.fromEntries((['wall-concrete', 'wall-metal', 'wall-corrugated', 'roof-gravel'] as WallKind[])
+    .map((k) => [k, EMPTY_WALL])) as WallSets;
+  if (params.has('nowalls')) return sets;
+  await Promise.all(kinds.map(async (k) => {
+    const [map, normal, rough, ao] = await Promise.all([
+      tryLoad(`/night/ground/${k}.jpg`),
+      tryLoad(`/night/ground/${k}-n.jpg`, false),
+      wantR ? tryLoad(`/night/ground/${k}-r.jpg`, false) : null,
+      wantAO ? tryLoad(`/night/ground/${k}-ao.jpg`, false) : null,
+    ]);
+    sets[k] = { map, normal, rough, ao };
+  }));
+  return sets;
+}
+
+/**
  * Standard "wet surface" material from an albedo + normal pair, tiled per world unit. Tile, axis swap,
  * tint and normal scale are uniforms, so every ground surface in the city shares one program.
  */
@@ -126,7 +152,32 @@ export function groundMaterial(
   return m;
 }
 
-export function createStreets(tex: GroundTextures) {
+export interface WallSet {
+  map: THREE.Texture | null; normal: THREE.Texture | null; rough: THREE.Texture | null; ao: THREE.Texture | null;
+}
+
+/**
+ * The vertical counterpart of `groundMaterial`: the same world-space projection turned on its side,
+ * so walls tile by world unit and need no UVs. `axis` is the wall's long horizontal direction, which
+ * is a uniform, so both orientations still share one program. Every wall in the city is axis-aligned,
+ * which is why this costs one texture fetch where triplanar projection would cost three.
+ */
+export function wallMaterial(set: WallSet, tile: number, opts: { roughness?: number; tint?: number; metalness?: number; normalScale?: number; axis?: 'x' | 'z' } = {}) {
+  const base = opts.roughness ?? 0.8;
+  const fallback = new THREE.MeshStandardNodeMaterial({ color: opts.tint ?? 0x1a1c24, roughness: base, metalness: opts.metalness ?? 0.08 });
+  if (!set.map) return fallback;
+  const m = new THREE.MeshStandardNodeMaterial({ roughness: base, metalness: opts.metalness ?? 0.08 });
+  const along = mix(positionWorld.x, positionWorld.z, uniform(opts.axis === 'z' ? 1 : 0));
+  const uvw = vec2(along, positionWorld.y).mul(uniform(1 / tile));
+  m.colorNode = texture(set.map, uvw).rgb.mul(color(opts.tint ?? 0xffffff));
+  const ns = opts.normalScale ?? 0.9;
+  if (set.normal) m.normalNode = normalMap(texture(set.normal, uvw), uniform(new THREE.Vector2(ns, ns)));
+  if (set.rough) m.roughnessNode = texture(set.rough, uvw).r.sub(0.5).mul(uniform(ROUGH_VARIATION)).add(uniform(base)).clamp(0.04, 1);
+  if (set.ao) m.aoNode = texture(set.ao, uvw).r;
+  return m;
+}
+
+export function createStreets(tex: GroundTextures, walls?: WallSets) {
   const group = new THREE.Group();
   const tileA = 9, tileP = 6;
   const uvA = positionWorld.xz.mul(1 / tileA), uvP = positionWorld.xz.mul(1 / tileP);
@@ -191,7 +242,11 @@ export function createStreets(tex: GroundTextures) {
   group.add(mesh);
 
   // Visible map perimeter: the ground ends against retaining walls, never an invisible district fence.
-  const boundaryMat = new THREE.MeshStandardNodeMaterial({ color: 0x252935, roughness: .85 });
+  // Retaining concrete, tinted well down: the generated set is daylight-bright and these walls
+  // sit at the dark edge of the map where only spill light reaches them.
+  const boundaryMat = walls
+    ? wallMaterial(walls['wall-concrete'], 7, { roughness: 0.85, tint: 0x4a4f5e, axis: 'z' })
+    : new THREE.MeshStandardNodeMaterial({ color: 0x252935, roughness: .85 });
   for (const x of [-380, 380]) {
     const wall = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4, 620), boundaryMat);
     wall.position.set(x, 2, -330); group.add(wall);

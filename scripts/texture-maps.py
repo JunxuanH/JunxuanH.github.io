@@ -53,6 +53,53 @@ def luminance(img: Image.Image) -> np.ndarray:
     return a @ LUMA
 
 
+def make_seamless(img: Image.Image, border: float = 0.10) -> Image.Image:
+    """Cross-fade the outer border with the opposite edge so the tile wraps without a seam.
+
+    Generated textures come back nearly tileable but not exactly. Blending each edge strip toward
+    its opposite number, with the weight reaching an even mix exactly at the boundary, makes the
+    first and last row and column identical. The fade is confined to the border, so the interior
+    detail the model produced is untouched.
+    """
+    a = np.asarray(img.convert("RGB"), dtype=np.float32)
+    h, w, _ = a.shape
+    out = a.copy()
+    bw = max(2, int(round(w * border)))
+    bh = max(2, int(round(h * border)))
+    for i in range(bw):
+        alpha = 0.5 * (1.0 + i / bw)
+        left, right = a[:, i], a[:, w - 1 - i]
+        out[:, i] = left * alpha + right * (1 - alpha)
+        out[:, w - 1 - i] = right * alpha + left * (1 - alpha)
+    base = out.copy()
+    for j in range(bh):
+        alpha = 0.5 * (1.0 + j / bh)
+        top, bottom = base[j, :], base[h - 1 - j, :]
+        out[j, :] = top * alpha + bottom * (1 - alpha)
+        out[h - 1 - j, :] = bottom * alpha + top * (1 - alpha)
+    return Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8), mode="RGB")
+
+
+def normal_from(img: Image.Image, strength: float = 2.0) -> Image.Image:
+    """Tangent-space normal map from the albedo's luminance treated as height.
+
+    Wrapped gradients, so the normal map tiles exactly as well as the albedo it came from.
+    """
+    height = luminance(img)
+    # Light blur first, or JPEG noise turns into a field of spikes.
+    height = np.asarray(
+        Image.fromarray((height * 255.0 + 0.5).astype(np.uint8), mode="L").filter(ImageFilter.GaussianBlur(1.0)),
+        dtype=np.float32,
+    ) / 255.0
+    dx = (np.roll(height, -1, axis=1) - np.roll(height, 1, axis=1)) * strength
+    dy = (np.roll(height, -1, axis=0) - np.roll(height, 1, axis=0)) * strength
+    nz = np.ones_like(height)
+    length = np.sqrt(dx * dx + dy * dy + nz * nz)
+    # OpenGL convention (+Y up), which is what three's normalMap expects.
+    rgb = np.stack([-dx / length, dy / length, nz / length], axis=-1)
+    return Image.fromarray(((rgb * 0.5 + 0.5) * 255.0 + 0.5).astype(np.uint8), mode="RGB")
+
+
 def roughness_from(img: Image.Image) -> Image.Image:
     lum = luminance(img)
     # Centre on the image's own mean so a dark asphalt tile and a pale paver tile both use the
@@ -94,28 +141,49 @@ def save(img: Image.Image, path: Path, quality: int) -> None:
     print(f"  {path}  {img.width}x{img.height}  {path.stat().st_size // 1024} KB")
 
 
-def process(src: Path, lite_dir: Path | None, size: int, quality: int) -> None:
+def process(src: Path, args: argparse.Namespace) -> None:
     if not src.exists():
         print(f"missing: {src}", file=sys.stderr)
         return
     img = Image.open(src)
     print(f"{src}  {img.width}x{img.height}")
-    for suffix, made in (("-r", roughness_from(img)), ("-ao", occlusion_from(img))):
-        out = src.with_name(f"{src.stem}{suffix}{src.suffix}")
-        save(fit(made, size), out, quality)
+    if args.seamless:
+        img = make_seamless(img)
+    dest_dir = args.out_dir or src.parent
+    stem = args.name or src.stem
+    suffix = args.ext or src.suffix
+    size, quality, lite_dir = args.max_size, args.quality, args.lite_dir
+
+    channels: list[tuple[str, Image.Image, int]] = [("-r", roughness_from(img), size), ("-ao", occlusion_from(img), size)]
+    if args.albedo_out:
+        channels.append(("", img.convert("RGB"), args.albedo_size))
+    if args.normal:
+        channels.append(("-n", normal_from(img, args.normal_strength), args.albedo_size))
+
+    for tag, made, target in channels:
+        out = dest_dir / f"{stem}{tag}{suffix}"
+        save(fit(made, target), out, quality)
         if lite_dir is not None:
-            save(fit(made, max(1, size // 2)), lite_dir / out.name, quality)
+            save(fit(made, max(1, target // 2)), lite_dir / out.name, quality)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("albedo", nargs="+", type=Path, help="tiling albedo images")
     ap.add_argument("--lite-dir", type=Path, default=None, help="also write half-size copies here")
-    ap.add_argument("--max-size", type=int, default=DEFAULT_MAX_SIZE, help=f"longest edge, default {DEFAULT_MAX_SIZE}")
+    ap.add_argument("--out-dir", type=Path, default=None, help="write beside the source unless given")
+    ap.add_argument("--name", default=None, help="output stem, default the source stem")
+    ap.add_argument("--ext", default=None, help="output extension, e.g. .jpg")
+    ap.add_argument("--max-size", type=int, default=DEFAULT_MAX_SIZE, help=f"derived channels' longest edge, default {DEFAULT_MAX_SIZE}")
+    ap.add_argument("--albedo-size", type=int, default=1024, help="albedo and normal longest edge, default 1024")
     ap.add_argument("--quality", type=int, default=DEFAULT_QUALITY, help=f"JPEG quality, default {DEFAULT_QUALITY}")
+    ap.add_argument("--seamless", action="store_true", help="cross-fade the borders so the tile wraps")
+    ap.add_argument("--normal", action="store_true", help="also derive a tangent-space normal map")
+    ap.add_argument("--normal-strength", type=float, default=2.0, help="normal map relief, default 2.0")
+    ap.add_argument("--albedo-out", action="store_true", help="also write the (possibly seam-healed) albedo")
     args = ap.parse_args()
     for src in args.albedo:
-        process(src, args.lite_dir, args.max_size, args.quality)
+        process(src, args)
     return 0
 
 

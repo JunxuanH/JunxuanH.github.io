@@ -10,7 +10,7 @@ import { createSky, createHaze } from './sky';
 import { createPost } from './post';
 import { createBackdrop } from './backdrop';
 import { createLandingFlyby } from './landing-flyby';
-import { createStreets, loadGroundTextures, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z, CURB_H } from './streets';
+import { createStreets, loadGroundTextures, loadWallSets, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z, CURB_H } from './streets';
 import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
 import { createKitbash, loadGlbTowers } from './towers';
@@ -148,7 +148,8 @@ export async function start(root: HTMLElement) {
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
-  scene.add(createStreets(ground));
+  const walls = await loadWallSets(['wall-concrete', 'wall-metal', 'wall-corrugated']);
+  scene.add(createStreets(ground, walls));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.
   // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
@@ -201,8 +202,8 @@ export async function start(root: HTMLElement) {
   // ---------- bay
   const water = params.has('nowater') ? null : createWater({ high: 0.5, med: 0.4, low: 0.3 }[tier]);
   if (water) scene.add(water);
-  scene.add(createBridge());
-  scene.add(createQuay(QUAY_Z, ground));
+  scene.add(createBridge(walls));
+  scene.add(createQuay(QUAY_Z, ground, walls));
   const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite || reducedMotion ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
   billboard.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5);
   scene.add(billboard);
@@ -241,7 +242,7 @@ export async function start(root: HTMLElement) {
       jobs: [...document.querySelectorAll<HTMLElement>('.slab.job')].slice(0, 4).map((el) => ({ label: el.querySelector('.kicker')?.textContent?.trim() ?? '', rows: 0 })),
       projects: [...document.querySelectorAll<HTMLElement>('.stack .card h3')].map((el) => ({ name: el.firstChild?.textContent?.trim() || '' })),
     },
-    tex: { facade: facadeTex, storefronts: storefrontTex, ground },
+    tex: { facade: facadeTex, storefronts: storefrontTex, ground, walls },
     tier,
   });
 
@@ -343,7 +344,7 @@ export async function start(root: HTMLElement) {
   // ---------- résumé content: slabs on their carriers (kiosk, bus stop, LED wall, blimp, hologram, stall, departures board)
   boot.phase('mounting the résumé', 0.82);
   const content = await createContent({
-    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground }, people: !params.has('nopeople'), // both resident rigs are already cached in the phone roster
+    scene, narrow, tier, tex: { facade: facadeTex, storefronts: storefrontTex, ground, walls }, people: !params.has('nopeople'), // both resident rigs are already cached in the phone roster
     onFlap: () => audio.clack(6, 0.07),
   });
   // District + carrier lights go through a fixed-size pool (constant light count → no shader rebuilds).
