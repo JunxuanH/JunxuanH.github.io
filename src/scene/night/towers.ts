@@ -130,36 +130,72 @@ export function createKitbash(opts: KitbashOptions) {
   // Windows in local space (instances are ~uniformly scaled).
   const wall = float(1).sub(smoothstep(0.4, 0.6, abs(normalLocal.y)));
   const across = mix(positionLocal.x, positionLocal.z, abs(normalLocal.x));
+
+  // Each building picks a character, so the skyline stops reading as one uniform field of dots.
+  //   office  wide horizontal ribbons, whole floors lit or dark
+  //   tech    narrow vertical slits, cool and sparse
+  //   block   the ordinary square grid
+  const styleH = hash(bId.mul(9.17));
+  const isOffice = step(styleH, 0.42);
+  const isTech = step(0.78, styleH);
+
   const pitch = hash(bId.mul(0.731)).mul(0.5).add(0.45); // cells per unit: 0.45–0.95
   const pitchY = pitch.mul(0.85);
-  // West of the avenue runs a little busier than east. The instance hash alone left the bay vista,
-  // which frames the city head-on, bright on one side and dim on the other. Occupancy is what the
-  // eye actually counts here, so the balance goes on the number of lit windows rather than on how
-  // hard each one burns: brightening already-saturated panes does not change how lit a block looks.
-  const occupancy = hash(bId.mul(0.413)).mul(0.42).add(0.4); // 0.40–0.82 of cells lit, was 0.30–0.70
+  const occupancy = hash(bId.mul(0.413)).mul(0.42).add(0.4);
   const cx = floor(across.mul(pitch)), cy = floor(positionLocal.y.mul(pitchY));
   const seedN = cx.mul(13.1).add(cy.mul(7.3)).add(bId.mul(0.37));
-  const lit = step(float(1).sub(occupancy), hash(seedN));
-  const band = step(0.7, hash(bId.mul(6.3))).mul(step(fract(cy.mul(1 / 6)), 0.17)); // every 6th row fully lit on 30 %
+
+  // Light by floor, not by cell. A per-cell coin flip gives an even scatter of dots, which is what
+  // made the towers read as noise; real buildings switch on a floor at a time, so a floor is either
+  // occupied (and then most of its windows are lit) or it is dark, and a few floors are fully lit.
+  const floorSeed = cy.mul(3.77).add(bId.mul(0.91));
+  const floorOn = step(float(1).sub(occupancy), hash(floorSeed));
+  const cellOn = step(0.26, hash(seedN));
+  const fullFloor = step(0.78, hash(floorSeed.add(5.5))); // lobby / plant floors, lit end to end
+  // Service cores: every ninth column stays lit top to bottom, the stair and lift shaft.
+  const core = step(fract(cx.mul(1 / 9)), 0.12).mul(step(0.45, hash(bId.mul(7.7))));
+  const lit = max(max(floorOn.mul(cellOn), fullFloor), core);
+
   const fx = fract(across.mul(pitch)), fy = fract(positionLocal.y.mul(pitchY));
-  const inset = step(0.14, fx).mul(step(fx, 0.86)).mul(step(0.18, fy)).mul(step(fy, 0.82)); // bigger pane, was 0.2-0.8 / 0.25-0.75
+  // Pane shape follows the building's character.
+  const x0 = mix(mix(float(0.14), float(0.05), isOffice), float(0.34), isTech);
+  const x1 = mix(mix(float(0.86), float(0.95), isOffice), float(0.66), isTech);
+  const y0 = mix(mix(float(0.18), float(0.34), isOffice), float(0.06), isTech);
+  const y1 = mix(mix(float(0.82), float(0.66), isOffice), float(0.94), isTech);
+  const inset = step(x0, fx).mul(step(fx, x1)).mul(step(y0, fy)).mul(step(fy, y1));
   const winFlick = float(1).sub(step(0.975, hash(seedN.add(floor(time.mul(2.0)).mul(3.1)))));
+
+  // Every tower runs a dominant hue, with per-window variation inside it, so a block reads as one
+  // building lit by one kind of light rather than a confetti of unrelated colours.
+  const tintSel = hash(bId.mul(2.13));
+  const houseTint = mix(
+    mix(color(PAL.sodium), color(0xbfe9ff), step(0.34, tintSel)),
+    mix(color(0xff7ad2), color(0x86ffd0), step(0.86, tintSel)),
+    step(0.7, tintSel),
+  );
   const warm = hash(seedN.add(99.0));
-  const winCol = mix(color(PAL.sodium), mix(color(PAL.cyan), color(0xdfe8ff), step(0.5, warm)), step(0.35, warm));
+  const cellTint = mix(color(PAL.sodium), mix(color(PAL.cyan), color(0xdfe8ff), step(0.5, warm)), step(0.35, warm));
+  const winCol = mix(cellTint, houseTint, 0.62);
   const bright = hash(seedN.add(7.0)).mul(0.9).add(0.8);
-  const dark = step(0.08, hash(bId.mul(5.1))); // 8 % fully dark buildings, was 15 %
+  const dark = step(0.08, hash(bId.mul(5.1))); // 8 % fully dark buildings
   // A window is a fraction of a cell, and past a few hundred units a cell is smaller than a pixel,
   // so the hardware averages mostly-unlit wall and the far skyline sinks to a silhouette. Real
   // distance does not dim a city that way: it stops resolving windows while the light still
   // arrives. Scale emission with distance to keep the total roughly constant.
   const farBoost = smoothstep(140.0, 620.0, length(positionWorld.xz.sub(cameraPosition.xz))).mul(2.8).add(1.0);
-  // The instance hash left the west side of the skyline noticeably darker than the east, which the
-  // bay vista frames head-on. This is a property of the city, not of the camera: the west blocks run
-  // a little brighter and the east a little dimmer, so the establishing shot reads evenly lit.
-  let winE = winCol.mul(max(lit, band)).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.6).mul(dark).mul(farBoost);
-  // Beyond the atlas range (140-200 u) a tower keeps only this flat colour, and at 0x0c0d16 it
-  // was dark enough to read as a hole in the skyline rather than a building. Distance also
-  // means more haze between us and it, not less light, so the far field is lifted.
+  let winE: any = winCol.mul(lit).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.6).mul(dark).mul(farBoost);
+
+  // Vertical neon signage running up one bay of the facade: the tall channel letters that make a
+  // cyberpunk skyline. About a third of the towers carry one, on a column that is theirs alone.
+  const signOn = step(0.66, hash(bId.mul(4.9)));
+  const signCol = mix(color(PAL.magenta), mix(color(PAL.cyan), color(PAL.yellow), step(0.62, hash(bId.mul(8.3)))), step(0.5, hash(bId.mul(5.7))));
+  const signBand = step(abs(fract(across.mul(0.055).add(hash(bId.mul(6.1)))).sub(0.5)), 0.045);
+  // Broken into character cells up the column, a couple of which are out, plus a slow pulse.
+  const signCell = step(0.18, fract(positionLocal.y.mul(0.42)));
+  const signOut = step(0.12, hash(floor(positionLocal.y.mul(0.42)).add(bId.mul(3.9))));
+  const signPulse = mix(float(1), float(0.55).add(fract(time.mul(0.35).add(hash(bId))).mul(0.45)), step(0.5, hash(bId.mul(2.7))));
+  const signE = signCol.mul(signBand).mul(signCell).mul(signOut).mul(signOn).mul(wall).mul(dark).mul(signPulse).mul(3.4).mul(farBoost);
+  winE = winE.add(signE);
   let albedo: any = color(0x222840);
 
   if (opts.atlas) {
@@ -201,7 +237,7 @@ export function createKitbash(opts: KitbashOptions) {
     // Windows stay unoccluded; they are the light sources on the tower.
     if (cset?.ao) {
       const occ = texture(cset.ao, wuv).r;
-      mat.aoNode = mix(float(1), occ, wall.mul(float(1).sub(isStrip)).mul(float(1).sub(max(lit, band).mul(inset))));
+      mat.aoNode = mix(float(1), occ, wall.mul(float(1).sub(isStrip)).mul(float(1).sub(lit.mul(inset))));
     }
     mat.colorNode = mix(albedo, mix(color(0x1a1c26), stripColY.mul(0.25), stripsOn), isStrip);
   }
@@ -249,7 +285,7 @@ export function createKitbash(opts: KitbashOptions) {
       const fq = new THREE.Quaternion().setFromAxisAngle(up, yawOf[side]);
       fronts.push(new THREE.Matrix4().compose(new THREE.Vector3(x + off[0], 2.6, z + off[1]), fq, new THREE.Vector3(Math.min(faceW, 16), 5.2, 1)));
     }
-    if (v.screen && r() < 0.18) {
+    if (v.screen && r() < 0.34) { // more ad screens: they are the skyline's cyberpunk signature
       const sm = new THREE.Matrix4().compose(
         new THREE.Vector3(0, v.screen.y, v.screen.z + 0.15), new THREE.Quaternion(), new THREE.Vector3(v.screen.w, v.screen.h, 1),
       );
