@@ -101,3 +101,14 @@ for(const a of DOWNTOWN_ASSETS) {
   console.log(`PASS ${a.file}: ${triangles} triangles, ${data.length} bytes, collision envelope matches`);
 }
 console.log('PASS downtown additions leave sidewalks, crosswalks and terminal approach clear');
+const {officeCore}=await bundled('src/scene/night/districts/office-core.ts');
+for(const [,,w] of DOWNTOWN_LOBBIES) {
+  const core=officeCore(w,7,DOWNTOWN_DEPTH);
+  assert.equal(core.children.length,4,'core geometry should remain batched');
+  for(const mesh of core.children) {
+    mesh.geometry.computeBoundingBox();const b=mesh.geometry.boundingBox;
+    assert(b.min.x>=-w/2 && b.max.x<=w/2 && b.min.z>=-DOWNTOWN_DEPTH/2 && b.max.z<=DOWNTOWN_DEPTH/2,'elevator core leaves building footprint');
+    assert(b.min.y>=-1e-6 && b.max.y<=7+1e-6,'core leaves lobby height');
+  }
+}
+console.log('PASS opaque elevator cores stay inside all four lobby shells (four draws each)');

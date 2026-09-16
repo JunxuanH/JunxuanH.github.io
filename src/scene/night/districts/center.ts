@@ -7,6 +7,7 @@ import { AVENUE_HALF, SIDEWALK, CURB_H, PATCH_LIFT } from '../streets';
 import { THEMES } from '../theme';
 import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_CENTER_X } from '../building-layout';
 import { downtownDetail } from './downtown-detail';
+import { officeCore } from './office-core';
 import { type DistrictBuild, type DistrictCtx } from './shared';
 
 /*
@@ -32,7 +33,7 @@ function lobbyGlass(h: number, tint: number) {
   return glass;
 }
 
-/** Glass lobby: translucent box (no transmission), bright interior floor, dark columns, a desk. */
+/** Glass perimeter around a solid elevator/service core and reception area. */
 function glassLobby(w: number, h: number, d: number, tint: number) {
   const group = new THREE.Group();
   const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), lobbyGlass(h, tint));
@@ -40,7 +41,7 @@ function glassLobby(w: number, h: number, d: number, tint: number) {
   if (!lobbyFloor) {
     lobbyFloor = new THREE.MeshStandardNodeMaterial({ roughness: 0.15, metalness: 0.4 });
     lobbyFloor.colorNode = color(0x0a0c14);
-    lobbyFloor.emissiveNode = color(0xdfe8ff).mul(0.9);
+    lobbyFloor.emissiveNode = color(0xdfe8ff).mul(0.25);
   }
   const floor = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, 0.2, d - 0.4).translate(0, 0.1, 0), lobbyFloor);
   const colMat = new THREE.MeshStandardNodeMaterial({ color: 0x080a12, roughness: 0.3, metalness: 0.5 });
@@ -50,14 +51,14 @@ function glassLobby(w: number, h: number, d: number, tint: number) {
     group.add(col);
   }
   const desk = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 1.1, 1.2).translate(0, 0.55, 0), colMat);
-  desk.position.set(0, 0.2, -d * 0.25);
+  desk.position.set(0, 0.2, d * 0.25);
   const deskGlow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.06, 0.06), glowMaterial(tint, 2.2));
-  deskGlow.position.set(0, 1.32, -d * 0.25 + 0.62);
+  deskGlow.position.set(0, 1.32, d * 0.25 + 0.62);
   // Forecourt: black marble slab in front of the lobby. PATCH_LIFT taller than the avenue sidewalk it overlaps by
   // 2.4 u, so the two top faces are not coplanar (streets.ts).
   const forecourt = new THREE.Mesh(new THREE.BoxGeometry(w + 6, CURB_H + PATCH_LIFT, 6), new THREE.MeshStandardNodeMaterial({ color: 0x0a0b12, roughness: 0.12, metalness: 0.5 }));
   forecourt.position.set(0, (CURB_H + PATCH_LIFT) / 2, d / 2 + 3);
-  group.add(box, floor, desk, deskGlow, forecourt);
+  group.add(box, floor, desk, deskGlow, forecourt,officeCore(w,h,d));
   void float; void mix;
   return group;
 }
