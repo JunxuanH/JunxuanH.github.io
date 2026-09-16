@@ -34,7 +34,8 @@ export async function downtownDetail(ctx: DistrictCtx) {
   for(const [i,[side,z,w]] of DOWNTOWN_LOBBIES.entries()) {
     const p=new THREE.Group();p.position.set(side*27.6,CURB_H,z);p.rotation.y=side<0?Math.PI/2:-Math.PI/2;group.add(p);
     // Stack within the existing lobby footprint, not new lots beside the campus.
-    const upper=facadeBlock(w,12+i*3,12,ctx.tex,i,'pz',side<0?0x9364a7:0x63b9c6);
+    // Elevated floors use only the window atlas; storefront doors belong at street level.
+    const upper=facadeBlock(w,12+i*3,12,ctx.tex,i,null,side<0?0x9364a7:0x63b9c6);
     upper.position.y=7;p.add(upper);
     const crown=facadeBlock(w*.68,5,8,ctx.tex,i+1,null,0x628b9c);crown.position.set(0,19+i*3,-1);p.add(crown);
     box(p,metal,w*.72,.35,3,0,4.8,6.5);
