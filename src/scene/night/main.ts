@@ -17,7 +17,7 @@ import { createKitbash, loadGlbTowers } from './towers';
 import { clearStreetFootprint, clearDistrictFootprint } from './building-layout';
 import { createProps } from './props';
 import { loadCharacter, createCrowd, instantiate } from './characters';
-import { MARKET_STALLS } from './market-layout';
+import { MARKET_ADS, MARKET_STALLS } from './market-layout';
 import { createShops } from './shops';
 import { createRobots } from './robots';
 import { createDrones } from './drones';
@@ -219,8 +219,17 @@ export async function start(root: HTMLElement) {
   ], [1,2,3,4,7,8,9,10,11,12]);
   scene.add(signs);
   if (lite || reducedMotion) params.set('novideo', '1'); // phones and reduced motion: still ads
-  const ads = await createAds(DOWNTOWN_ADS);
+  // Downtown runs the city's own brands; the Market runs Ivan's projects, which is what that
+  // district is for. Both rosters are 9:16 art matching the panel, so nothing is cropped.
+  const ads = await createAds(DOWNTOWN_ADS, ['ad-transit', 'ad-noodle', 'ad-cyberware', 'ad-drink']);
+  ads.group.name = 'ads:downtown';
   scene.add(ads.group);
+  const projectAds = await createAds(
+    MARKET_ADS.map((a) => ({ ...a })),
+    ['ad-proj-chordsmith', 'ad-proj-bibi', 'ad-proj-tripplanner', 'ad-proj-ensemble'],
+  );
+  projectAds.group.name = 'ads:projects';
+  scene.add(projectAds.group);
   const traffic = await createTraffic([
     // Street level: avenue and the parallel Downtown cross street; Market is pedestrian-only.
     { pts: [[-5, 0.1, -24], [-5, 0.1, -200], [-5, 0.1, -640]], speed: 0.02, ground: true },
@@ -770,7 +779,7 @@ export async function start(root: HTMLElement) {
     timed('traffic', () => traffic.update(dt, t, camera.position,
       [...crowds.flatMap(c=>c.walkers.map(w=>w.root.position)),...(nav.mode==='walk'?[playerPos]:[])]));
     landingFlyby?.update(dt);
-    timed('ads', () => ads.update(t));
+    timed('ads', () => { ads.update(t); projectAds.update(t); });
     timed('life', () => { for (const l of life) l.update(dt, camera); });
     dialogue.glance(); // after the mixers: the resident being talked to looks at the player
     timed('districts', () => districts.update(t, p, walkSec));

@@ -15,3 +15,16 @@ export const MARKET_STALLS = [
 ] as const;
 export const MARKET_BOLLARDS = [22, 82].flatMap(x => [-234, -230, -226, -222].map(z => ({ x, z })));
 export const isMarketLane = (x: number, z: number) => x >= MARKET.x0 && x <= MARKET.x1 && Math.abs(z - MARKET.z) <= MARKET.halfWidth;
+
+/**
+ * Ad mounts on the market's storefront faces, looking onto the lane. Buildings on the lane's south
+ * side present their −z face, those on the north side their +z face, so each panel faces a shopper
+ * walking the aisle. These carry the project posters: the Market is the projects district.
+ * Mounted above the stall awnings, which otherwise hide anything on the lower facade.
+ */
+export const MARKET_ADS = [
+  { x: 36, y: 9.0, z: -213.4, yaw: Math.PI, h: 8.5, mounted: true },
+  { x: 68, y: 7.2, z: -213.4, yaw: Math.PI, h: 7.0, mounted: true },
+  { x: 40, y: 7.8, z: -242.6, yaw: 0, h: 7.5, mounted: true },
+  { x: 74, y: 10.0, z: -242.6, yaw: 0, h: 9.5, mounted: true },
+] as const;
