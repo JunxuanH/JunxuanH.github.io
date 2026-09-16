@@ -17,6 +17,7 @@ import { createKitbash, loadGlbTowers } from './towers';
 import { createProps } from './props';
 import { loadCharacter, createCrowd, instantiate } from './characters';
 import { MARKET_STALLS } from './market-layout';
+import { createShops } from './shops';
 import { createRobots } from './robots';
 import { createDrones } from './drones';
 import { DISTRICT_CROWDS, PATROLS, DRONE_LANES } from './paths';
@@ -254,6 +255,7 @@ export async function start(root: HTMLElement) {
   // ---------- people, robots, drones (rigged fal characters; walkers stay visible out to 140 u)
   const life: { group?: THREE.Group; update(dt: number, cam: THREE.Camera): void }[] = [];
   const crowds: { id: string; walkers: ReturnType<typeof createCrowd>['walkers'] }[] = []; // the walkers, for the dialogue
+  const shopOwners = new Map<number, ReturnType<typeof instantiate>>();
   if (!params.has('nopeople')) {
     try {
       boot.phase('waking the residents', 0.62);
@@ -273,6 +275,7 @@ export async function start(root: HTMLElement) {
         const action=inst.play(inst.actions.has('talk')?'talk':'idle',0);
         if(action) action.time=i*.43;
         vendorGroup.add(inst.root);
+        shopOwners.set(i,inst);
         return inst;
       }).filter((v): v is NonNullable<typeof v> => !!v);
       life.push({group:vendorGroup,update(dt,cam) {
@@ -397,7 +400,7 @@ export async function start(root: HTMLElement) {
   });
   const input = createInput({
     stage: root, touch: hud.touch,
-    enabled: () => nav.mode === 'walk',
+    enabled: () => nav.mode === 'walk' && !document.documentElement.classList.contains('shop-open'),
     onKey: (e) => {
       if (nav.mode !== 'dock') return false;
       if (content.onKey(e)) return true; // the docked carrier first (Esc may collapse a menu row before it leaves)
@@ -406,8 +409,22 @@ export async function start(root: HTMLElement) {
     },
   });
   // One HUD prompt slot, two writers: the residents' "Talk to …" (dialogue.ts) wins over the carriers' prompt.
-  const prompts: { talk: string | null; use: string | null } = { talk: null, use: null };
-  const publishPrompt = () => hud.prompt(prompts.talk ?? prompts.use);
+  const prompts: { shop: string | null; talk: string | null; use: string | null } = { shop: null, talk: null, use: null };
+  const publishPrompt = () => hud.prompt(prompts.shop ?? prompts.talk ?? prompts.use);
+  const shops = createShops({
+    prompt: l => { prompts.shop=l; publishPrompt(); },
+    available: i => shopOwners.get(i)?.root.visible ?? false,
+    owner: (i,active) => {
+      const owner=shopOwners.get(i); if(!owner)return;
+      owner.play(active && owner.actions.has('talk')?'talk':'idle',.2);
+      if(active) {
+        const s=MARKET_STALLS[i];
+        const target=Math.atan2(playerPos.x-s.x,playerPos.z-s.z);
+        const delta=Math.atan2(Math.sin(target-s.yaw),Math.cos(target-s.yaw));
+        owner.root.rotation.y=s.yaw+THREE.MathUtils.clamp(delta,-.5,.5);
+      } else owner.root.rotation.y=MARKET_STALLS[i].yaw;
+    },
+  });
   const interactables = createInteractables({ scene, carriers: content.carriers, nav, prompt: (l) => { prompts.use = l; publishPrompt(); }, landingCar });
   document.querySelector('.hud-prompt')?.addEventListener('click', () => {
     if (nav.mode === 'walk' && !nav.cutscene) input.press('interact');
@@ -648,7 +665,7 @@ export async function start(root: HTMLElement) {
     let walkSec: WalkSection | undefined = mode !== 'ride' && nav.section !== 'city' ? nav.section : undefined;
     if (mode === 'dock' && inp.walkIntent) nav.undock(); // walking away leaves the carrier
     if (player) {
-      player.update(dt, inp, nav.mode === 'walk' && !nav.cutscene);
+      player.update(dt, inp, nav.mode === 'walk' && !nav.cutscene && !shops.open);
       if (nav.mode !== 'ride') playerPos.copy(player.position);
       if (nav.mode === 'walk' && !nav.cutscene) {
         walkSec = walkSectionAt(playerPos.x, playerPos.z);
@@ -658,9 +675,10 @@ export async function start(root: HTMLElement) {
     timed('content', () => content.update(p, t, dt, { mode: nav.mode, section: walkSec, docked: nav.docked, player: walkSec ? playerPos : null })); // carriers first so the blimp's displacement is current
     // Residents first: a box open or a resident in reach takes F (and the prompt slot) from the carriers; never docked or mid-fade.
     const talkSec = nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null;
+    const shopping = shops.update(playerPos,player?.yaw ?? 0,talkSec==='projects',inp.interact);
     let talk = false;
-    timed('talk', () => { talk = dialogue.update(talkSec ? playerPos : null, talkSec, inp.interact, inp.back, inp.walkIntent, dt); });
-    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk && !nav.cutscene, nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null, talk));
+    timed('talk', () => { talk = dialogue.update(talkSec && !shopping ? playerPos : null, shopping ? null : talkSec, inp.interact && !shopping, inp.back, inp.walkIntent, dt); });
+    timed('use', () => interactables.update(walkSec ? playerPos : null, inp.interact && !talk && !shopping && !nav.cutscene, nav.mode === 'walk' && !nav.cutscene ? walkSec ?? null : null, talk || shopping));
     const rigP = nav.samplePath(pos, look); // rail pose
     content.followOffset(p, off);
     pos.add(off); look.add(off);

@@ -64,11 +64,11 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
       const art=poster(s.kind==='audio'?'product-headphones-v2.webp':'product-computer-v2.webp',2.4);
       art.position.set(-1.25,2.55,-1.67); p.add(art);
     }
-    // Human-scale illuminated product panels, not giant floating advertisements.
+    // Wall-mounted artwork: never span the serving opening or hide the shopkeeper.
     const newArt = ({food:'market-ramen.webp',drinks:'market-drinks.webp',wear:'market-wear.webp'} as Record<string,string>)[s.kind];
     if(newArt) {
-      const art=poster(newArt,2.4);
-      art.position.set(0,2.05,1.64); p.add(art);
+      const art=poster(newArt,1.75);
+      art.position.set(-.95,2.55,-1.67); p.add(art);
     }
     // Stock shelving and packaged goods fill the previously empty counter ends.
     for(const side of [-1,1]) {
@@ -123,7 +123,8 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
       }
       if(s.kind==='repair') for(let k=0;k<4;k++) box(p,ceramic,.08,.48,.06,.5+k*.3,2.3,-1.65);
     }
-    lights.push([s.x,3.2,s.z+Math.cos(s.yaw)*2.2,s.accent,140,9]);
+    // Keep the source away from the front curtain: close point lighting caused a white hotspot.
+    lights.push([s.x,2.8,s.z-.25*Math.cos(s.yaw),s.accent,35,7]);
   }
   // A compact directory crown makes the centre legible from across the market.
   // Supports sit within the terminal's existing collision footprint.
