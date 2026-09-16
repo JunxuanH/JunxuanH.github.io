@@ -40,7 +40,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   };
   // Existing skyline/storefront architecture stays behind the counters.
   for (const [x,z,w,h,seed,side] of MARKET_BUILDINGS) {
-    const b=facadeBlock(w,h,16,ctx.tex,seed,side>0?'nz':'pz',side>0?0xc867c4:0x5fced8);
+    const b=facadeBlock(w,h,16,ctx.tex,seed,side>0?'nz':'pz',side>0?0xc867c4:0x5fced8,'wall-corrugated');
     b.position.set(x,CURB_H,z); group.add(b);
   }
   const lights: DistrictBuild['lights']=[];

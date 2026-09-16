@@ -151,7 +151,7 @@ export async function start(root: HTMLElement) {
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
-  const walls = await loadWallSets(['wall-concrete', 'wall-metal', 'glass-grime']);
+  const walls = await loadWallSets(['wall-concrete', 'wall-metal', 'wall-corrugated', 'roof-gravel', 'glass-grime']);
   scene.add(createStreets(ground, walls));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.
@@ -172,7 +172,7 @@ export async function start(root: HTMLElement) {
   const margin = SIDEWALK + 1;
   boot.phase('raising the skyline', 0.22);
   const kit = params.has('nokit') ? null : createKitbash({
-    tier, keepOut, atlas: params.has('noatlas') ? null : facadeTex, screens: screensTex, storefronts: storefrontTex,
+    tier, keepOut, walls, atlas: params.has('noatlas') ? null : facadeTex, screens: screensTex, storefronts: storefrontTex,
     clear: (x,z,hw,hd) => clearStreetFootprint(x,z,hw,hd) && clearDistrictFootprint(x,z,hw,hd),
     streetSide: (x, z, hw, hd) => {
       if (Math.abs(x) - hw < AVENUE_HALF + margin + 8) return x > 0 ? 'nx' : 'px';

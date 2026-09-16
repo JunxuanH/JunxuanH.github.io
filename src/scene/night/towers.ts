@@ -2,10 +2,11 @@ import * as THREE from 'three/webgpu';
 import {
   attribute, positionLocal, normalLocal, uv, float, vec2, vec3, color, mix, step, smoothstep, fract, floor,
   abs, hash, time, instanceIndex, texture, luminance, max, positionWorld, cameraPosition, length,
- uniform } from './tsl';
+ uniform, normalMap } from './tsl';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import type { WallSets } from './streets';
 import { PAL, rng, type Tier } from './palette';
 import { streetLot } from './building-layout';
 
@@ -94,6 +95,8 @@ export interface KitbashOptions {
   screens?: THREE.Texture | null;
   /** Storefront atlas (2×2 tiles) for ground floors facing a street. */
   storefronts?: THREE.Texture | null;
+  /** Generated wall sets: concrete grain for the towers, gravel for their roofs. */
+  walls?: WallSets;
   /** Keep-out discs [x, z, radius] for districts and hero towers. */
   keepOut: [number, number, number][];
   /** Which ground positions count as street-adjacent (x, z of the building) → face direction or null. */
@@ -160,6 +163,33 @@ export function createKitbash(opts: KitbashOptions) {
   }
   mat.colorNode = mix(albedo, mix(color(0x1a1c26), stripColY.mul(0.25), stripsOn), isStrip);
   mat.emissiveNode = winE.mul(float(1).sub(isStrip)).add(stripE).add(blinkE);
+
+  // Surface relief on the 1500 kitbash instances. Reuses the same local-position UV the windows are
+  // built from, so no new attribute and no merged-UV problem, and it is one material either way.
+  // Walls get concrete, up-facing roofs get gravel, chosen by the same normal term the windows use.
+  const cset = opts.walls?.['wall-concrete'], gset = opts.walls?.['roof-gravel'];
+  if (cset?.map || gset?.map) {
+    const wuv = vec2(across.mul(0.14), positionLocal.y.mul(0.14));
+    const ruv = vec2(positionLocal.x.mul(0.1), positionLocal.z.mul(0.1));
+    const roof = float(1).sub(wall);
+    if (cset?.normal && gset?.normal) {
+      mat.normalNode = normalMap(mix(texture(gset.normal, ruv), texture(cset.normal, wuv), wall), uniform(new THREE.Vector2(0.45, 0.45)));
+    } else if (cset?.normal) {
+      mat.normalNode = normalMap(texture(cset.normal, wuv), uniform(new THREE.Vector2(0.45, 0.45)));
+    }
+    if (cset?.rough) {
+      const grain = gset?.rough ? mix(texture(gset.rough, ruv).r, texture(cset.rough, wuv).r, wall) : texture(cset.rough, wuv).r;
+      mat.roughnessNode = grain.sub(0.5).mul(uniform(0.35)).add(uniform(0.55)).clamp(0.1, 1);
+    }
+    // Roof gravel is albedo too: rooftops were the same flat colour as the walls from every fly-over.
+    if (gset?.map) albedo = mix(albedo, texture(gset.map, ruv).rgb.mul(0.32), roof.mul(float(1).sub(isStrip)));
+    // Windows stay unoccluded; they are the light sources on the tower.
+    if (cset?.ao) {
+      const occ = texture(cset.ao, wuv).r;
+      mat.aoNode = mix(float(1), occ, wall.mul(float(1).sub(isStrip)).mul(float(1).sub(max(lit, band).mul(inset))));
+    }
+    mat.colorNode = mix(albedo, mix(color(0x1a1c26), stripColY.mul(0.25), stripsOn), isStrip);
+  }
 
   // ---- placement
   const r = rng(7);

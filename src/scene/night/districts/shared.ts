@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, smoothstep, fract, mix, uv, float, texture, luminance, vec2, normalLocal, normalMap, abs, uniform, glowMaterial } from '../tsl';
+import { color, smoothstep, fract, floor, mix, uv, float, texture, luminance, vec2, normalLocal, normalMap, abs, uniform, glowMaterial } from '../tsl';
 import { PAL } from '../palette';
 import type { PropPlacement } from '../props';
 import type { PathDef } from '../paths';
@@ -30,7 +30,7 @@ export interface DistrictCtx { content: DistrictContent; tex: DistrictTextures; 
  * optional storefront strip on one face. Used for campus buildings and alley backdrops.
  * Size and atlas cell go in as uniforms so every block (eight across the city) shares two programs.
  */
-export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextures, seed: number, front: 'pz' | 'nz' | 'px' | 'nx' | null, stripTint?: number) {
+export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextures, seed: number, front: 'pz' | 'nz' | 'px' | 'nx' | null, stripTint?: number, grain: 'wall-concrete' | 'wall-corrugated' = 'wall-concrete') {
   const group = new THREE.Group();
   const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.7, metalness: 0.15 });
   const cell = seed % 4;
@@ -43,7 +43,7 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
     m.emissiveNode = s.rgb.mul(smoothstep(0.35, 0.65, luminance(s.rgb))).mul(2.2).mul(wall);
     // Surface relief from the concrete set, tiled by world size rather than by atlas cell, so the
     // wall has grain and cavity shading between the windows instead of reading as printed card.
-    const cw = tex.walls?.['wall-concrete'];
+    const cw = tex.walls?.[grain];
     if (cw?.normal || cw?.rough || cw?.ao) {
       const grain = uv().mul(uniform(new THREE.Vector2(w / 4, h / 4)));
       if (cw.normal) m.normalNode = normalMap(texture(cw.normal, grain), uniform(new THREE.Vector2(0.5, 0.5)));
@@ -66,8 +66,13 @@ export function facadeBlock(w: number, h: number, d: number, tex: DistrictTextur
   if (front && tex.storefronts) {
     const fm = new THREE.MeshStandardNodeMaterial({ roughness: 0.6, side: THREE.DoubleSide });
     const fcell = (seed * 7) % 4;
-    const fcellUV = uniform(new THREE.Vector2(fcell % 2 * 0.5, Math.floor(fcell / 2) * 0.5));
-    const fuv = vec2(fract(uv().x.mul(uniform(w / 14))).mul(0.5), uv().y.mul(0.5)).add(fcellUV);
+    // One cell repeated across the frontage showed the same shutter three times on a wide wall.
+    // Pick the cell from the repeat index, the way the tower LED screens already do.
+    const ux = uv().x.mul(uniform(w / 14));
+    const bay = floor(ux);
+    const pick = floor(fract(bay.mul(0.6180339887).add(uniform(fcell * 0.25 + 0.13))).mul(4.0));
+    const bayUV = vec2(fract(pick.mul(0.5)), floor(pick.mul(0.5)).mul(0.5));
+    const fuv = vec2(fract(ux).mul(0.5), uv().y.mul(0.5)).add(bayUV);
     const s = texture(tex.storefronts, fuv);
     fm.colorNode = s.rgb.mul(1.0);
     fm.emissiveNode = s.rgb.mul(smoothstep(0.45, 0.7, luminance(s.rgb))).mul(2.0);
