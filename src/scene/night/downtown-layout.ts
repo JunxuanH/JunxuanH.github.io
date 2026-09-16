@@ -1,8 +1,12 @@
 import { DOWNTOWN_LOBBIES, DOWNTOWN_FRONT_X } from './building-layout';
 
+/** Windowed upper floors only: ground-floor entrances and signs keep their original scale. */
+export const DOWNTOWN_UPPER_HEIGHTS = [54,70,62,78] as const;
+export const downtownTowerHeight = (index:number) => 7+DOWNTOWN_UPPER_HEIGHTS[index]+5+.4;
+
 /** Rear-lot infill stays inside the reserved corporate blocks, behind existing lobbies. */
 export const DOWNTOWN_INFILL = DOWNTOWN_LOBBIES.filter(([,z])=>z===-174).map(([side,z,w],i)=>({
-  x:side*39,z,w:8,d:w-4,h:48+i*6,
+  x:side*39,z,w:8,d:w-4,h:92+i*12,
 }));
 /** Mounts track the same frontage layout as the buildings, never old tower positions. */
 export const DOWNTOWN_ADS = DOWNTOWN_LOBBIES.map(([side,z],i)=>({

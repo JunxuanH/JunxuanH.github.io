@@ -56,7 +56,11 @@ for (const [side,z,w] of DOWNTOWN_LOBBIES) {
   assert(DOWNTOWN_DEPTH===14 && DOWNTOWN_FRONT_X>=19,'reclaimed width expands buildings without taking sidewalk');
 }
 console.log('PASS imported-tower lot fitting, lobby forecourts and synchronized collisions');
-const { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, DOWNTOWN_ADS } = await bundled('src/scene/night/downtown-layout.ts');
+const { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, DOWNTOWN_ADS, DOWNTOWN_UPPER_HEIGHTS, downtownTowerHeight } = await bundled('src/scene/night/downtown-layout.ts');
+for(const [i,[side,z,w]] of DOWNTOWN_LOBBIES.entries()) {
+  assert(downtownTowerHeight(i)>60);
+  assert(work.obstacles.some(o=>o.kind==='box' && o.z0===z-w/2 && o.x0===(side<0?-(DOWNTOWN_FRONT_X+DOWNTOWN_DEPTH):DOWNTOWN_FRONT_X) && o.h===downtownTowerHeight(i)), 'taller tower collision height is stale');
+}
 for(const t of DOWNTOWN_INFILL) {
   assert(clearStreetFootprint(t.x,t.z,t.w/2,t.d/2), 'infill clips a road or sidewalk');
   assert(t.z-t.d/2 > -190 && t.z+t.d/2 < -144, 'infill enters market or campus');
@@ -67,7 +71,7 @@ for(const [i,a] of DOWNTOWN_ADS.entries()) {
   const [side,z,w]=DOWNTOWN_LOBBIES[i];
   assert.equal(a.z,z);assert.equal(a.yaw,side<0?Math.PI/2:-Math.PI/2);
   assert(Math.abs(Math.abs(a.x)-DOWNTOWN_FRONT_X)<.2 && a.mounted, 'ad detached from facade');
-  assert(a.h*9/16<w && a.y-a.h/2>7 && a.y+a.h/2<37+i*3, 'ad exceeds upper facade');
+  assert(a.h*9/16<w && a.y-a.h/2>7 && a.y+a.h/2<7+DOWNTOWN_UPPER_HEIGHTS[i], 'ad exceeds upper facade');
 }
 console.log('PASS fixed facade ad mounts and rear infill with synchronized collisions');
 const footprints = [...DOWNTOWN_PROPS.map(s=>({...s,hw:s.w/2,hd:s.d/2})),

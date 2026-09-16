@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_CENTER_X } from '../building-layout';
-import { DOWNTOWN_ASSETS, DOWNTOWN_PROPS, DOWNTOWN_INFILL } from '../downtown-layout';
+import { DOWNTOWN_ASSETS, DOWNTOWN_PROPS, DOWNTOWN_INFILL, DOWNTOWN_UPPER_HEIGHTS } from '../downtown-layout';
 import { CURB_H } from '../streets';
 import { facadeBlock, type DistrictCtx } from './shared';
 
@@ -35,7 +35,7 @@ export async function downtownDetail(ctx: DistrictCtx) {
     const p=new THREE.Group();p.position.set(side*DOWNTOWN_CENTER_X,CURB_H,z);p.rotation.y=side<0?Math.PI/2:-Math.PI/2;group.add(p);
     // Stack within the existing lobby footprint, not new lots beside the campus.
     // Elevated floors use only the window atlas; storefront doors belong at street level.
-    const upperHeight=30+i*3;
+    const upperHeight=DOWNTOWN_UPPER_HEIGHTS[i];
     const upper=facadeBlock(w,upperHeight,DOWNTOWN_DEPTH,ctx.tex,i,null,side<0?0x9364a7:0x63b9c6);
     upper.position.y=7;p.add(upper);
     const crown=facadeBlock(w*.68,5,8,ctx.tex,i+1,null,0x628b9c);crown.position.set(0,7+upperHeight,-1);p.add(crown);

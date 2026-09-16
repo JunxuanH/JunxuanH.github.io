@@ -8,7 +8,7 @@
 import * as THREE from 'three/webgpu';
 import { TERMINALS } from './terminal-layout';
 import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_FRONT_X } from './building-layout';
-import { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL } from './downtown-layout';
+import { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, downtownTowerHeight } from './downtown-layout';
 import { SIGNAL_POSTS } from './crossing-logic';
 import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from './market-layout';
 import { rng } from './palette';
@@ -98,9 +98,9 @@ function downtown(placed: boolean): Area {
   for (const s of DOWNTOWN_PROPS) obstacles.push(centred(s.x,s.z,s.w,s.d,s.h));
   for (const s of DOWNTOWN_INFILL) obstacles.push(centred(s.x,s.z,s.w,s.d,s.h));
   for (const s of DOWNTOWN_ASSETS) obstacles.push({kind:'obb',x:s.x,z:s.z,hw:s.w/2,hd:s.d/2,yaw:s.yaw,h:s.h});
-  for (const [side, z, w] of DOWNTOWN_LOBBIES) {
+  for (const [i,[side, z, w]] of DOWNTOWN_LOBBIES.entries()) {
     const x0 = side < 0 ? -(DOWNTOWN_FRONT_X+DOWNTOWN_DEPTH) : DOWNTOWN_FRONT_X;
-    obstacles.push(box(x0, x0 + DOWNTOWN_DEPTH, z - w / 2, z + w / 2, 52));
+    obstacles.push(box(x0, x0 + DOWNTOWN_DEPTH, z - w / 2, z + w / 2, downtownTowerHeight(i)));
     for (const offset of [-w*.32,w*.32]) obstacles.push(centred(side*(DOWNTOWN_FRONT_X-.6),z+offset,.8,3,3.3));
   }
   for (const cz of [CROSS_Z[0], CROSS_Z[1]]) {
