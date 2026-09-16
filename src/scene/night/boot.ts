@@ -16,7 +16,7 @@ const log = el?.querySelector<HTMLElement>('.boot-log') ?? null;
 const sr = el?.querySelector<HTMLElement>('.boot-sr') ?? null; // the polite live region (the visual log is aria-hidden)
 
 let target = 0;      // last milestone
-let shown = bar ? parseFloat(bar.style.width || '0') / 100 : 0; // continue from the inline pre-script's value
+let shown = bar ? parseFloat(bar.style.getPropertyValue('--boot-p') || '0') : 0; // continue from the inline pre-script's value
 if (bar) bar.dataset.owned = '1';
 let loaded = 0, total = 0;
 let finished = false;
@@ -29,7 +29,7 @@ function paint() {
   // Asset completion is not shader completion. Reserve the final portion for actual warm-up milestones.
   const goal = finished ? 1 : target >= .86 ? target : Math.min(target + 0.03 + within * 0.1, .85);
   shown = Math.max(shown, Math.min(goal, shown + (goal - shown) * (reducedMotion ? 1 : 0.06)));
-  bar.style.width = `${(shown * 100).toFixed(1)}%`;
+  bar.style.setProperty('--boot-p', shown.toFixed(4));
   pct.textContent = `${Math.round(shown * 100).toString().padStart(2, '0')}%`;
   if (!finished || shown < 0.999) raf = requestAnimationFrame(paint);
 }
@@ -46,7 +46,7 @@ export const boot = {
   begin() {
     if (!el || begun) return;
     begun = true;
-    shown = bar ? parseFloat(bar.style.width || '0') / 100 : 0;
+    shown = bar ? parseFloat(bar.style.getPropertyValue('--boot-p') || '0') : 0;
     raf = requestAnimationFrame(paint);
   },
   /** A milestone: `label` is what is being built now, `f` the overall fraction reached. */
@@ -65,6 +65,11 @@ export const boot = {
   },
   /** Within-stage progress without repeating announcements to screen readers. */
   progress(f: number) { target = Math.max(target, Math.min(.97, f)); },
+  /**
+   * Shader warm-up is running. The main thread is unavailable for stretches, so the bar switches to
+   * a composited indeterminate stripe that the compositor keeps animating without us.
+   */
+  warming(on: boolean) { el?.setAttribute('data-warm', on ? '1' : '0'); },
   /** First frame is on screen: fill the bar; the landing takes the overlay from here (or it glitches out and goes). */
   done() {
     if (!el || finished) return;

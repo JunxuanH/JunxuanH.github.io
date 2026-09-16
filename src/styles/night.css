@@ -213,10 +213,19 @@ html.no-3d .nav { position: sticky; top: 12px; margin: 12px auto 0; left: auto; 
 
 .boot-hud { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 56px clamp(16px, 4vw, 48px) max(18px, env(safe-area-inset-bottom));
   background: linear-gradient(to top, rgb(5 5 9 / 0.88), rgb(5 5 9 / 0.55) 55%, transparent); transition: opacity 0.35s ease, transform 0.35s ease; }
-.boot-bar { height: 2px; background: rgb(0 229 255 / 0.16); overflow: hidden; }
-.boot-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--magenta));
-  background-size: 200% 100%; animation: boot-sweep 1.2s linear infinite; box-shadow: 0 0 10px rgb(0 229 255 / 0.7); transition: width 0.12s linear; }
-@keyframes boot-sweep { to { background-position: -200% 0; } }
+.boot-bar { position: relative; height: 2px; background: rgb(0 229 255 / 0.16); overflow: hidden; }
+/* scaleX, not width: transforms are composited, so the fill keeps gliding toward its last target
+   even while the main thread sits inside a shader compile and no frame is being scripted. The long
+   transition outlasts the worst compile chunk, so the bar reads as continuous rather than stepping. */
+.boot-bar i { display: block; height: 100%; width: 100%; transform: scaleX(var(--boot-p, 0)); transform-origin: left center;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta)); box-shadow: 0 0 10px rgb(0 229 255 / 0.7);
+  transition: transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1); will-change: transform; }
+/* While shaders compile there can be a second between progress updates. This stripe is pure
+   transform, so it keeps sweeping regardless, and the screen never looks hung. */
+.boot-bar::after { content: ''; position: absolute; inset: 0; width: 34%; transform: translateX(-120%);
+  background: linear-gradient(90deg, transparent, rgb(234 252 255 / 0.55), transparent); opacity: 0; }
+#boot[data-warm='1'] .boot-bar::after { opacity: 1; animation: boot-slide 1.15s linear infinite; }
+@keyframes boot-slide { from { transform: translateX(-120%); } to { transform: translateX(400%); } }
 .boot-row { display: flex; align-items: center; gap: 14px; margin-top: 10px; min-height: 30px; font-size: 12px; }
 .boot-pct { margin: 0; min-width: 3.4em; letter-spacing: 0.2em; color: var(--yellow); }
 .boot-log { flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: rgb(234 252 255 / 0.85); }
@@ -241,12 +250,12 @@ html:not(.is-landed) .hero-tilt { display: none !important; }
   .boot-row { gap: 10px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .boot-wordmark::before, .boot-wordmark::after, .boot-bar i, .boot-log li.is-live::after { animation: none; }
+  .boot-wordmark::before, .boot-wordmark::after, .boot-bar::after, .boot-log li.is-live::after { animation: none; }
   .boot.is-done { animation: none; display: none; }
 }
 
 /* Session reduced motion (the gate's "Enter with reduced motion"; palette.ts setReducedMotion adds html.reduce-motion). */
-html.reduce-motion .boot-wordmark::before, html.reduce-motion .boot-wordmark::after, html.reduce-motion .boot-bar i, html.reduce-motion .boot-log li.is-live::after { animation: none; }
+html.reduce-motion .boot-wordmark::before, html.reduce-motion .boot-wordmark::after, html.reduce-motion .boot-bar::after, html.reduce-motion .boot-log li.is-live::after { animation: none; }
 html.reduce-motion .boot.is-done { animation: none; display: none; }
 html.reduce-motion .neon-btn { transition: none; }
 

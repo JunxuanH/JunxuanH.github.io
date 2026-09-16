@@ -543,7 +543,12 @@ export async function start(root: HTMLElement) {
     // reveals its not-yet-compiled materials a few at a time (everything else hidden, so a render compiles only that
     // chunk), yields until the loop has presented new frames, then renders the whole pose once for the combinations.
     // Visibility only toggles meshes; lights stay put, so program keys are unchanged.
-    const CHUNK = narrow || tier === 'low' ? 1 : 4;
+    boot.warming(true);
+    // Chunk size adapts to what the device actually does. A desktop compiles four materials in a
+    // few milliseconds; a phone can spend most of a second on one. Measuring and halving keeps the
+    // longest blocking task short enough that the overlay's own animation never visibly stalls.
+    let chunk = narrow || tier === 'low' ? 1 : 4;
+    const CHUNK_BUDGET = 90; // ms per blocking batch before backing off
     const seen = new Set<string>();
     const keyOf = (o: any) => {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -567,10 +572,10 @@ export async function start(root: HTMLElement) {
       const shown = meshes.filter((o) => o.visible && visibleInScene(o) && !inWater(o));
       const pass = water?.visible ? '|w' : ''; // a program compiled without the reflector still needs its reflection-pass twin
       for (const o of shown) { const k = keyOf(o); if (!seen.has(k + pass)) { seen.add(k + pass); seen.add(k); fresh.push(o); } }
-      if (fresh.length > CHUNK) {
+      if (fresh.length > chunk) {
         for (const o of shown) o.visible = false;
-        for (let c = 0; c < fresh.length; c += CHUNK) {
-          const batch = fresh.slice(c, c + CHUNK);
+        for (let c = 0; c < fresh.length; c += chunk) {
+          const batch = fresh.slice(c, c + chunk);
           for (const o of batch) o.visible = true;
           const tc = performance.now();
           // Warm the actual render passes in bounded batches. Do not await compileAsync:
@@ -579,7 +584,10 @@ export async function start(root: HTMLElement) {
           pipeline.render();
           if (params.has('prof') && performance.now() - tc > 150) console.info('[night] pre-warm chunk', Math.round(performance.now() - tc), 'ms', batch.map((o: any) => `${o.name || o.type}/${(Array.isArray(o.material) ? o.material[0] : o.material)?.type}`).join(', '));
           for (const o of batch) o.visible = false;
-          boot.progress(.86 + .1 * (i + .9 * Math.min(1, (c + CHUNK) / fresh.length)) / poses.length);
+          const spent = performance.now() - tc;
+          if (spent > CHUNK_BUDGET && chunk > 1) chunk = Math.max(1, chunk >> 1);
+          else if (spent < CHUNK_BUDGET / 4 && chunk < 8) chunk++;
+          boot.progress(.86 + .1 * (i + .9 * Math.min(1, (c + chunk) / fresh.length)) / poses.length);
           await landing.breathe();
         }
         for (const o of shown) o.visible = true;
@@ -591,6 +599,7 @@ export async function start(root: HTMLElement) {
     meshes.forEach((o, i) => { o.frustumCulled = culled[i]; });
     console.info('[night] pre-warm', Math.round(performance.now() - t0), 'ms', params.has('prof') ? Object.entries(stages).map(([k, v]) => `${k}=${Math.round(v)}`).join(' ') : '');
   }
+  boot.warming(false);
   boot.phase('first light', 0.97);
   let firstFrame = true;
   let heroAlpha = 1;

@@ -115,7 +115,7 @@ const win = (k: string) => WINDOWS[k].join(',');
           if (!bar || document.documentElement.classList.contains('is-booted') || bar.dataset.owned) return;
           if (boot.dataset.landing === 'pending') { t0 = Date.now(); return requestAnimationFrame(tick); }
           var s = Date.now() - t0, v = 12 * (1 - Math.exp(-s / 5000));
-          bar.style.width = v.toFixed(1) + '%'; pct.textContent = String(Math.round(v)).padStart(2, '0') + '%';
+          bar.style.setProperty('--boot-p', (v / 100).toFixed(4)); pct.textContent = String(Math.round(v)).padStart(2, '0') + '%';
           requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);

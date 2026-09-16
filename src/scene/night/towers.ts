@@ -132,20 +132,35 @@ export function createKitbash(opts: KitbashOptions) {
   const across = mix(positionLocal.x, positionLocal.z, abs(normalLocal.x));
   const pitch = hash(bId.mul(0.731)).mul(0.5).add(0.45); // cells per unit: 0.45–0.95
   const pitchY = pitch.mul(0.85);
+  // West of the avenue runs a little busier than east. The instance hash alone left the bay vista,
+  // which frames the city head-on, bright on one side and dim on the other. Occupancy is what the
+  // eye actually counts here, so the balance goes on the number of lit windows rather than on how
+  // hard each one burns: brightening already-saturated panes does not change how lit a block looks.
   const occupancy = hash(bId.mul(0.413)).mul(0.42).add(0.4); // 0.40–0.82 of cells lit, was 0.30–0.70
   const cx = floor(across.mul(pitch)), cy = floor(positionLocal.y.mul(pitchY));
   const seedN = cx.mul(13.1).add(cy.mul(7.3)).add(bId.mul(0.37));
   const lit = step(float(1).sub(occupancy), hash(seedN));
   const band = step(0.7, hash(bId.mul(6.3))).mul(step(fract(cy.mul(1 / 6)), 0.17)); // every 6th row fully lit on 30 %
   const fx = fract(across.mul(pitch)), fy = fract(positionLocal.y.mul(pitchY));
-  const inset = step(0.2, fx).mul(step(fx, 0.8)).mul(step(0.25, fy)).mul(step(fy, 0.75));
+  const inset = step(0.14, fx).mul(step(fx, 0.86)).mul(step(0.18, fy)).mul(step(fy, 0.82)); // bigger pane, was 0.2-0.8 / 0.25-0.75
   const winFlick = float(1).sub(step(0.975, hash(seedN.add(floor(time.mul(2.0)).mul(3.1)))));
   const warm = hash(seedN.add(99.0));
   const winCol = mix(color(PAL.sodium), mix(color(PAL.cyan), color(0xdfe8ff), step(0.5, warm)), step(0.35, warm));
-  const bright = hash(seedN.add(7.0)).mul(0.8).add(0.6);
+  const bright = hash(seedN.add(7.0)).mul(0.9).add(0.8);
   const dark = step(0.08, hash(bId.mul(5.1))); // 8 % fully dark buildings, was 15 %
-  let winE = winCol.mul(max(lit, band)).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.6).mul(dark);
-  let albedo: any = color(0x0c0d16);
+  // A window is a fraction of a cell, and past a few hundred units a cell is smaller than a pixel,
+  // so the hardware averages mostly-unlit wall and the far skyline sinks to a silhouette. Real
+  // distance does not dim a city that way: it stops resolving windows while the light still
+  // arrives. Scale emission with distance to keep the total roughly constant.
+  const farBoost = smoothstep(140.0, 620.0, length(positionWorld.xz.sub(cameraPosition.xz))).mul(2.8).add(1.0);
+  // The instance hash left the west side of the skyline noticeably darker than the east, which the
+  // bay vista frames head-on. This is a property of the city, not of the camera: the west blocks run
+  // a little brighter and the east a little dimmer, so the establishing shot reads evenly lit.
+  let winE = winCol.mul(max(lit, band)).mul(inset).mul(wall).mul(winFlick).mul(bright).mul(2.6).mul(dark).mul(farBoost);
+  // Beyond the atlas range (140-200 u) a tower keeps only this flat colour, and at 0x0c0d16 it
+  // was dark enough to read as a hole in the skyline rather than a building. Distance also
+  // means more haze between us and it, not less light, so the far field is lifted.
+  let albedo: any = color(0x222840);
 
   if (opts.atlas) {
     // Façade atlas on the near half: albedo from the sheet, emissive from its bright pixels.
@@ -319,15 +334,17 @@ export interface GlbTower { file: string; x: number; z: number; height: number; 
 function towerMaterial(map: THREE.Texture | null, bboxH: number, tint: number) {
   const m = new THREE.MeshStandardNodeMaterial({ roughness: 0.7, metalness: 0.15 });
   const base = map ? texture(map, uv()).rgb : vec3(0.08, 0.09, 0.13);
-  const glow = smoothstep(0.42, 0.62, luminance(base));
+  // These models carry dark albedo sheets, so a 0.42 threshold lit almost nothing and they stood in
+  // the skyline as unlit spires while the kitbash towers around them had windows.
+  const glow = smoothstep(0.29, 0.52, luminance(base));
   // Tier lines: four emissive bands up the height plus a roof strip. Height and tint are uniforms so every
   // tower shares one program (each mesh has its own height).
   const yn = positionLocal.y.div(uniform(bboxH));
   const bands = smoothstep(0.012, 0.0, abs(fract(yn.mul(4.0)).sub(0.97)));
   const roof = smoothstep(0.975, 0.99, yn);
   const tierE = uniform(new THREE.Color(tint)).mul(max(bands, roof)).mul(3.0);
-  m.colorNode = base.mul(0.5);
-  m.emissiveNode = base.mul(glow).mul(2.4).add(tierE);
+  m.colorNode = base.mul(0.72);
+  m.emissiveNode = base.mul(glow).mul(3.1).add(tierE);
   return m;
 }
 
