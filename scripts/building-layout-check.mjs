@@ -56,7 +56,14 @@ for (const [side,z,w] of DOWNTOWN_LOBBIES) {
   assert(DOWNTOWN_DEPTH===14 && DOWNTOWN_FRONT_X>=19,'reclaimed width expands buildings without taking sidewalk');
 }
 console.log('PASS imported-tower lot fitting, lobby forecourts and synchronized collisions');
-const { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, DOWNTOWN_ADS, DOWNTOWN_UPPER_HEIGHTS, downtownTowerHeight } = await bundled('src/scene/night/downtown-layout.ts');
+const { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, DOWNTOWN_ADS, DOWNTOWN_UPPER_HEIGHTS, downtownTowerHeight, OFFICE_RESIDENTS } = await bundled('src/scene/night/downtown-layout.ts');
+assert.equal(OFFICE_RESIDENTS.length,2);
+for(const s of OFFICE_RESIDENTS) {
+  const [,,w]=DOWNTOWN_LOBBIES[s.lobby];
+  assert(Math.abs(s.x)+.4<w/2);
+  assert(s.z-.4>1.3 && s.z+.4<2.9,'office resident intersects elevator core or desk');
+}
+assert(Math.hypot(OFFICE_RESIDENTS[0].x-OFFICE_RESIDENTS[1].x,OFFICE_RESIDENTS[0].z-OFFICE_RESIDENTS[1].z)>1);
 for(const [i,[side,z,w]] of DOWNTOWN_LOBBIES.entries()) {
   assert(downtownTowerHeight(i)>60);
   assert(work.obstacles.some(o=>o.kind==='box' && o.z0===z-w/2 && o.x0===(side<0?-(DOWNTOWN_FRONT_X+DOWNTOWN_DEPTH):DOWNTOWN_FRONT_X) && o.h===downtownTowerHeight(i)), 'taller tower collision height is stale');

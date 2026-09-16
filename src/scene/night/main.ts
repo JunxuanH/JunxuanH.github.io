@@ -10,7 +10,7 @@ import { createSky, createHaze } from './sky';
 import { createPost } from './post';
 import { createBackdrop } from './backdrop';
 import { createLandingFlyby } from './landing-flyby';
-import { createStreets, loadGroundTextures, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z } from './streets';
+import { createStreets, loadGroundTextures, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z, CURB_H } from './streets';
 import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
 import { createKitbash, loadGlbTowers } from './towers';
@@ -28,6 +28,8 @@ import { createAudio, bindAudioToggle } from './audio';
 import { createInteract } from './interact';
 import { createAds } from './ads';
 import { DOWNTOWN_ADS } from './downtown-layout';
+import { OFFICE_RESIDENTS } from './downtown-layout';
+import { DOWNTOWN_LOBBIES, DOWNTOWN_CENTER_X } from './building-layout';
 import { createCrossingSignals } from './crossing-signals';
 import { createTraffic } from './traffic';
 import { createRain } from './rain';
@@ -266,6 +268,33 @@ export async function start(root: HTMLElement) {
       const all = RIGS_ALL;
       const names = lite ? RIGS_LITE : all;
       const rigs = Object.fromEntries(await Promise.all(names.map(async (n) => [n, await loadCharacter(n)]))) as Partial<Record<(typeof all)[number], Awaited<ReturnType<typeof loadCharacter>>>>;
+      // Ambient office staff reuse loaded rigs, never join street paths or dialogue queues.
+      const officeGroup=new THREE.Group();officeGroup.name='Downtown office residents';scene.add(officeGroup);
+      const officeResidents=OFFICE_RESIDENTS.flatMap((s,i)=>{
+        const asset=rigs[s.rig] ?? rigs.corpo ?? rigs['yakuza-boss'];
+        if(!asset) return [];
+        const inst=instantiate(asset);
+        const [side,z]=DOWNTOWN_LOBBIES[s.lobby];
+        const yaw=side<0?Math.PI/2:-Math.PI/2;
+        inst.root.name=s.role;
+        inst.root.position.set(s.x,CURB_H+.2,s.z).applyAxisAngle(new THREE.Vector3(0,1,0),yaw);
+        inst.root.position.x+=side*DOWNTOWN_CENTER_X;inst.root.position.z+=z;
+        inst.root.rotation.y=yaw+s.yaw;
+        const action=inst.play('idle',0);
+        if(action) action.time=i*.7;
+        inst.mixer.update(0);
+        officeGroup.add(inst.root);return [inst];
+      });
+      const officeFrustum=new THREE.Frustum(),officeMatrix=new THREE.Matrix4();
+      const officeBounds=new THREE.Sphere(new THREE.Vector3(),1.5);
+      life.push({group:officeGroup,update(dt,cam) {
+        officeMatrix.multiplyMatrices(cam.projectionMatrix,cam.matrixWorldInverse);officeFrustum.setFromProjectionMatrix(officeMatrix);
+        for(const inst of officeResidents) {
+          officeBounds.center.copy(inst.root.position);officeBounds.center.y+=1;
+          inst.root.visible=cam.position.distanceToSquared(inst.root.position)<10000 && officeFrustum.intersectsSphere(officeBounds);
+          if(inst.root.visible && !reducedMotion) inst.mixer.update(Math.min(dt,.1));
+        }
+      }});
       // Shopkeepers stay behind their counters. Reuse already-loaded rigs on phones.
       const vendorGroup = new THREE.Group();
       vendorGroup.name = 'Market shopkeepers';
