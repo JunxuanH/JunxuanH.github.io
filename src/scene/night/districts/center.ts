@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { color, positionLocal, smoothstep, abs, mix, float, glowMaterial } from '../tsl';
+import { color, positionLocal, positionWorld, normalWorld, cameraPosition, normalize, dot, pow, texture, smoothstep, abs, mix, float, glowMaterial } from '../tsl';
 import { PAL } from '../palette';
 import { ANCHORS } from '../journey';
 import { createKeyedSigns } from '../signs';
@@ -20,7 +20,7 @@ import { type DistrictBuild, type DistrictCtx } from './shared';
 // build each instead of one per lobby).
 const glassCache = new Map<string, THREE.MeshStandardNodeMaterial>();
 let lobbyFloor: THREE.MeshStandardNodeMaterial | null = null;
-function lobbyGlass(h: number, tint: number) {
+function lobbyGlass(h: number, tint: number, grime?: THREE.Texture | null) {
   const key = `${h}|${tint}`;
   let glass = glassCache.get(key);
   if (!glass) {
@@ -28,15 +28,24 @@ function lobbyGlass(h: number, tint: number) {
     glass.colorNode = color(0xdfe8ff);
     const edge = smoothstep(0.03, 0.0, abs(abs(positionLocal.y.div(h / 2)).sub(1.0)));
     glass.emissiveNode = color(tint).mul(edge).mul(1.4).add(color(0x8fb0ff).mul(0.06));
+    // Grazing angles go opaque and bright, head-on stays clear: the fresnel term real glass has and
+    // a flat alpha does not. Dried rain and dust break up the reflection so the pane reads as a
+    // surface rather than a tinted hole. Cheaper than transmission, which would cost a second
+    // render of everything behind the pane for a lobby the camera never enters.
+    const fres = pow(float(1).sub(abs(dot(normalize(cameraPosition.sub(positionWorld)), normalWorld))).clamp(0, 1), 3.0);
+    let dirt: any = float(0);
+    if (grime) dirt = texture(grime, positionWorld.xy.mul(1 / 9)).r.sub(0.5).mul(2).clamp(0, 1);
+    glass.opacityNode = float(0.22).add(fres.mul(0.5)).add(dirt.mul(0.22)).clamp(0, 0.92);
+    glass.roughnessNode = float(0.06).add(dirt.mul(0.35));
     glassCache.set(key, glass);
   }
   return glass;
 }
 
 /** Glass perimeter around a solid elevator/service core and reception area. */
-function glassLobby(w: number, h: number, d: number, tint: number) {
+function glassLobby(w: number, h: number, d: number, tint: number, grime?: THREE.Texture | null) {
   const group = new THREE.Group();
-  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), lobbyGlass(h, tint));
+  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d).translate(0, h / 2, 0), lobbyGlass(h, tint, grime));
   box.renderOrder = 3;
   if (!lobbyFloor) {
     lobbyFloor = new THREE.MeshStandardNodeMaterial({ roughness: 0.15, metalness: 0.4 });
@@ -99,7 +108,7 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   // Glass lobbies on both sides of the avenue, set back behind the sidewalk.
   for (const [side, z, w] of DOWNTOWN_LOBBIES) {
     const d = DOWNTOWN_DEPTH;
-    const lobby = glassLobby(w, 7, d, side < 0 ? T.secondary : 0xdfe8ff);
+    const lobby = glassLobby(w, 7, d, side < 0 ? T.secondary : 0xdfe8ff, ctx.tex.walls?.['glass-grime']?.map);
     lobby.position.set(side * DOWNTOWN_CENTER_X, CURB_H, z);
     lobby.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
     group.add(lobby);

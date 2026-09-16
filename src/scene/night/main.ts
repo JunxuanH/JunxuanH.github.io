@@ -97,7 +97,10 @@ export async function start(root: HTMLElement) {
   let dpr = Number(params.get('dpr')) || Math.max(0.6, dprCap);
   renderer.setPixelRatio(dpr);
   renderer.setSize(innerWidth, innerHeight);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  // ACES crushes saturated neon toward white; AgX holds the hue as it clips, which matters in a
+  // scene whose only light sources are coloured signs. `?tm=aces|agx|neutral` to compare.
+  const TONE = { aces: THREE.ACESFilmicToneMapping, agx: THREE.AgXToneMapping, neutral: THREE.NeutralToneMapping } as const;
+  renderer.toneMapping = TONE[(params.get('tm') as keyof typeof TONE) ?? 'aces'] ?? THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = Number(params.get('exp')) || 1.0;
   root.appendChild(renderer.domElement);
   if (params.has('debug')) {
@@ -148,7 +151,7 @@ export async function start(root: HTMLElement) {
   if (!params.has('nopeople')) for (const n of (lite ? RIGS_LITE : RIGS_ALL)) loadCharacter(n).catch(() => {});
   boot.phase('paving the streets', 0.1);
   const ground = await loadGroundTextures();
-  const walls = await loadWallSets(['wall-concrete', 'wall-metal', 'wall-corrugated']);
+  const walls = await loadWallSets(['wall-concrete', 'wall-metal', 'glass-grime']);
   scene.add(createStreets(ground, walls));
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.

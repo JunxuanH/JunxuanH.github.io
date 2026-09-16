@@ -106,14 +106,14 @@ const ROUGH_VARIATION = 0.55;
  * The generated wall sets. Loaded once and shared, because a material per surface would opt every
  * one of them out of `dedupeMaterials` and multiply the shader pre-warm.
  */
-export type WallKind = 'wall-concrete' | 'wall-metal' | 'wall-corrugated' | 'roof-gravel';
+export type WallKind = 'wall-concrete' | 'wall-metal' | 'wall-corrugated' | 'roof-gravel' | 'glass-grime';
 export type WallSets = Record<WallKind, WallSet>;
 
 const EMPTY_WALL: WallSet = { map: null, normal: null, rough: null, ao: null };
 
 export async function loadWallSets(kinds: readonly WallKind[]): Promise<WallSets> {
   const wantR = !params.has('norough'), wantAO = !params.has('noao');
-  const sets = Object.fromEntries((['wall-concrete', 'wall-metal', 'wall-corrugated', 'roof-gravel'] as WallKind[])
+  const sets = Object.fromEntries((['wall-concrete', 'wall-metal', 'wall-corrugated', 'roof-gravel', 'glass-grime'] as WallKind[])
     .map((k) => [k, EMPTY_WALL])) as WallSets;
   if (params.has('nowalls')) return sets;
   await Promise.all(kinds.map(async (k) => {

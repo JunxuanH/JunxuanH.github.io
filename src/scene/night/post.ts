@@ -1,6 +1,7 @@
 import * as THREE from 'three/webgpu';
 import { pass, mrt, output, velocity, vec2, vec3, vec4 } from './tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
+import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { traa } from 'three/addons/tsl/display/TRAANode.js';
 import { sharpen } from 'three/addons/tsl/display/SharpenNode.js';
 import { chromaticAberration } from 'three/addons/tsl/display/ChromaticAberrationNode.js';
@@ -25,9 +26,25 @@ export function createPost(renderer: THREE.WebGPURenderer, scene: THREE.Scene, c
   }
   const scenePass = pass(scene, camera);
   scenePass.setMRT(mrt({ output, velocity }));
-  const beauty = scenePass.getTextureNode('output');
+  let beauty: any = scenePass.getTextureNode('output');
   const depth = scenePass.getTextureNode('depth');
   const vel = scenePass.getTextureNode('velocity');
+  // Ground-truth ambient occlusion, high tier only. The scene has no shadow maps at all, so contact
+  // darkening where props, walls and characters meet the ground has to come from screen space.
+  // Normals are reconstructed from depth rather than adding a third MRT attachment: one less
+  // full-resolution target to write and read every frame, which matters more here than exactness.
+  if (tier === 'high' && !params.has('nogtao')) {
+    // Null normals means "reconstruct from depth"; the addon's typings mark the parameter as
+    // required even though the node handles null, so the cast keeps the typecheck at its baseline.
+    const occlusion = ao(depth, null as any, camera);
+    occlusion.resolutionScale = Number(params.get('aores')) || 0.5;
+    occlusion.distanceExponent.value = 1.6;
+    occlusion.radius.value = Number(params.get('aorad')) || 0.55;
+    occlusion.scale.value = Number(params.get('aoamt')) || 1.0;
+    occlusion.thickness.value = 1.0;
+    // Multiply, floored: neon is emissive and must not be darkened into mud by a depth-only guess.
+    beauty = vec4(beauty.rgb.mul(occlusion.clamp(0.35, 1.0)), beauty.a);
+  }
   let o: any = traa(beauty, depth, vel, camera);
   if (!params.has('nobloom')) o = withBloom(o, Number(params.get('bs')) || 0.3, 0.35, Number(params.get('bt')) || 1.6);
   if (tier === 'high' && !params.has('noca')) {
