@@ -14,7 +14,7 @@ import { createStreets, loadGroundTextures, AVENUE_HALF, SIDEWALK, CROSS_Z, CROS
 import { createEnvironment } from './env';
 import { createParticles, type ParticleSpec } from './particles';
 import { createKitbash, loadGlbTowers } from './towers';
-import { clearStreetFootprint } from './building-layout';
+import { clearStreetFootprint, clearDistrictFootprint } from './building-layout';
 import { createProps } from './props';
 import { loadCharacter, createCrowd, instantiate } from './characters';
 import { MARKET_STALLS } from './market-layout';
@@ -165,7 +165,7 @@ export async function start(root: HTMLElement) {
   boot.phase('raising the skyline', 0.22);
   const kit = params.has('nokit') ? null : createKitbash({
     tier, keepOut, atlas: params.has('noatlas') ? null : facadeTex, screens: screensTex, storefronts: storefrontTex,
-    clear: clearStreetFootprint,
+    clear: (x,z,hw,hd) => clearStreetFootprint(x,z,hw,hd) && clearDistrictFootprint(x,z,hw,hd),
     streetSide: (x, z, hw, hd) => {
       if (Math.abs(x) - hw < AVENUE_HALF + margin + 8) return x > 0 ? 'nx' : 'px';
       const cz = CROSS_Z.find((c) => Math.abs(z - c) - hd < CROSS_HALF + margin + 8);
