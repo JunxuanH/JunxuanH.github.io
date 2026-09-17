@@ -18,6 +18,23 @@ export async function createDistricts(ctx: DistrictCtx) {
   const builds: DistrictBuild[] = [jp, ce, ka, pi];
   const group = new THREE.Group();
   for (const b of builds) group.add(b.group);
+
+  /** How close the viewer must be to a district's own bounds for it to be drawn regardless of section. */
+  const NEAR = 110;
+  const bounds: (THREE.Box3 | null)[] = builds.map(() => null);
+  // Parts of a district arrive asynchronously, so the bounds are remeasured a few times early on and
+  // then left alone. Measuring every frame would traverse hundreds of meshes for nothing.
+  let ticks = 0;
+  const measure = () => {
+    ticks++;
+    if (ticks !== 1 && ticks !== 120 && ticks !== 600) return;
+    builds.forEach((b, i) => {
+      const was = b.group.visible;
+      b.group.visible = true;              // setFromObject skips nothing, but children must be current
+      bounds[i] = new THREE.Box3().setFromObject(b.group);
+      b.group.visible = was;
+    });
+  };
   return {
     group,
     props: builds.flatMap((b) => b.props),
@@ -25,14 +42,21 @@ export async function createDistricts(ctx: DistrictCtx) {
     /** Specs of the districts currently drawn — fed to the light pool (lights.ts) every frame. */
     activeLights: () => builds.flatMap((b) => (b.group.visible ? b.lights : [])),
     padRing: pi.padRing,
-    // Districts are only drawn near their own section (hundreds of small meshes each; invisible from the vista anyway).
-    // `section` (walk / dock mode) forces that section's district on regardless of p; the others keep their p windows.
-    update: (t: number, p: number, section?: SectionId) => {
+    // Districts are only drawn near their own section (hundreds of small meshes each; invisible from the
+    // vista anyway). `section` (walk / dock mode) forces that section's district on regardless of p.
+    //
+    // Section alone is not enough on foot. Two districts can stand within sight of each other across a
+    // crossing, and driving visibility from the nav section meant that walking over the boundary swapped
+    // one district's buildings for another's in the same piece of street. So a district is also drawn
+    // whenever the viewer is near its own bounds, which makes the change happen out of sight instead.
+    update: (t: number, p: number, section?: SectionId, viewer?: THREE.Vector3) => {
       pi.update(t);
-      jp.group.visible = (p > 0.08 && p < 0.34) || section === 'education'; // not part of the bay vista (and it would be mirrored by the water)
-      ce.group.visible = (p > 0.08 && p < 0.78) || section === 'work';
-      ka.group.visible = (p > 0.55 && p < 0.95) || section === 'projects';
-      pi.group.visible = p > 0.8 || section === 'contact';
+      if (viewer) measure();
+      const near = (i: number) => !!viewer && !!bounds[i] && bounds[i]!.distanceToPoint(viewer) < NEAR;
+      jp.group.visible = (p > 0.08 && p < 0.34) || section === 'education' || near(0); // not part of the bay vista (and it would be mirrored by the water)
+      ce.group.visible = (p > 0.08 && p < 0.78) || section === 'work' || near(1);
+      ka.group.visible = (p > 0.55 && p < 0.95) || section === 'projects' || near(2);
+      pi.group.visible = p > 0.8 || section === 'contact' || near(3);
     },
   };
 }
