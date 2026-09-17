@@ -1,13 +1,20 @@
 import { AVENUE_HALF, CROSS_HALF, CROSS_Z, SIDEWALK } from './streets';
 
 export type Signal = 'red' | 'amber' | 'green';
-export const SIGNAL_CYCLE = 84;
+/**
+ * The old cycle spent 45 of its 84 seconds with both directions red, so traffic stood still for more
+ * than half the time and the walk window was a narrow 8 seconds. Movement now fills most of the
+ * cycle, with two all-red scrambles: a short clearance and a longer pedestrian window.
+ *   0-18 avenue  · 18-21 amber · 21-26 all red
+ *   26-44 cross  · 44-47 amber · 47-60 all red (the long walk window)
+ */
+export const SIGNAL_CYCLE = 60;
 export function crossingPhase(seconds: number) {
   const t=((seconds%SIGNAL_CYCLE)+SIGNAL_CYCLE)%SIGNAL_CYCLE;
   return {
-    avenue:(t<14?'green':t<17?'amber':'red') as Signal,
-    cross:(t>=22&&t<36?'green':t>=36&&t<39?'amber':'red') as Signal,
-    walk:t>=44&&t<52,
+    avenue:(t<18?'green':t<21?'amber':'red') as Signal,
+    cross:(t>=26&&t<44?'green':t>=44&&t<47?'amber':'red') as Signal,
+    walk:(t>=47&&t<57)||(t>=21&&t<24),
   };
 }
 let clock=0;
@@ -32,20 +39,34 @@ export function signalStopDistance(x:number,z:number,dx:number,dz:number,nose:nu
   return distance;
 }
 
-/** Wait at the curb, never freeze a pedestrian already crossing the asphalt. */
+/**
+ * Wait at the curb, never freeze a pedestrian already crossing the asphalt.
+ *
+ * A walker only conflicts with the traffic on the road they are stepping into, so the old rule of
+ * "cross only during the all-red scramble" kept them standing through phases that were no threat to
+ * them: someone crossing a side street beside the avenue was held while the avenue, which they never
+ * touch, ran green. Each direction now watches its own conflicting axis, and only steps off with
+ * enough of the red left to finish.
+ */
+const CROSSING_MARGIN = 3; // seconds of red still needed before stepping off
+
 export function pedestrianMustWait(x:number,z:number,dx:number,dz:number,t=clock) {
-  if(crossingPhase(t).walk) return false;
+  // Which traffic would they be stepping in front of, and are they at that kerb right now?
+  let conflict: 'avenue' | 'cross' | null = null;
   if(Math.abs(dz)>.5 && Math.abs(x)<=AVENUE_HALF+SIDEWALK) {
-    return CROSS_Z.some(cz=>{
+    const atKerb=CROSS_Z.some(cz=>{
       const d=(cz-Math.sign(dz)*(CROSS_HALF+.7)-z)*Math.sign(dz);
       return d>=0 && d<1;
     });
-  }
-  if(Math.abs(dx)>.5 && CROSS_Z.some(cz=>Math.abs(z-cz)<CROSS_HALF+SIDEWALK)) {
+    if(atKerb) conflict='cross';
+  } else if(Math.abs(dx)>.5 && CROSS_Z.some(cz=>Math.abs(z-cz)<CROSS_HALF+SIDEWALK)) {
     const d=(-Math.sign(dx)*(AVENUE_HALF+.7)-x)*Math.sign(dx);
-    return d>=0 && d<1;
+    if(d>=0 && d<1) conflict='avenue';
   }
-  return false;
+  if(!conflict) return false;                      // mid-crossing or nowhere near a kerb: keep going
+  if(crossingPhase(t).walk) return false;          // the all-red scramble lets everyone go
+  if(crossingPhase(t)[conflict]!=='red') return true;
+  return secondsUntilChange(conflict,t)<=CROSSING_MARGIN;
 }
 
 /**
@@ -54,14 +75,14 @@ export function pedestrianMustWait(x:number,z:number,dx:number,dz:number,t=clock
  */
 export function secondsUntilChange(axis:'avenue'|'cross',seconds:number) {
   const t=((seconds%SIGNAL_CYCLE)+SIGNAL_CYCLE)%SIGNAL_CYCLE;
-  const edges=axis==='avenue'?[14,17,SIGNAL_CYCLE]:[22,36,39,SIGNAL_CYCLE];
+  const edges=axis==='avenue'?[18,21,SIGNAL_CYCLE]:[26,44,47,SIGNAL_CYCLE];
   for(const e of edges) if(t<e) return Math.max(1,Math.ceil(e-t));
   return 1;
 }
 
 /** Seconds left of the walk window, or until it opens. The number a pedestrian actually wants. */
 export function walkCountdown(seconds:number) {
-  const t=((seconds%SIGNAL_CYCLE)+SIGNAL_CYCLE)%SIGNAL_CYCLE;
-  if(t>=44&&t<52) return {secs:Math.max(1,Math.ceil(52-t)),walk:true};
-  return {secs:Math.max(1,Math.ceil(t<44?44-t:SIGNAL_CYCLE+44-t)),walk:false};
+  const walk=crossingPhase(seconds).walk;
+  for(let i=1;i<=SIGNAL_CYCLE;i++) if(crossingPhase(seconds+i).walk!==walk) return {secs:i,walk};
+  return {secs:1,walk};
 }

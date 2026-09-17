@@ -68,7 +68,11 @@ export function createCrossingSignals() {
     const post=new THREE.Group();post.position.set(p.x,0,p.z);group.add(post);
     box(post,.22,6.2,.22,0,3.1,0);box(post,.34,.12,.34,0,6.2,0,trim);
     for(const axis of ['avenue','cross'] as const) {
-      const head=new THREE.Group();head.rotation.y=axis==='avenue'?(p.sz>0?0:Math.PI):(p.sx>0?Math.PI/2:-Math.PI/2);post.add(head);
+      // Both heads and both pedestrian units used to sit concentric on the mast, so each one's
+      // housing cut across its neighbour's lit face from any oblique angle. Standing each unit out
+      // along its own facing direction puts them side by side instead of inside one another.
+      const head=new THREE.Group();head.rotation.y=axis==='avenue'?(p.sz>0?0:Math.PI):(p.sx>0?Math.PI/2:-Math.PI/2);
+      head.position.set(0,0,.26);head.position.applyAxisAngle(new THREE.Vector3(0,1,0),head.rotation.y);post.add(head);
       box(head,.92,2.0,.42,0,4.8,0);box(head,1.0,.12,.72,0,5.88,.12);
       for(const [i,state] of (['red','amber','green'] as const).entries()) {
         const y=5.42-i*.6;
@@ -86,7 +90,8 @@ export function createCrossingSignals() {
       const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.63),panelMat[axis]);
       panel.position.set(0,3.5,.2);head.add(panel);countdowns[axis].push(panel);
 
-      const ped=new THREE.Group();ped.rotation.y=head.rotation.y+Math.PI;post.add(ped);
+      const ped=new THREE.Group();ped.rotation.y=head.rotation.y+Math.PI;
+      ped.position.set(0,0,.26);ped.position.applyAxisAngle(new THREE.Vector3(0,1,0),ped.rotation.y);post.add(ped);
       box(ped,1.24,.86,.18,0,1.95,0);box(ped,.8,.92,.18,0,2.92,0);
       const wpanel=new THREE.Mesh(new THREE.PlaneGeometry(1.18,.76),panelMat.walk);
       wpanel.position.set(0,1.95,.13); // its backing plate is only .18 deep, so this clears itped.add(wpanel);countdowns.walk.push(wpanel);
