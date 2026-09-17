@@ -27,7 +27,10 @@ export async function createBackdrop() {
     // Toward the faded bottom the plate also takes the street haze's navy, so what remains reads as mist, not a cut edge.
     // Distorted source margins are physically absent, not merely dimmed. Feather only the new
     // cut boundary; UV0 spans the retained geometry while UV1 excludes the source's outer strips.
-    const edgeStart = uniform(0), edgeEnd = uniform(0.06);
+    // A 6 % feather is not a fade, it is an edge with a soft corner. Seen obliquely from the pier the
+    // plate ended in a vertical step of 55 to 76 luminance against the sky. A fifth of the panel now
+    // dissolves, which costs some painted city at the extremes and buys no visible boundary.
+    const edgeStart = uniform(0), edgeEnd = uniform(0.2);
     const fadeX = smoothstep(edgeStart, edgeEnd, uv().x).mul(smoothstep(edgeStart, edgeEnd, float(1).sub(uv().x)));
     const plateColor = texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
     // Fade coverage only. Darkening RGB as well produced a dark fringe along the cut buildings.

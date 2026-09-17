@@ -22,7 +22,10 @@ export function createSky(_tier: 'high' | 'med' | 'low') {
   // black. The ramp shape is unchanged; only the zenith colour is lifted to a dark navy, so this is
   // a rainy, light-polluted sky with a visible cloud base rather than a hole.
   const up = smoothstep(-0.05, 0.55, dir.y);
-  const grad = mix(color(PAL.plum), color(0x0e1322), up);
+  // The dome also has to meet the plate, not sit half its brightness below it: where the painting
+  // ends, the sky it dissolves into is what decides whether you see a boundary. The plate's own band
+  // measures 88, the old plum 41.
+  const grad = mix(color(0x58405a), color(0x0e1322), up);
   // Warm city glow just above the horizon, strongest toward -z (the skyline).
   const glow = smoothstep(0.25, 0.0, dir.y).mul(smoothstep(-0.3, -1.0, dir.z).mul(0.5).add(0.5));
   mat.colorNode = grad.add(color(0x5a2a3c).mul(glow).mul(0.6));
