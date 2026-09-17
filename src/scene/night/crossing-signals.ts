@@ -29,59 +29,74 @@ export function createCrossingSignals() {
   const panels: Record<PanelKey,{tex:THREE.CanvasTexture;ctx:CanvasRenderingContext2D;shown:string}> = {} as any;
   const panelMat: Record<PanelKey,THREE.MeshBasicNodeMaterial> = {} as any;
   for(const axis of ['avenue','cross','walk'] as const) {
-    const c=document.createElement('canvas');c.width=192;c.height=112;
+    const c=document.createElement('canvas');c.width=256;c.height=160;
     const ctx=c.getContext('2d')!;
     const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;
     panels[axis]={tex,ctx,shown:''};
     const m=new THREE.MeshBasicNodeMaterial();
-    m.colorNode=texture(tex).rgb.mul(uniform(2.2)); // emissive enough for bloom to catch the digits
+    m.colorNode=texture(tex).rgb.mul(uniform(3.4)); // well past the bloom threshold: the panel is a light
     panelMat[axis]=m;
   }
-  const drawPanel=(axis:PanelKey,secs:number,state:'red'|'amber'|'green')=>{
-    const p=panels[axis];const label=String(secs).padStart(2,'0');
-    if(p.shown===label+state) return;
-    p.shown=label+state;
-    const {ctx}=p;const w=192,h=112;
-    ctx.fillStyle='#05080d';ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle='#1d2b3a';ctx.lineWidth=5;ctx.strokeRect(3,3,w-6,h-6);
-    ctx.fillStyle=state==='green'?'#57efb0':state==='amber'?'#ffbd40':'#ff415f';
-    ctx.font='bold 78px "IBM Plex Mono", monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(label,w/2,h/2+4);
+  const drawPanel=(axis:PanelKey,secs:number,state:'red'|'amber'|'green',word?:string)=>{
+    const p=panels[axis];const key=secs+state+(word??'');
+    if(p.shown===key) return;
+    p.shown=key;
+    const {ctx}=p;const w=256,h=160;
+    const ink=state==='green'?'#57efb0':state==='amber'?'#ffbd40':'#ff415f';
+    ctx.fillStyle='#04070c';ctx.fillRect(0,0,w,h);
+    // A depleting bar rather than digits. Text on a small panel kept losing its top to whatever sat
+    // in front of it, and at this size a row of blocks reads faster anyway: each block is a second,
+    // capped at ten, and the whole panel is one colour so the state is legible before the count is.
+    const n=Math.min(10,Math.max(1,secs));
+    const pad=14,gap=5,cols=10;
+    const bw=(w-pad*2-gap*(cols-1))/cols,bh=52;
+    for(let i=0;i<cols;i++) {
+      ctx.fillStyle=i<n?ink:'#12202c';
+      ctx.fillRect(pad+i*(bw+gap),h-pad-bh,bw,bh);
+    }
+    ctx.strokeStyle=ink;ctx.lineWidth=8;ctx.strokeRect(4,4,w-8,h-8);
+    if(word) {
+      ctx.fillStyle=ink;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      ctx.font='bold 46px "IBM Plex Mono", monospace';
+      ctx.fillText(word,w/2,h-pad-bh-16);
+    }
     p.tex.needsUpdate=true;
   };
-  drawPanel('avenue',1,'red');drawPanel('cross',1,'red');drawPanel('walk',1,'red');
+  drawPanel('avenue',1,'red');drawPanel('cross',1,'red');drawPanel('walk',1,'red','WAIT');
 
   for(const p of SIGNAL_POSTS) {
     const post=new THREE.Group();post.position.set(p.x,0,p.z);group.add(post);
     box(post,.22,6.2,.22,0,3.1,0);box(post,.34,.12,.34,0,6.2,0,trim);
     for(const axis of ['avenue','cross'] as const) {
       const head=new THREE.Group();head.rotation.y=axis==='avenue'?(p.sz>0?0:Math.PI):(p.sx>0?Math.PI/2:-Math.PI/2);post.add(head);
-      box(head,1.0,2.3,.55,0,4.65,0);box(head,1.1,.14,.9,0,5.95,.14);
+      box(head,.92,2.0,.42,0,4.8,0);box(head,1.0,.12,.72,0,5.88,.12);
       for(const [i,state] of (['red','amber','green'] as const).entries()) {
-        const y=5.3-i*.65;
+        const y=5.42-i*.6;
         // These lenses were 0.2 u across and read as roughly eight screen pixels from the pavement,
         // against a dark hood: the lights were drawn and correct, just too small to notice. The head
         // is now a third larger and the lens half again, and burns past the bloom threshold, so the
         // post-chain gives it the same halo every other light in the city gets. No extra geometry:
         // a separate halo quad per lamp cost 50 draw calls and showed up on the phone tier.
-        const socket=new THREE.Mesh(new THREE.CircleGeometry(.34,14),lens);socket.position.set(0,y,.30);head.add(socket);
-        const mesh=new THREE.Mesh(new THREE.CircleGeometry(.3,14),lit[state]);mesh.position.set(0,y,.34);mesh.userData.signal=`${axis}:${state}`;head.add(mesh);
+        const socket=new THREE.Mesh(new THREE.CircleGeometry(.32,14),lens);socket.position.set(0,y,.24);head.add(socket);
+        const mesh=new THREE.Mesh(new THREE.CircleGeometry(.3,14),lit[state]);mesh.position.set(0,y,.28);mesh.userData.signal=`${axis}:${state}`;head.add(mesh);
         lamps.push({mesh,axis,state});
       }
-      const panel=new THREE.Mesh(new THREE.PlaneGeometry(.78,.46),panelMat[axis]);
-      panel.position.set(0,3.62,.34);head.add(panel);countdowns[axis].push(panel);
+      // The bar is the point, so its housing is a shallow backing plate rather than a tall hood.
+      box(head,1.06,.74,.16,0,3.5,.06);
+      const panel=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.63),panelMat[axis]);
+      panel.position.set(0,3.5,.2);head.add(panel);countdowns[axis].push(panel);
 
       const ped=new THREE.Group();ped.rotation.y=head.rotation.y+Math.PI;post.add(ped);
-      box(ped,.86,1.55,.35,0,2.45,0);
-      const wpanel=new THREE.Mesh(new THREE.PlaneGeometry(.66,.4),panelMat.walk);
-      wpanel.position.set(0,2.06,.2);ped.add(wpanel);countdowns.walk.push(wpanel);
-      const stop=box(ped,.4,.09,.02,0,2.7,.24,lit.red);
+      box(ped,1.24,.86,.18,0,1.95,0);box(ped,.8,.92,.18,0,2.92,0);
+      const wpanel=new THREE.Mesh(new THREE.PlaneGeometry(1.18,.76),panelMat.walk);
+      wpanel.position.set(0,1.95,.13); // its backing plate is only .18 deep, so this clears itped.add(wpanel);countdowns.walk.push(wpanel);
+      const stop=box(ped,.62,.14,.02,0,2.92,.13,lit.red);
       const walk=new THREE.Group();ped.add(walk);
-      box(walk,.11,.27,.02,0,2.7,.24,lit.green);
-      const dot=new THREE.Mesh(new THREE.CircleGeometry(.085,8),lit.green);dot.position.set(0,2.96,.25);walk.add(dot);
+      box(walk,.15,.36,.02,0,2.92,.13,lit.green);
+      const dot=new THREE.Mesh(new THREE.CircleGeometry(.115,10),lit.green);dot.position.set(0,3.24,.14);walk.add(dot);
       for(const s of [-1,1]) {
-        const leg=box(walk,.07,.25,.02,s*.07,2.48,.24,lit.green);leg.rotation.z=s*.45;
-        const arm=box(walk,.07,.22,.02,s*.1,2.7,.24,lit.green);arm.rotation.z=s*.7;
+        const leg=box(walk,.09,.33,.02,s*.09,2.66,.13,lit.green);leg.rotation.z=s*.45;
+        const arm=box(walk,.09,.29,.02,s*.13,2.92,.13,lit.green);arm.rotation.z=s*.7;
       }
       walk.updateMatrix();
       const glyphParts=walk.children.map(child=>{
@@ -115,8 +130,8 @@ export function createCrossingSignals() {
 
   const update=(t:number)=>{
     setCrossingTime(t);const phase=crossingPhase(t);
-    for(const axis of ['avenue','cross'] as const) drawPanel(axis,secondsUntilChange(axis,t),phase[axis]);
-    const wc=walkCountdown(t);drawPanel('walk',wc.secs,wc.walk?'green':'red');
+    for(const axis of ['avenue','cross'] as const) drawPanel(axis,secondsUntilChange(axis,t),phase[axis],axis==='avenue'?'AVE':'CROSS');
+    const wc=walkCountdown(t);drawPanel('walk',wc.secs,wc.walk?'green':'red',wc.walk?'WALK':'WAIT');
     for(const l of lamps) l.mesh.visible=phase[l.axis]===l.state;
     for(const p of pedestrians) {p.walk.visible=phase.walk;p.stop.visible=!phase.walk;}
   };
