@@ -783,7 +783,7 @@ export async function start(root: HTMLElement) {
     timed('life', () => { for (const l of life) l.update(dt, camera); });
     dialogue.glance(); // after the mixers: the resident being talked to looks at the player
     timed('districts', () => districts.update(t, p, walkSec));
-    timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position));
+    timed('lights', () => lightPool.update([...districts.activeLights(), ...content.activeLights()], camera.position, dt));
     timed('particles', () => { for (const s of particles) s.update(p, dt); });
     timed('interact', () => interact.update(dt, p));
     timed('audio', () => audio.update(p));
