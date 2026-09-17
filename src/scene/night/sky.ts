@@ -42,9 +42,18 @@ export function createSky(_tier: 'high' | 'med' | 'low') {
   return group;
 }
 
-/** Height-tinted haze: magenta/orange near the streets, navy up high. */
+/**
+ * Height-tinted haze: warm near the streets, cool up high.
+ *
+ * The colour matters more than the density. Distant geometry fades toward this, while the painted
+ * skyline behind it is drawn with fog off, so if the two do not agree the rendered towers turn into
+ * black cut-outs against a bright painting. Measured against the plate, the old navy and plum were
+ * luminance 17 and 41 where the plate's own mid band is 88, which is exactly the mismatch that made
+ * the middle of the skyline read as unlit. These sit just under the plate, so distance still reads as
+ * depth, but a far tower now washes into the city glow the way it would in real air.
+ */
 export function createHaze(density = 0.0032) {
-  const c = mix(color(PAL.navy), color(PAL.plum), smoothstep(40.0, 0.0, positionWorld.y));
+  const c = mix(color(0x434a63), color(0x624455), smoothstep(40.0, 0.0, positionWorld.y));
   return fog(c, densityFogFactor(density));
 }
 
