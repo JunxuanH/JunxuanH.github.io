@@ -64,6 +64,8 @@ function prefetchScene() {
       lite(`/night/ground/${n}-r.jpg`), lite(`/night/ground/${n}-ao.jpg`),
     ]),
     lite('/night/facades/facade-mix.jpg'), lite('/night/facades/storefronts.jpg'), lite('/night/ads/screens-atlas.jpg'),
+    // The skyline plate is the first thing the eye lands on at the vista and it was never prefetched.
+    lite('/night/backdrop/aerial.webp'),
     ...['a', 'b', 'c', 'd'].map((t) => lite(`/night/models/tower-${t}.glb`)),
     ...['01', '02', '03', '04', '05', '06'].map((t) => `/night/models/tower-${t}.glb`),
     '/night/models/landing-hovercar.glb',

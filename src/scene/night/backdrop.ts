@@ -11,7 +11,9 @@ import { croppedPlateGeometry } from './plate-geometry';
 export async function createBackdrop() {
   const group = new THREE.Group();
   group.name = 'backdrop';
-  const H0 = 520, D0 = 560, Y0 = 150;
+  // Taller than it is wide-ish: the plate's job is the sky as much as the skyline. The bottom edge
+  // stays at y -110 where it meets the water and the city, so H0 and Y0 move together.
+  const H0 = 760, D0 = 560, Y0 = 270;
   const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean) => {
     // Crop geometry and UVs together so retained buildings are not stretched to fill the old width.
     const margin = 0.08;
@@ -31,7 +33,9 @@ export async function createBackdrop() {
     // Fade coverage only. Darkening RGB as well produced a dark fringe along the cut buildings.
     mat.colorNode = mix(color(0x0b0d1c), plateColor, fadeB.mul(0.6).add(0.4));
     // Ascending smoothstep edges are defined on both WebGL and WebGPU.
-    const fadeY = float(1).sub(smoothstep(0.72, 1.0, uv().y));
+    // The knee is in UV space, so a taller plate would otherwise dissolve most of its new sky. Hold the
+  // paint opaque to 86 % and let only the top band blend into the dome.
+  const fadeY = float(1).sub(smoothstep(0.86, 1.0, uv().y));
     mat.opacityNode = fadeX.mul(fadeY).mul(fadeB);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.userData.sourceCrop = [margin, 1 - margin];

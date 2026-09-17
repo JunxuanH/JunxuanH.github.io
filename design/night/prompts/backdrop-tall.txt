@@ -1,0 +1,7 @@
+Extend the supplied cyberpunk city skyline painting upward into a taller 4:3 composition, keeping its exact city, palette, haze and painting style.
+
+Lower 55 percent of the frame: the same dense night skyline as the reference image, same towers, same cyan magenta and amber neon, same wet atmospheric haze at the base, seen straight on from a distance with no perspective distortion and no fisheye.
+
+Upper 45 percent of the frame: night sky above that city. Layered cloud banks underlit by the glow of the streets below, deepening from warm plum near the rooftops to dark navy at the top. Thin drifting mist between the highest towers. A few distant aircraft and airship lights as small points. Faint light pollution bloom above the brightest districts. Rain haze softening the far towers into the cloud base.
+
+Flat matte painting for use as a backdrop plate, straight on, horizon level and centred, no camera tilt, no lens curvature, no vignette, no foreground objects, no ground, no water, no text, no letters, no logos, no watermark, no people, no frame or border.
