@@ -11,7 +11,7 @@ import * as THREE from 'three/webgpu';
 import { texture, uniform } from './tsl';
 import { ANCHORS, followWeight, type SectionId } from './journey';
 import { params, reducedMotion, type Tier } from './palette';
-import { createCarriers, type Board, type Carrier, type CarrierId, type CarrierCtx } from './carriers/index';
+import { createCarriers, type Carrier, type CarrierId, type CarrierCtx } from './carriers/index';
 import type { DistrictTextures } from './districts/shared';
 import type { Mode } from './nav';
 import { DOCK_EVENT, UNDOCK_EVENT, type DockEventDetail } from './hud';
@@ -50,7 +50,6 @@ interface Slab {
   win: [number, number];
   cueArmed: boolean;
   board?: BoardMesh;
-  handle: Board;
   /** The board just appeared / disappeared (edge-triggered `rise`). */
   shown: boolean;
 }
@@ -118,7 +117,6 @@ export async function createContent(opts: ContentOptions) {
     const target = parentFor(id);
     session.adopt(el);
     let board: BoardMesh | undefined;
-    let handle: Board = { repaint() {} };
     if (target) {
       const art = adCanvas(id, target.carrier?.aspect ?? 0.65);
       const canvas = art.canvas;
@@ -132,13 +130,9 @@ export async function createContent(opts: ContentOptions) {
       board.name = `board:${id}`;
       target.parent.add(board);
       target.carrier?.fit?.(h);
-      // Repaints keep the first paint's layout height so the geometry (and the carrier's fit) never change.
-      handle = { repaint() {} };
       art.load(() => { tex.needsUpdate = true; });
-      // Project screenshots (`.card img`, eager) may land after the first paint: repaint when they do.
-      for (const img of el.querySelectorAll<HTMLImageElement>('img')) if (!(img.complete && img.naturalWidth > 0)) img.addEventListener('load', () => handle.repaint(), { once: true });
     }
-    slabs.push({ id, el, carrier: target?.carrier, win: winOf(el), cueArmed: true, board, handle, shown: false });
+    slabs.push({ id, el, carrier: target?.carrier, win: winOf(el), cueArmed: true, board, shown: false });
   }
 
   const windowK = (win: [number, number], p: number) => smooth(win[0] - FADE, win[0], p) * (1 - smooth(win[1], win[1] + FADE, p));
@@ -175,7 +169,7 @@ export async function createContent(opts: ContentOptions) {
       if (on !== s.shown) { s.shown = on; s.carrier?.rise?.(on); }
       const cue = s.carrier?.cue;
       if (cue) {
-        if (s.cueArmed && p >= cue.p) { s.cueArmed = false; cue.run(s.handle); }
+        if (s.cueArmed && p >= cue.p) { s.cueArmed = false; cue.run(); }
         else if (!s.cueArmed && p < cue.p - 0.05) s.cueArmed = true;
       }
     }
@@ -204,7 +198,7 @@ export async function createContent(opts: ContentOptions) {
     const out: DockActions = {};
     for (const k of Object.keys(a) as (keyof DockActions)[]) {
       const fn = a[k];
-      if (fn) out[k] = () => { fn(); s.handle.repaint(); session.reveal(); };
+      if (fn) out[k] = () => { fn(); session.reveal(); };
     }
     return out;
   };
@@ -217,7 +211,6 @@ export async function createContent(opts: ContentOptions) {
     s.el.classList.add('is-docked');
     session.open(s.el, { node: c?.node ?? id, section: sectionName(s.el), index: Math.max(0, ORDER.indexOf(id)) });
     c?.interact?.onEnter?.(s.el);
-    s.handle.repaint();
     // The HUD's phone chip bar mirrors the carrier's named actions (hud.ts).
     document.dispatchEvent(new CustomEvent<DockEventDetail>(DOCK_EVENT, { detail: { id, actions: wrapActions(s, c?.interact?.actions) } }));
   }
@@ -230,7 +223,6 @@ export async function createContent(opts: ContentOptions) {
     carriers.byId[id]?.interact?.onExit?.(s.el);
     s.el.classList.remove('is-docked');
     session.close();
-    s.handle.repaint();
   }
   /** Route a key to the docked carrier; true when handled. */
   function onKey(e: KeyboardEvent): boolean {
@@ -238,7 +230,7 @@ export async function createContent(opts: ContentOptions) {
     const s = slabOf(docked);
     if (!s) return false;
     const handled = !!carriers.byId[docked]?.interact?.onKey?.(e, s.el);
-    if (handled) { s.handle.repaint(); session.reveal(); }
+    if (handled) session.reveal();
     return handled;
   }
 

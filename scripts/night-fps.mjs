@@ -1,11 +1,11 @@
 // Frame-time probe for the Night City pages.
 //   node scripts/night-fps.mjs [path] [query ...]
-//   e.g. node scripts/night-fps.mjs /lab/night "q=high" "q=med"      (base URL from $URL, default http://localhost:4324)
+//   e.g. node scripts/night-fps.mjs /lab/characters "crowd=1&count=10"   (base URL from $URL, default http://localhost:4324)
 //        URL=http://localhost:4325 node scripts/night-fps.mjs /lab/characters "crowd=1&count=10"
 // Reads window.__perf (cpu ms per frame + renderer.info) when the page exposes it, else plain rAF deltas.
 import { chromium } from '/private/tmp/claude-501/-Users-ivan-Desktop-Projects/b7838c10-cf27-4bee-97f1-abc644ec1d9e/scratchpad/pw/node_modules/playwright-core/index.mjs';
 const exe = `${process.env.HOME}/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
-const [path = '/lab/night', ...queries] = process.argv.slice(2);
+const [path = '/lab/characters', ...queries] = process.argv.slice(2);
 const qs = queries.length ? queries : ['q=high', 'q=med', 'q=low'];
 const base = (process.env.URL || 'http://localhost:4324').replace(/\/$/, '');
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--enable-unsafe-webgpu', '--use-angle=metal', '--ignore-gpu-blocklist'] });

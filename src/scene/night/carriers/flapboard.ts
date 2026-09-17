@@ -11,14 +11,13 @@ import { THEMES } from '../theme';
 import { neonText } from '../signs';
 import { sfx } from '../audio';
 import { keyToAction, setSel, hint, clearHint, retrigger, type DockActions } from './dock';
-import type { Board, Carrier, CarrierCtx } from './index';
+import type {Carrier, CarrierCtx } from './index';
 
 const DECK_Y = 2.9;        // pier deck (districts/pier.ts)
 const BX = 140, BZ = 32.1; // board centre
 const BOTTOM = 5.9;        // board bottom edge: the landed car stays below it
 const FRAME_H = 5.4;
 
-const scramble = (n: number) => Array.from({ length: n }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
 
 export function create(ctx: CarrierCtx): Carrier {
   const T = THEMES.contact;
@@ -54,9 +53,7 @@ export function create(ctx: CarrierCtx): Carrier {
   };
   place(4.8); // frame centred at 8.3 until the board is painted
 
-  // Letter shuffle: 8 ticks × 70 ms of random capitals on the three rows (board repaints), then a clean repaint.
   // Driven from update() (frame time) rather than timers, which background tabs throttle to seconds.
-  let shuffleBoard: Board | null = null, shuffleTicks = 0, shuffleAcc = 0;
 
   // ---- dock: the three links are departure rows; ↑/↓ move the cursor, Enter flaps the row's status to BOARDED
   // (clacks) and opens the link in a new tab half a second later. Statuses go back to normal on undock.
@@ -79,20 +76,10 @@ export function create(ctx: CarrierCtx): Carrier {
     lights: [[140, 5.0, 28, 0xffb000, 45, 10]],
     fit: place,
     update(_t, dt) {
-      if (!shuffleTicks || !shuffleBoard) return;
-      shuffleAcc += dt;
-      if (shuffleAcc < 0.07) return;
-      shuffleAcc = 0;
-      if (--shuffleTicks === 0) shuffleBoard.repaint();
-      else shuffleBoard.repaint((doc) => ({ ...doc, lines: doc.lines.map((l) => (l.kind === 'kv' ? { ...l, text: scramble((l.text ?? '').length) } : l)) }));
     },
     cue: {
       p: 0.975,
-      run(board) {
-        if (ctx.reducedMotion) return;
-        ctx.onFlap?.();
-        shuffleBoard = board; shuffleTicks = 8; shuffleAcc = 0.07; // first tick this frame
-      },
+      run() { if (!ctx.reducedMotion) ctx.onFlap?.(); },
     },
     interact: {
       onEnter(el) {

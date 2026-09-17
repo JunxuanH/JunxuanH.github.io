@@ -11,7 +11,6 @@ import type { Tier } from '../palette';
 import type { DistrictTextures, LightSpec } from '../districts/shared';
 import type { PropPlacement } from '../props';
 import type { SectionId } from '../journey';
-import type { TermDoc } from '../slabcanvas';
 import { create as createKiosk } from './kiosk';
 import { TERMINALS, type TerminalId } from '../terminal-layout';
 import { terminalScreen } from '../district-art';
@@ -26,11 +25,6 @@ export interface CarrierCtx {
   reducedMotion: boolean;
   /** Split-flap clack cue (audio.ts). */
   onFlap?: () => void;
-}
-
-/** A carrier's painted board (content.ts): repaint from the section's DOM, optionally transforming the doc first. */
-export interface Board {
-  repaint(mutate?: (doc: TermDoc) => TermDoc): void;
 }
 
 export interface Carrier {
@@ -57,7 +51,8 @@ export interface Carrier {
   /** Called once with the painted board's height (u) so frames / backings match it. */
   fit?(boardHeightU: number): void;
   /** Fired once when p crosses `p` upward; re-armed when p drops below `p - 0.05`. */
-  cue?: { p: number; run(board: Board): void };
+  /** Fires once as the journey passes `p` (the flap board's clack). */
+  cue?: { p: number; run(): void };
   /** Moving carriers: world position minus the home pose (camera follow). */
   displacement?(out: THREE.Vector3): THREE.Vector3;
   /**
