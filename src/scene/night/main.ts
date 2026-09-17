@@ -184,6 +184,25 @@ export async function start(root: HTMLElement) {
 
   // Signature (fal) towers first, playweave set as mid-ground fill.
   const buildingObstacles: Obstacle[] = [...(kit?.obstacles ?? [])];
+  // The hero tower carries the Shellworks ad. Both arrive asynchronously and either can win the race,
+  // so each one calls mountBillboard() and the last to arrive does the work.
+  let heroTower: { box: THREE.Box3; yaw: number } | null = null;
+  let billboardRef: THREE.Group | null = null;
+  const mountBillboard = () => {
+    if (!billboardRef) return;
+    if (!heroTower) { billboardRef.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5); return; }
+    const { box, yaw } = heroTower;
+    const width = box.max.x - box.min.x, depth = box.max.z - box.min.z;
+    const cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+    // A 36 u panel would dwarf a 20 u shaft. Let it overhang, as the concept art does, but not by more
+    // than two thirds of the building's own width.
+    const k = THREE.MathUtils.clamp((Math.max(width, depth) * 1.65) / 36, 0.45, 1);
+    billboardRef.scale.setScalar(k);
+    billboardRef.rotation.y = yaw;
+    // Stand it off the south face, the one the bay vista looks at, along the tower's own facing.
+    const reach = depth / 2 + 18 * k * 0.06 + 1.2;
+    billboardRef.position.set(cx + Math.sin(yaw) * reach, box.min.y + (box.max.y - box.min.y) * 0.76, cz + Math.cos(yaw) * reach);
+  };
   if (!params.has('noglb')) {
     pending.push(loadGlbTowers([
       { file: 'tower-a', x: ANCHORS.towerA.x, z: ANCHORS.towerA.z, height: 84, tint: PAL.cyan },
@@ -196,9 +215,23 @@ export async function start(root: HTMLElement) {
       { file: 'tower-04', x: 90, z: -120, height: 54, yaw: 0.3, tint: PAL.magenta },
       { file: 'tower-05', x: -96, z: -180, height: 60, yaw: -0.2, tint: PAL.cyan },
       { file: 'tower-06', x: 40, z: -260, height: 70, yaw: 0.5, tint: PAL.yellow },
-    ], (_t, obj) => {
+      // The hero tower: the landmark the bay vista is composed around, and the Shellworks ad's host.
+      // Its concept art was drawn with an empty screen panel so the billboard has somewhere to live.
+      // x 28 / z -34 is the closest clear lot to the vista's centre line: the avenue needs |x| >= 27
+      // once the setback is counted, and the block between the quay and the first cross street is the
+      // only row south of downtown deep enough to hold it.
+      // Height is set by the lot, not by ambition: the only row between the quay and the first cross
+      // street is 24 u deep, and this model is 0.386 deep per unit of height, so anything over ~62
+      // gets banished to the map edge by streetLot. At 62 it still reads as the tallest thing in the
+      // vista because it stands far closer to the camera than the rest.
+      { file: 'tower-hero', x: 28, z: -34, height: 62, tint: PAL.cyan },
+    ], (t, obj) => {
       const b = new THREE.Box3().setFromObject(obj);
       buildingObstacles.push({ kind: 'box', x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z, h: b.max.y });
+      // Mount the ad on the face of the tower as it was actually placed. streetLot moves a tower to
+      // the nearest clear lot, which is how the old billboard ended up hanging in mid-air over the
+      // avenue after its host walked off; measuring here means it can never drift again.
+      if (t.file === 'tower-hero') { heroTower = { box: b, yaw: t.yaw ?? 0 }; mountBillboard(); }
     }).then((g) => scene.add(g)));
   }
 
@@ -208,8 +241,9 @@ export async function start(root: HTMLElement) {
   scene.add(createBridge(walls));
   scene.add(createQuay(QUAY_Z, ground, walls));
   const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite || reducedMotion ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
-  billboard.position.set(ANCHORS.towerA.x, 53, ANCHORS.towerA.z + 14.5);
   scene.add(billboard);
+  billboardRef = billboard;
+  mountBillboard();
 
   // ---------- life
   const signs = await createKeyedSigns([

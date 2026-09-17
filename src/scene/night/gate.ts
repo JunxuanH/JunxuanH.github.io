@@ -68,6 +68,7 @@ function prefetchScene() {
     lite('/night/backdrop/aerial.webp'),
     ...['a', 'b', 'c', 'd'].map((t) => lite(`/night/models/tower-${t}.glb`)),
     ...['01', '02', '03', '04', '05', '06'].map((t) => `/night/models/tower-${t}.glb`),
+    lite('/night/models/tower-hero.glb'),
     '/night/models/landing-hovercar.glb',
     ...['meta.json', 'rigged.glb', 'idle.glb', 'walk.glb', 'run.glb'].map((f) => `/night/characters/ronin-player/${f}`),
   ];
