@@ -1,11 +1,13 @@
 /**
  * Résumé content in the scene. Every section (index.astro `[data-slab]`: education, four jobs, the project cards,
- * contact) gets a canvas board (district-art.ts `adCanvas`) on its carrier's mount (carriers/*: kiosk, bus stop,
+ * contact) gets a canvas board on its carrier's mount (district-art.ts `adCanvas`, or the carrier's own `art`
+ * when it paints its face itself, as the departures board does) (carriers/*: kiosk, bus stop,
  * LED wall, blimp banner, hologram, holo stall, departures board) — real geometry, so the boards depth-test against
  * the character. In ride mode each board has a p window (data-window="a,b") during which it is visible; on foot it
  * fades by proximity to its carrier, and in dock mode only the docked board shows. Docking opens the section's DOM
  * element in the terminal session overlay (session.ts) and routes keys to the carrier's `interact` block
- * (`dock` / `undock` / `onKey`); the board repaints after every action so it mirrors the session's cursor.
+ * (`dock` / `undock` / `onKey`) — which carriers/index.ts currently clears on every carrier, in favour of the
+ * kiosks' native reading controls.
  */
 import * as THREE from 'three/webgpu';
 import { texture, uniform } from './tsl';
@@ -50,6 +52,9 @@ interface Slab {
   win: [number, number];
   cueArmed: boolean;
   board?: BoardMesh;
+  /** Carriers that paint their own board (flapboard): ticked while the board is on. */
+  art?: { update?(t: number, dt: number): boolean };
+  tex?: THREE.CanvasTexture;
   /** The board just appeared / disappeared (edge-triggered `rise`). */
   shown: boolean;
 }
@@ -117,10 +122,13 @@ export async function createContent(opts: ContentOptions) {
     const target = parentFor(id);
     session.adopt(el);
     let board: BoardMesh | undefined;
+    let art: { canvas: HTMLCanvasElement; load?(cb: () => void): void; update?(t: number, dt: number): boolean } | undefined;
+    let tex: THREE.CanvasTexture | undefined;
     if (target) {
-      const art = adCanvas(id, target.carrier?.aspect ?? 0.65);
+      const aspect = target.carrier?.aspect ?? 0.65;
+      art = target.carrier?.art?.(el, aspect) ?? adCanvas(id, aspect);
       const canvas = art.canvas;
-      const tex = new THREE.CanvasTexture(canvas);
+      tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 4;
       const h = target.w * canvas.height / canvas.width;
@@ -130,9 +138,9 @@ export async function createContent(opts: ContentOptions) {
       board.name = `board:${id}`;
       target.parent.add(board);
       target.carrier?.fit?.(h);
-      art.load(() => { tex.needsUpdate = true; });
+      art.load?.(() => { tex!.needsUpdate = true; });
     }
-    slabs.push({ id, el, carrier: target?.carrier, win: winOf(el), cueArmed: true, board, shown: false });
+    slabs.push({ id, el, carrier: target?.carrier, win: winOf(el), cueArmed: true, board, art, tex, shown: false });
   }
 
   const windowK = (win: [number, number], p: number) => smooth(win[0] - FADE, win[0], p) * (1 - smooth(win[1], win[1] + FADE, p));
@@ -164,7 +172,11 @@ export async function createContent(opts: ContentOptions) {
       const on = k > 0.01;
       if (s.board) {
         if (on !== s.board.visible) s.board.visible = on;
-        if (on) s.board.material.opacity = k;
+        if (on) {
+          s.board.material.opacity = k;
+          // A self-painted board (the departures listing) only redraws on the frames it actually changes.
+          if (s.art?.update?.(t, dt) && s.tex) s.tex.needsUpdate = true;
+        }
       }
       if (on !== s.shown) { s.shown = on; s.carrier?.rise?.(on); }
       const cue = s.carrier?.cue;

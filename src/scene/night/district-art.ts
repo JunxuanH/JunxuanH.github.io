@@ -8,7 +8,7 @@ const ADS: Record<string, string> = {
   'amd-dc': 'console',
   apple: 'camera',
   projects: 'console',
-  contact: 'camera',
+  // No `contact`: the departures board paints its own face (carriers/flapboard.ts).
 };
 
 /** Complete illustrated posters; preserve their lettering without an extra caption overlay. */
@@ -16,7 +16,7 @@ export function adCanvas(id: string, aspect = 0.65) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024; canvas.height = Math.max(256, Math.round(1024 * aspect));
   const ctx = canvas.getContext('2d')!;
-  const asset = ADS[id] ?? ADS.contact;
+  const asset = ADS[id] ?? 'camera';
   let image: HTMLImageElement | undefined;
   const paint = () => {
     const { width: w, height: h } = canvas;

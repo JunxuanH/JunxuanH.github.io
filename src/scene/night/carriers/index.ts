@@ -48,6 +48,12 @@ export interface Carrier {
   props?: PropPlacement[];
   npcs?: { root: THREE.Object3D; headBone?: THREE.Bone }[];
   update?(t: number, dt: number, p: number): void;
+  /**
+   * Paints its own board instead of the district ad poster (the departures board lists the contact links as
+   * real departure rows, so it has to read the section's DOM and animate its own flaps). `el` is the section
+   * element; `update` returns true on a frame that changed pixels, and content.ts flags the texture.
+   */
+  art?(el: HTMLElement, aspect: number): { canvas: HTMLCanvasElement; load?(onLoad: () => void): void; update?(t: number, dt: number): boolean };
   /** Called once with the painted board's height (u) so frames / backings match it. */
   fit?(boardHeightU: number): void;
   /** Fired once when p crosses `p` upward; re-armed when p drops below `p - 0.05`. */
