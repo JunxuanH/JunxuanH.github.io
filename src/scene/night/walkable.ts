@@ -179,6 +179,9 @@ export function buildWorldArea(areas: Record<WalkSection, Area>, buildings: Obst
     ...[-130, 70, 210].map((x) => ({ x0: x - 2.6, x1: x + 2.6, z0: QUAY_Z - 2.4, z1: 13.6, y: 2.85 })),
   ];
   const obstacles = buildings; // shared: late GLB loads append their actual bounds here too
+  // The tunnel head at the foot of the avenue (bay.ts createTunnelPortal). Tall enough to stop the camera
+  // boom as well as the player, so nobody ends up inside the throat with the traffic.
+  obstacles.push(box(-14, 14, -40.4, -22.4, 3.2));
   for(const p of SIGNAL_POSTS) obstacles.push(circle(p.x,p.z,.25,5.8));
   obstacles.push(...Object.values(areas).flatMap((a) => a.obstacles));
   for (const [id, terminal] of Object.entries(TERMINALS)) {

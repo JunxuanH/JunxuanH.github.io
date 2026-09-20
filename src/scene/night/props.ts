@@ -133,6 +133,7 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
     if (isRoad(0, z) && !isSidewalk(inner, z)) continue;
     if (!isSidewalk(inner, z)) continue;
     const side = ((z / 14) | 0) % 2 ? 1 : -1;
+    if (z > -42 && z < -22) continue; // the tunnel head stands here (bay.ts createTunnelPortal)
     add('lamp', side * inner, z, side > 0 ? Math.PI : 0);
     if (r() < 0.55 * density) add(r() < 0.5 ? 'dumpster' : 'barrier', -side * outer, z + (r() - 0.5) * 8, r() * Math.PI);
     if (r() < 0.35 * density) add('cone', side * (inner + 1.5), z + 5, r() * Math.PI, 0.9);

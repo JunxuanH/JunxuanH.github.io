@@ -4,6 +4,7 @@ import {
   transformNormalToView, sin, cos, max, dot, pow, length, mix, reflector, color, uv, step, fract, floor, hash,
   smoothstep, abs, reflect, glowMaterial, uniform,
 } from './tsl';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, loader, params } from './palette';
 import { groundMaterial, wallMaterial, type GroundTextures, type WallSets } from './streets';
 
@@ -77,11 +78,15 @@ export function createWater(resolutionScale: number) {
 /** Seawall where the city meets the bay: concrete quay with a cyan edge strip, bollard lights, three jetties on pilings. */
 export function createQuay(quayZ: number, ground?: Pick<GroundTextures, 'planks' | 'planksN' | 'planksR' | 'planksAO'>, walls?: WallSets) {
   const group = new THREE.Group();
-  // The seawall runs 780 u along the waterfront and was a single flat colour. Concrete, tinted
-  // down hard: it faces the dark bay and only the quay edge strip and bollards light it.
+  // The seawall runs 780 u along the waterfront. It faces the bay, the moon is behind it, and the nearest
+  // point lights are the pier's 120 u east with a range of 30 — so it rendered pure black for its whole
+  // length, the largest dark mass in the harbour. Nothing can light 780 u of wall without evicting district
+  // lights from the fixed pool (lights.ts), so the wall lights itself: a graded emissive, strongest under
+  // the lip where the bollards and the edge strip actually are, gone by the waterline.
   const wallMat = walls
-    ? wallMaterial(walls['wall-concrete'], 6, { roughness: 0.85, tint: 0x3d4250 })
+    ? wallMaterial(walls['wall-concrete'], 6, { roughness: 0.85, tint: 0x4d5464 })
     : new THREE.MeshStandardNodeMaterial({ color: 0x1a1c24, roughness: 0.85 });
+  wallMat.emissiveNode = mix(color(0x141b26), color(0x38485c), smoothstep(0.2, 3.0, positionWorld.y)).mul(0.85);
   const wall = new THREE.Mesh(new THREE.BoxGeometry(780, 3.2, 2.4), wallMat);
   wall.position.set(0, 1.4, quayZ - 1.2);
   group.add(wall);
@@ -289,3 +294,93 @@ export function createBillboard(face: string | BillboardFace, subtitle = '', w =
 }
 
 export const _unused = { sub, abs };
+
+/**
+ * Harbor tunnel portal: the head the avenue drives into at the waterfront.
+ *
+ * Both ground lanes used to begin and end at z −24 (main.ts), and traffic.ts wraps a car's progress modulo 1,
+ * so cars teleported in and out of existence in the open, in front of a blank seawall — the defect Ivan
+ * photographed. The lanes now run on into this head and wrap deep inside it, out of sight, which reads as
+ * traffic going under the bay.
+ *
+ * It stands ON the road north of the seawall rather than cutting through it. A trench would mean splitting
+ * the single flat road plane that spans z −640…−20 (streets.ts) and teaching `groundY` about a slope, and a
+ * head projecting into the water would sit on the optical axis of the hero vista — the rail flies down x = 0
+ * and at p 0.10 looks straight at (0, 22, −20) — besides fighting a water plane that reaches 110 u inland.
+ * Standing here it touches neither, and the wall, bollards and edge strip behind it are untouched.
+ *
+ * The seam is hidden by a blackout wall, not by darkness. A lintel above eye height occludes nothing: the ray
+ * from a walker's eye through the soffit ascends, so the whole throat floor is in view from the avenue, and
+ * the scene's hemisphere and moon lights are unshadowed, so a car inside is lit exactly like the street. A
+ * matte black wall across the throat is what actually eats them: a car drives at it and is progressively
+ * occluded, which is what driving into a tunnel looks like. It wraps well behind that wall.
+ */
+export const TUNNEL = {
+  /** Mouth face (north, where cars enter) and back face (south, against the seawall). */
+  z0: -40.4, z1: -22.4,
+  /** Half width of the structure and of its opening; the opening matches the avenue exactly. */
+  half: 14, mouthHalf: 10,
+  /**
+   * Structure height and the clear height of the opening. The head must not rise above the 3.0 seawall: the
+   * hero rail looks down this exact axis and anything taller shows over the wall line in the vista.
+   */
+  h: 3.2, mouthH: 2.8,
+  /** The blackout wall's face. Everything south of it is invisible from the street. */
+  blackout: -33,
+} as const;
+
+export function createTunnelPortal(walls?: WallSets) {
+  const group = new THREE.Group();
+  group.name = 'tunnel-portal';
+  const { z0, z1, half, mouthHalf, h, mouthH } = TUNNEL;
+  const depth = z1 - z0, cz = (z0 + z1) / 2, pier = half - mouthHalf;
+  const mat = walls
+    ? wallMaterial(walls['wall-concrete'], 6, { roughness: 0.82, tint: 0x565e70 })
+    : new THREE.MeshStandardNodeMaterial({ color: 0x232733, roughness: 0.82 });
+  // Same reason as the seawall: nothing out here lights concrete. The head glows faintly from its own
+  // mouth, warm near the opening and colder as it rises toward the quay lip.
+  mat.emissiveNode = mix(color(0x2a2118), color(0x36445a), smoothstep(0.4, 4.0, positionWorld.y)).mul(0.9);
+
+  // Concrete in one draw: flanks either side of the opening, the lintel across it, the back wall closing the
+  // head against the seawall, and the sign's two brackets.
+  const shell = [
+    new THREE.BoxGeometry(pier, h, depth).translate(-(mouthHalf + pier / 2), h / 2, cz),
+    new THREE.BoxGeometry(pier, h, depth).translate(mouthHalf + pier / 2, h / 2, cz),
+    new THREE.BoxGeometry(mouthHalf * 2, h - mouthH, depth).translate(0, (h + mouthH) / 2, cz),
+    new THREE.BoxGeometry(mouthHalf * 2, h, 1).translate(0, h / 2, z1 - 0.5),
+    ...[-1, 1].map((side) => new THREE.BoxGeometry(0.22, 2.0, 0.22).translate(side * 5.6, h + 0.2, z0 - 0.3)),
+  ];
+  group.add(new THREE.Mesh(mergeGeometries(shell, false)!, mat));
+
+  // The mouth needs an edge or the opening reads as a painted rectangle: a warm rim around three sides, the
+  // same trick as the quay's cyan lip, plus two short service strips just inside. The strips stop well before
+  // the blackout wall — lighting the depth of the throat is exactly what makes a hidden thing visible again.
+  const lit = [
+    new THREE.BoxGeometry(mouthHalf * 2 + 0.5, 0.22, 0.22).translate(0, mouthH + 0.11, z0 - 0.12),
+    ...[-1, 1].map((side) => new THREE.BoxGeometry(0.22, mouthH, 0.22).translate(side * (mouthHalf + 0.14), mouthH / 2, z0 - 0.12)),
+    ...[-1, 1].map((side) => new THREE.BoxGeometry(0.14, 0.14, 4.5).translate(side * (mouthHalf - 0.3), mouthH - 0.35, z0 + 3)),
+  ];
+  group.add(new THREE.Mesh(mergeGeometries(lit, false)!, glowMaterial(0xffb347, 2.0)));
+
+  // The blackout wall. Unlit, near-black, opaque: cars are eaten by it as they drive in, and the lane's wrap
+  // happens behind it where nothing can be seen at all.
+  const dark = new THREE.MeshBasicNodeMaterial({ color: 0x04060b });
+  dark.fog = false;
+  const blind = new THREE.Mesh(new THREE.BoxGeometry(mouthHalf * 2, mouthH, 0.4), dark);
+  blind.position.set(0, mouthH / 2, TUNNEL.blackout);
+  group.add(blind);
+
+  // Portal nameplate over the mouth (nano-banana-2, design/night/prompts/tunnel-portal.txt). Self-lit like
+  // every other sign in the city, and mounted on two brackets so it reads as bolted on rather than painted.
+  const signTex = loader.load('/night/tunnel/portal-sign.webp');
+  signTex.colorSpace = THREE.SRGBColorSpace;
+  signTex.anisotropy = 4;
+  const signMat = new THREE.MeshBasicNodeMaterial({ map: signTex });
+  signMat.fog = false;
+  signMat.colorNode = texture(signTex).rgb.mul(1.45);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(13, 13 * 254 / 1024), signMat);
+  sign.position.set(0, h + 0.9, z0 - 0.45);
+  sign.rotation.y = Math.PI; // faces the oncoming traffic
+  group.add(sign);
+  return group;
+}

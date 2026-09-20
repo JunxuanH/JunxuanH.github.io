@@ -24,7 +24,7 @@ import { createShops } from './shops';
 import { createRobots } from './robots';
 import { createDrones } from './drones';
 import { DISTRICT_CROWDS, PATROLS, DRONE_LANES } from './paths';
-import { createWater, createBridge, createBillboard, createQuay } from './bay';
+import { createWater, createBridge, createBillboard, createQuay, createTunnelPortal } from './bay';
 import { createKeyedSigns, neonText, signRegistryGroup } from './signs';
 import { createAudio, bindAudioToggle } from './audio';
 import { createInteract } from './interact';
@@ -244,6 +244,7 @@ export async function start(root: HTMLElement) {
   if (water) scene.add(water);
   scene.add(createBridge(walls));
   scene.add(createQuay(QUAY_Z, ground, walls));
+  scene.add(createTunnelPortal(walls)); // where the avenue's traffic goes (bay.ts)
   const billboard = createBillboard({ image: '/night/ads/billboard-shellworks.webp', video: lite || reducedMotion ? undefined : '/night/ads/billboard-shellworks-loop.mp4' }); // the tower's ad (design/night/prompts/ad-shellworks.txt, billboard-loop.txt); phones keep the still + shader motion
   scene.add(billboard);
   billboardRef = billboard;
@@ -270,14 +271,20 @@ export async function start(root: HTMLElement) {
   scene.add(projectAds.group);
   const traffic = await createTraffic([
     // Street level: avenue and the parallel Downtown cross street; Market is pedestrian-only.
-    { pts: [[-5, 0.1, -24], [-5, 0.1, -200], [-5, 0.1, -640]], speed: 0.02, ground: true },
-    { pts: [[5, 0.1, -640], [5, 0.1, -200], [5, 0.1, -24]], speed: 0.018, ground: true },
+    // Both avenue lanes run on into the tunnel throat (bay.ts createTunnelPortal) and wrap 6 u inside it,
+    // where the mouth hides the seam. `speed` is a fraction of curve length per second (traffic.ts), so the
+    // 6 u of extra lane is divided back out or the cars would quietly run faster than before.
+    { pts: [[-5, 0.1, -28], [-5, 0.1, -24], [-5, 0.1, -200], [-5, 0.1, -640]], speed: 0.02 * (616 / 620), ground: true },
+    { pts: [[5, 0.1, -640], [5, 0.1, -200], [5, 0.1, -24], [5, 0.1, -28]], speed: 0.018 * (616 / 620), ground: true },
     { pts: [[-300, 0.1, -148], [0, 0.1, -148], [300, 0.1, -148]], speed: 0.02, ground: true },
     { pts: [[300, 0.1, -140], [0, 0.1, -140], [-300, 0.1, -140]], speed: 0.02, ground: true },
-    // Aloft: hover lanes and the bridge deck.
-    { pts: [[-40, 22, 300], [-12, 24, 120], [-8, 26, -40], [-6, 28, -200], [10, 30, -420]], speed: 0.05 },
-    { pts: [[12, 30, -420], [8, 33, -200], [10, 34, -60], [20, 32, 100], [60, 30, 300]], speed: 0.045 },
-    { pts: [[-120, 40, -60], [-60, 41, -90], [0, 42, -110], [40, 43, -130], [120, 44, -170]], speed: 0.04 },
+    // Aloft: hover lanes and the bridge deck. Every lane wraps its progress modulo 1 (traffic.ts), so each
+    // one has a seam where a car jumps from its end back to its start. These run out past the hero camera to
+    // the south and off the map to the north, so the seam is always in the haze rather than over the city —
+    // scripts/tunnel-check.mjs fails if any lands inside the dressed footprint.
+    { pts: [[-60, 20, 660], [-40, 22, 300], [-12, 24, 120], [-8, 26, -40], [-6, 28, -200], [10, 30, -420], [16, 32, -700]], speed: 0.05 },
+    { pts: [[12, 30, -700], [8, 33, -420], [10, 34, -200], [14, 34, -60], [20, 32, 100], [60, 30, 300], [90, 28, 660]], speed: 0.045 },
+    { pts: [[-330, 36, -20], [-120, 40, -60], [-60, 41, -90], [0, 42, -110], [40, 43, -130], [120, 44, -170], [330, 48, -230]], speed: 0.04 },
     { pts: [[-300, 13.5, 70], [300, 13.5, 70]], speed: 0.03, ground: true },
   ], tier);
   scene.add(traffic.group);
