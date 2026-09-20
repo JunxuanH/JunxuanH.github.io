@@ -11,7 +11,6 @@ import { createPost } from './post';
 import { createBackdrop } from './backdrop';
 import { createFarShore } from './far-shore';
 import { createAirTraffic } from './air-traffic';
-import { createDriftClouds } from './drift-clouds';
 import { createLandingFlyby } from './landing-flyby';
 import { createStreets, loadGroundTextures, loadWallSets, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z, CURB_H } from './streets';
 import { createEnvironment } from './env';
@@ -162,8 +161,6 @@ export async function start(root: HTMLElement) {
   // Keep the painted skyline on the far north boundary, visible down the city streets.
   // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
   pending.push(createBackdrop().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
-  // Weather in front of the plate; the band is a texture, so it loads with the rest (drift-clouds.ts).
-  if (!params.has('noair')) pending.push(createDriftClouds().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] clouds', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],

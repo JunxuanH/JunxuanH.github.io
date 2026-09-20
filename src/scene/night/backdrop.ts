@@ -11,8 +11,8 @@ import { croppedPlateGeometry } from './plate-geometry';
  * The plate stays a still. A 5 s Kling O1 loop of the same image was generated and wired in as a VideoTexture
  * (scripts/backdrop-loop.sh, take 3) and Ivan judged it worse than the still on 2026-09-20 — the clip ships at
  * 1280 px against a 2048 px painting, and the softness costs more than the blinking beacons buy. The generator and
- * its prompt are kept; the runtime swap is not. Motion around the plate comes from drift-clouds.ts and
- * air-traffic.ts instead, and from the window flicker below.
+ * its prompt are kept; the runtime swap is not. Motion around the plate comes from air-traffic.ts and from the
+ * window flicker below; a drifting cloud sheet was tried in front of it and removed on Ivan's call the same day.
  */
 export async function createBackdrop() {
   const group = new THREE.Group();
@@ -45,9 +45,9 @@ export async function createBackdrop() {
     const cellId = floor(tuv.mul(vec2(260, 195)));
     const flick = hash(cellId.x.mul(0.173).add(cellId.y.mul(9.71)).add(floor(time.mul(1.6))));
     const lit = smoothstep(0.30, 0.72, luminance(painted));
-    // Weather lives on its own sheet in front of the plate (drift-clouds.ts), not here. Modulating the painting's
-    // own cloud density only made banks thicken and thin in place — the shapes cannot translate, and it is
-    // translation that reads as moving weather — so a per-plate-pixel noise was paying for the wrong thing.
+    // The clouds are left alone. Modulating their density in this shader only made banks thicken and thin in
+    // place (the shapes are pixels and cannot translate), and a sheet of drifting cloud hung in front of the
+    // plate was tried and cut: the sky is the painting's, and both attempts read as haze over it.
     const plateColor = painted.mul(float(1).add(lit.mul(step(0.93, flick)).mul(0.55)));
     // Fade coverage only. Darkening RGB as well produced a dark fringe along the cut buildings.
     mat.colorNode = mix(color(0x0b0d1c), plateColor, fadeB.mul(0.6).add(0.4));
