@@ -7,7 +7,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ENDPOINT="$1"; PRICE="$2"; OUT="$3"; PROMPT_FILE="$4"; EXTRA="${5:-{\}}"
-BUDGET="${FAL_BUDGET:-15}"
+# Running total the ledger may not exceed, in dollars. Raised to 100 by Ivan on 2026-09-20.
+BUDGET="${FAL_BUDGET:-100}"
 LOG=design/fal-spend.log
 
 if [[ -z "${FAL_KEY:-}" && -f .env.local ]]; then

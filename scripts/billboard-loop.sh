@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 CMD="${1:?gen|encode}"
 ADS=design/night/ads; PANEL=$ADS/billboard-shellworks-panel.png; PROMPT=design/night/prompts/billboard-loop.txt
 MODEL=fal-ai/kling-video/o1/image-to-video; PRICE=0.56
-export FAL_BUDGET="${FAL_BUDGET:-75}"
+export FAL_BUDGET="${FAL_BUDGET:-100}"
 
 if [[ $CMD == gen ]]; then
   TAKE="${2:-1}"

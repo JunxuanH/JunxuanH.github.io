@@ -23,7 +23,7 @@ cd "$(dirname "$0")/.."
 CMD="${1:?gen|encode}"
 PLATES=design/night/plates; FRAME=$PLATES/aerial-loop-frame.png; PROMPT=design/night/prompts/backdrop-loop.txt
 MODEL=fal-ai/kling-video/o1/image-to-video; PRICE=0.56
-export FAL_BUDGET="${FAL_BUDGET:-95.19}"
+export FAL_BUDGET="${FAL_BUDGET:-100}"
 
 if [[ $CMD == gen ]]; then
   TAKE="${2:-1}"; MODE="${3:-loop}"

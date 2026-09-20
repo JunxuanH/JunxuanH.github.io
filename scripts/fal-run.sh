@@ -12,7 +12,8 @@ cd "$(dirname "$0")/.."
 
 ENDPOINT="$1"; PRICE="$2"; LABEL="$3"; INPUT="$4"; OUT="$5"
 JQ_URL="${6:-[.. | objects | select(has(\"url\")) | .url] | first // empty}"
-BUDGET="${FAL_BUDGET:-15}"
+# Running total the ledger may not exceed, in dollars. Raised to 100 by Ivan on 2026-09-20.
+BUDGET="${FAL_BUDGET:-100}"
 LOG=design/fal-spend.log
 
 if [[ -z "${FAL_KEY:-}" && -f .env.local ]]; then

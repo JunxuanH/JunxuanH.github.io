@@ -19,7 +19,7 @@ cat > "$OUT/input.json" <<'JSON'
 JSON
 
 # $0.60 includes PBR. The landing media workflow owns the $88 cap; the caller may raise it explicitly.
-FAL_BUDGET="${FAL_BUDGET:-90}" scripts/fal-run.sh \
+FAL_BUDGET="${FAL_BUDGET:-100}" scripts/fal-run.sh \
   fal-ai/hunyuan3d-v3/text-to-3d 0.60 night/landing-car/3d \
   "$OUT/input.json" "$OUT/model-raw.glb" '.model_glb.url'
 
