@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {
-  positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, uniform,
+  positionWorld, step, fract, smoothstep, hash, floor, mix, color, float, texture, abs, max, min, vec2, normalMap, uniform, luminance,
 } from './tsl';
 import { loader, params, rng } from './palette';
 import { MARKET, isMarketLane } from './market-layout';
@@ -29,6 +29,8 @@ export const CURB_H = 0.22;
 export const PATCH_LIFT = 0.015;
 /** Waterfront edge: streets stop here, the bay begins. */
 export const QUAY_Z = -20;
+/** How brightly the paving's inlaid seams glow. The albedo keeps them dim so this stays the only dial. */
+const SEAM_GLOW = 0.85;
 
 function canvasTex(size: number, draw: (g: CanvasRenderingContext2D, s: number, r: () => number) => void, seed: number) {
   const c = document.createElement('canvas');
@@ -231,7 +233,13 @@ export function createStreets(tex: GroundTextures, walls?: WallSets) {
     const occ = mix(texture(tex.paversAO, uvP).r, texture(tex.asphaltAO, uvA).r, road);
     m.aoNode = mix(occ, float(1), max(puddle, max(paintY, paintW)));
   }
-  m.emissiveNode = mix(color(0xd9c56a).mul(paintY), color(0xd8dde8).mul(paintW), paintW).mul(0.25);
+  // Lane paint reads as paint; the paving's recessed seams read as light. The sidewalk albedo
+  // (design/night/prompts/sidewalk.txt) has pale strips inlaid between its slabs, so key an emissive off its
+  // brightest pixels wherever paving is drawn. Keeping the glow here rather than baking it bright into the
+  // texture is what makes it tunable — SEAM_GLOW is the one dial for how lit the city's pavements look.
+  const paint = mix(color(0xd9c56a).mul(paintY), color(0xd8dde8).mul(paintW), paintW).mul(0.25);
+  const seam = smoothstep(0.34, 0.66, luminance(pave.rgb)).mul(float(1).sub(road));
+  m.emissiveNode = paint.add(color(0x8fe8ff).mul(seam).mul(uniform(SEAM_GLOW)));
   if (tex.asphaltN && tex.paversN) {
     const nA = texture(tex.asphaltN, uvA), nP = texture(tex.paversN, uvP);
     m.normalNode = normalMap(mix(nP, nA, road), vec2(0.9, 0.9));

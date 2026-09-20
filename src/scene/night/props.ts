@@ -207,3 +207,30 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
   const matrices = Object.fromEntries(kinds.map((k) => [k, geos[k] ? place[k] ?? [] : []])) as Record<PropKind, THREE.Matrix4[]>;
   return { group, count: total, placements, matrices };
 }
+
+/**
+ * A patch of light on the ground, as geometry rather than as a light.
+ *
+ * The point-light pool is a fixed size (lights.ts), so every real light added anywhere in the city evicts
+ * one somewhere else. Most of what reads as "lit pavement" in a night scene is not lighting at all — it is
+ * the pool of light under a lamp or a sign — and a flat radial decal delivers that for one draw per colour,
+ * with no shader recompile and no cost to the pool. The street lamps above have used this since the start;
+ * this is the same recipe, exposed so districts can put colour under their own signage.
+ *
+ * `spots` are world x, z and radius. Rendered just above the ground (the caller gives the height), additive
+ * and depth-write-free so wet asphalt keeps showing through.
+ */
+export function lightPools(spots: [number, number, number][], tint: number, opts: { y?: number; strength?: number } = {}) {
+  const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  mat.fog = false;
+  const d = uv().sub(0.5).length();
+  mat.colorNode = color(tint);
+  mat.opacityNode = float(1).sub(smoothstep(0.06, 0.5, d)).mul(opts.strength ?? 0.4);
+  const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), mat, spots.length);
+  const flat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
+  spots.forEach(([x, z, r], i) => mesh.setMatrixAt(i, new THREE.Matrix4().compose(
+    new THREE.Vector3(x, opts.y ?? 0.05, z), flat, new THREE.Vector3(r * 2, r * 2, 1))));
+  mesh.frustumCulled = false;
+  mesh.renderOrder = -1;
+  return mesh;
+}

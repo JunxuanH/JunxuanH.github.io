@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { facadeBlock, stringLights, type DistrictBuild, type DistrictCtx } from './shared';
 import { CURB_H } from '../streets';
 import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from '../market-layout';
+import { lightPools } from '../props';
 import { loader } from '../palette';
 
 /** Pedestrian bazaar around a central public terminal, with clear circulation on both sides. */
@@ -124,8 +125,10 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
       }
       if(s.kind==='repair') for(let k=0;k<4;k++) box(p,ceramic,.08,.48,.06,.5+k*.3,2.3,-1.65);
     }
-    // Keep the source away from the front curtain: close point lighting caused a white hotspot.
-    lights.push([s.x,2.8,s.z-.25*Math.cos(s.yaw),s.accent,35,7]);
+    // Keep the source away from the front curtain: close point lighting caused a white hotspot. Range was
+    // 7 u, which lit the stall and nothing else: the lane between the two rows read as mud while Downtown,
+    // 90 u away, was bright. Reaching across the lane is what makes the market feel like a street.
+    lights.push([s.x,2.8,s.z-.25*Math.cos(s.yaw),s.accent,70,14]);
   }
   // A compact directory crown makes the centre legible from across the market.
   // Supports sit within the terminal's existing collision footprint.
@@ -165,5 +168,10 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
     if(merged) group.add(new THREE.Mesh(merged,mat));
     geos.forEach(g=>g.dispose());
   }
+  // Each stall throws its own accent colour onto the lane in front of it. Decals, not lights: the point-light
+  // pool is fixed-size (props.ts lightPools). Tight and separated on purpose — a continuous warm run across
+  // the whole aisle was tried and turned the market into a beige carpet; what reads as a night market is
+  // coloured puddles with dark between them.
+  for (const s of MARKET_STALLS) group.add(lightPools([[s.x, s.z + (s.yaw ? 4.4 : -4.4), 5]], s.accent, { y: CURB_H + 0.06, strength: 0.6 }));
   return {group,props:[],lights};
 }

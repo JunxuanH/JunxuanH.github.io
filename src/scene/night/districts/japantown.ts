@@ -143,7 +143,9 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   // faces would otherwise be coplanar and z-fight (blocky interleaving around the torii). The approach starts at the
   // plaza's north edge so the two patches never overlap each other.
   const g = ctx.tex.ground;
-  const plazaMat = g?.plaza ? groundMaterial(g.plaza, g.plazaN, 7, { roughness: 0.5, rough: g.plazaR, ao: g.plazaAO }) : new THREE.MeshStandardNodeMaterial({ color: T.ground, roughness: 0.8 });
+  // Tinted down: the machined paving (design/night/prompts/plaza.txt) is a lighter stone than the mossy
+  // slabs it replaced, and at full albedo the plaza was the brightest thing in the district.
+  const plazaMat = g?.plaza ? groundMaterial(g.plaza, g.plazaN, 7, { roughness: 0.5, tint: 0xb9bec9, rough: g.plazaR, ao: g.plazaAO }) : new THREE.MeshStandardNodeMaterial({ color: T.ground, roughness: 0.8 });
   const plaza = new THREE.Mesh(new THREE.BoxGeometry(84, CURB_H + PATCH_LIFT, 62), plazaMat);
   plaza.position.set(c.x, (CURB_H + PATCH_LIFT) / 2, c.z);
   group.add(plaza);

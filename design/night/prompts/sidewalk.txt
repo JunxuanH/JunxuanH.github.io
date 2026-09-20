@@ -1,0 +1,5 @@
+A seamless tiling texture of a futuristic city sidewalk, photographed straight down from above, flat orthographic top view with no perspective and no horizon.
+
+Large precise modular pavement slabs in dark blue-grey composite, laid in a regular grid, their edges crisp and machined rather than chipped. Between the slabs run narrow recessed seams holding thin pale cyan light strips, evenly spaced, clean and unbroken. A few slabs carry a faint etched circuit pattern or a small stencilled maintenance marking in dim grey. The surface is damp, with a subtle even sheen and one or two shallow puddles catching a hint of magenta.
+
+Clean and maintained: no rubble, no cracked or broken slabs, no potholes, no weeds, no rubbish, no gravel, no hexagons. Even flat lighting across the whole image with no baked shadows, no vignette, no bright spot and no directional highlight, so it can be tiled. No objects sitting on the ground, no people, no vehicles, no text, no watermark, no border.
