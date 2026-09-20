@@ -63,9 +63,17 @@ function glassLobby(w: number, h: number, d: number, tint: number, grime?: THREE
   desk.position.set(0, 0.2, d * 0.25);
   const deskGlow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 0.06, 0.06), glowMaterial(tint, 2.2));
   deskGlow.position.set(0, 1.32, d * 0.25 + 0.62);
-  // Forecourt: black marble slab in front of the lobby. PATCH_LIFT taller than the avenue sidewalk it overlaps by
+  // Forecourt: polished slab in front of the lobby. PATCH_LIFT taller than the avenue sidewalk it overlaps by
   // 2.4 u, so the two top faces are not coplanar (streets.ts).
-  const forecourt = new THREE.Mesh(new THREE.BoxGeometry(w + 6, CURB_H + PATCH_LIFT, 6), new THREE.MeshStandardNodeMaterial({ color: 0x0a0b12, roughness: 0.12, metalness: 0.5 }));
+  //
+  // It used to be roughness 0.12 / metalness 0.5 over a near-black albedo, which on a scene with no shadow
+  // maps and a dark environment map meant it reflected almost nothing and took almost no diffuse: a void
+  // beside a lit road, with the lobby's traffic cones apparently floating on it. Same recipe as the lobby
+  // floor above now — still polished, but it answers to light.
+  const forecourtMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.34, metalness: 0.18 });
+  forecourtMat.colorNode = color(0x141824);
+  forecourtMat.emissiveNode = color(0x9fb4d8).mul(0.14);
+  const forecourt = new THREE.Mesh(new THREE.BoxGeometry(w + 6, CURB_H + PATCH_LIFT, 6), forecourtMat);
   forecourt.position.set(0, (CURB_H + PATCH_LIFT) / 2, d / 2 + 3);
   group.add(box, floor, desk, deskGlow, forecourt,officeCore(w,h,d));
   void float; void mix;
