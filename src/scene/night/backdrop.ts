@@ -8,22 +8,18 @@ import { croppedPlateGeometry } from './plate-geometry';
  * vista) at z −560, mirrored to both sides so wide viewports never see its edge. It fades to the sky dome at the top
  * and sides. `fog: false` — haze is baked in. No east / west plates: those read as nearby wallpaper from the streets.
  *
- * With `video`, the painting comes alive: a 5 s Kling O1 loop of the same plate (scripts/backdrop-loop.sh, take 3)
- * is swapped into the same texture taps as a VideoTexture, so beacons blink, rooftop neon cycles, aerial vehicles
- * travel their painted lanes and the water shimmers — inside the art, which the shader's own window flicker cannot
- * do. The clip is conditioned on the shipped plate as both first and last frame, which is what keeps it loopable and
- * pixel-aligned with the still; that same constraint is why it animates light and not clouds (weather drifts in
- * front instead, drift-clouds.ts). Setting `TextureNode.value` keeps the program, so the swap costs no recompile,
- * and the still carries the scene until the video is playing. Phones and reduced motion never load it.
+ * The plate stays a still. A 5 s Kling O1 loop of the same image was generated and wired in as a VideoTexture
+ * (scripts/backdrop-loop.sh, take 3) and Ivan judged it worse than the still on 2026-09-20 — the clip ships at
+ * 1280 px against a 2048 px painting, and the softness costs more than the blinking beacons buy. The generator and
+ * its prompt are kept; the runtime swap is not. Motion around the plate comes from drift-clouds.ts and
+ * air-traffic.ts instead, and from the window flicker below.
  */
-export async function createBackdrop(opts: { video?: string } = {}) {
+export async function createBackdrop() {
   const group = new THREE.Group();
   group.name = 'backdrop';
   // Taller than it is wide-ish: the plate's job is the sky as much as the skyline. The bottom edge
   // stays at y -110 where it meets the water and the city, so H0 and Y0 move together.
   const H0 = 760, D0 = 560, Y0 = 270;
-  /** The plate's texture taps, one per panel: the video is swapped into these once it plays. */
-  const taps: { value: THREE.Texture }[] = [];
   const make = (plate: THREE.Texture, W: number, H: number, mirror: boolean) => {
     // Crop geometry and UVs together so retained buildings are not stretched to fill the old width.
     const margin = 0.08;
@@ -42,9 +38,7 @@ export async function createBackdrop(opts: { video?: string } = {}) {
     // dissolves, which costs some painted city at the extremes and buys no visible boundary.
     const edgeStart = uniform(0), edgeEnd = uniform(0.2);
     const fadeX = smoothstep(edgeStart, edgeEnd, uv().x).mul(smoothstep(edgeStart, edgeEnd, float(1).sub(uv().x)));
-    const tap = texture(plate, tuv);
-    taps.push(tap as unknown as { value: THREE.Texture });
-    const painted = tap.rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
+    const painted = texture(plate, tuv).rgb.mul(vec3(0.95, 1.0, 1.08)).mul(1.1);
     // The painting's windows are lit but frozen. Flicker them on a coarse cell grid — bright pixels only, so the
     // sky and the water stay still — and the far city reads as inhabited instead of as a photograph. Costs nothing,
     // survives on every tier, and stops dead under reduced motion, where `time` is held at 0 (tsl.ts).
@@ -81,23 +75,6 @@ export async function createBackdrop(opts: { video?: string } = {}) {
   group.add(left, right, centre);
 
   group.renderOrder = -10;
-  if (opts.video) playLoop(opts.video, taps);
   return group;
 }
 
-/**
- * Swap the still for its loop once the video is actually playing — not on `canplay`, which fires before the first
- * frame is decodable and would flash a black plate across the whole sky. A failure here is silent on purpose: the
- * still is already on screen and is a complete picture.
- */
-function playLoop(src: string, taps: { value: THREE.Texture }[]) {
-  const v = document.createElement('video');
-  Object.assign(v, { src, muted: true, loop: true, playsInline: true, autoplay: true, preload: 'auto', crossOrigin: 'anonymous' });
-  v.addEventListener('playing', () => {
-    const vt = new THREE.VideoTexture(v);
-    vt.colorSpace = THREE.SRGBColorSpace;
-    vt.wrapS = vt.wrapT = THREE.ClampToEdgeWrapping;
-    for (const t of taps) t.value = vt;
-  }, { once: true });
-  v.play().catch(() => { /* autoplay refused: the still stays */ });
-}

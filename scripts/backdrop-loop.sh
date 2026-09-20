@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-# Animate the far skyline plate (backdrop.ts): a seamless ~5 s Kling O1 loop conditioned on the shipped plate as both
-# start and end frame, played as a VideoTexture over the still on non-lite tiers. Same shape as billboard-loop.sh.
+# Animate the far skyline plate: a seamless ~5 s Kling O1 loop conditioned on the shipped plate as both start and end
+# frame. Same shape as billboard-loop.sh.
+#
+# NOT WIRED UP. Take 3 shipped on 2026-09-20 and came straight back out: the clip encodes at 1280 px against a 2048 px
+# painting and the softness cost more than the blinking beacons bought. backdrop.ts draws the still. Keep this script
+# for the next attempt — which wants a sharper encode (or a model that returns the plate's own resolution) before the
+# VideoTexture swap is worth restoring.
 # Usage: scripts/backdrop-loop.sh gen [take=1] [open]       # $0.56 → design/night/plates/backdrop-loop-<take>.mp4 (gitignored)
 #        scripts/backdrop-loop.sh encode <raw.mp4> [w=1280] # → public/night/backdrop/aerial-loop.mp4 (≤ 2 MB)
 #

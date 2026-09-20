@@ -161,8 +161,7 @@ export async function start(root: HTMLElement) {
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.
   // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
-  pending.push(createBackdrop({ video: lite || reducedMotion || params.has('novideo') ? undefined : '/night/backdrop/aerial-loop.mp4' }) // the painting's own lights, animated (scripts/backdrop-loop.sh)
-    .then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
+  pending.push(createBackdrop().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
   // Weather in front of the plate; the band is a texture, so it loads with the rest (drift-clouds.ts).
   if (!params.has('noair')) pending.push(createDriftClouds().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] clouds', e)));
 
