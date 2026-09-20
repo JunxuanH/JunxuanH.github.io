@@ -9,6 +9,9 @@ import { PAL, params, reducedMotion, setReducedMotion, loader, type Tier } from 
 import { createSky, createHaze } from './sky';
 import { createPost } from './post';
 import { createBackdrop } from './backdrop';
+import { createFarShore } from './far-shore';
+import { createAirTraffic } from './air-traffic';
+import { createDriftClouds } from './drift-clouds';
 import { createLandingFlyby } from './landing-flyby';
 import { createStreets, loadGroundTextures, loadWallSets, AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, QUAY_Z, CURB_H } from './streets';
 import { createEnvironment } from './env';
@@ -141,6 +144,8 @@ export async function start(root: HTMLElement) {
     });
   }
   scene.add(createSky(tier));
+  if (!params.has('noshore')) scene.add(createFarShore());
+  if (!params.has('noair')) scene.add(createAirTraffic()); // moving lights in front of the painted skyline
   // Start the rig downloads now so they overlap the skyline build instead of gating 'waking the residents'.
   const PROTAGONIST = 'ronin-player'; // chosen anime Ronin; separate from the existing ronin NPC
   const RIGS_ALL = [PROTAGONIST, 'netrunner', 'corpo', 'vendor', 'punk', 'sec-bot', 'chef', 'geisha-bot', 'idol', 'ronin', 'schoolgirl-hacker', 'mech-pilot', 'cat-courier', 'oni-bouncer', 'maid-bot', 'medic', 'skater', 'salaryman', 'dj', 'nomad', 'noodle-cook', 'patrol-bot',
@@ -156,7 +161,10 @@ export async function start(root: HTMLElement) {
   const pending: Promise<unknown>[] = []; // async builds to finish before the shader pre-warm
   // Keep the painted skyline on the far north boundary, visible down the city streets.
   // No east/west panels: those read as nearby wallpaper when looking sideways across the map.
-  pending.push(createBackdrop().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
+  pending.push(createBackdrop({ video: lite || reducedMotion || params.has('novideo') ? undefined : '/night/backdrop/aerial-loop.mp4' }) // the painting's own lights, animated (scripts/backdrop-loop.sh)
+    .then((m) => { scene.add(m); }).catch((e) => console.warn('[night] backdrop', e)));
+  // Weather in front of the plate; the band is a texture, so it loads with the rest (drift-clouds.ts).
+  if (!params.has('noair')) pending.push(createDriftClouds().then((m) => { scene.add(m); }).catch((e) => console.warn('[night] clouds', e)));
 
   const keepOut: [number, number, number][] = [
     [ANCHORS.towerA.x, ANCHORS.towerA.z, 20], [-33, -95, 18], [30, -95, 18], [-22, -190, 18],

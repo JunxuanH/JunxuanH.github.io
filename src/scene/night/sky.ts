@@ -1,6 +1,6 @@
 import * as THREE from 'three/webgpu';
 import {
-  positionLocal, normalize, mix, color, smoothstep, float, uv,
+  positionLocal, normalize, mix, color, smoothstep, float, uv, sin,
   fog, densityFogFactor, positionWorld,
 } from './tsl';
 import { PAL } from './palette';
@@ -28,7 +28,20 @@ export function createSky(_tier: 'high' | 'med' | 'low') {
   const grad = mix(color(0x58405a), color(0x0e1322), up);
   // Warm city glow just above the horizon, strongest toward -z (the skyline).
   const glow = smoothstep(0.25, 0.0, dir.y).mul(smoothstep(-0.3, -1.0, dir.z).mul(0.5).add(0.5));
-  mat.colorNode = grad.add(color(0x5a2a3c).mul(glow).mul(0.6));
+  // East and west over the bay the painted plate does not reach, and there the dome was doing all the
+  // work alone: measured from the pier looking west, 42 % of the frame was sky whose luminance changed
+  // by 0.1 from the horizon to the top of frame — a flat wall, with the bay's far edge cutting across it.
+  // Two cheap additions give that half of the sky something to be, without a second painting.
+  // Mist on the horizon itself, in every direction, so the water ends in air rather than on a line.
+  const mist = smoothstep(0.14, -0.03, dir.y);
+  // Cloud strata: two long sine layers crossed, low contrast, gone by ~30° up. Not weather — just enough
+  // structure that the eye reads depth instead of paint. Kept under the plate's own cloud contrast so the
+  // vista, where the painting covers the sky, does not gain a second set of bands behind the first.
+  const strata = sin(dir.y.mul(26.0).add(dir.x.mul(3.1))).mul(0.5).add(0.5)
+    .mul(sin(dir.y.mul(15.0).sub(dir.z.mul(2.4)).add(1.7)).mul(0.5).add(0.5))
+    .mul(smoothstep(0.5, 0.05, dir.y));
+  const lit = grad.add(color(0x5a2a3c).mul(glow).mul(0.6));
+  mat.colorNode = mix(lit, color(0x6d5573), mist.mul(0.5)).add(color(0x35263f).mul(strata).mul(0.7));
   group.add(dome);
 
   // Moon
