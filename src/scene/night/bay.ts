@@ -56,8 +56,12 @@ export function createWater(resolutionScale: number) {
     const uv2 = add(div(p, vec2(897.0, 983.0)), vec2(div(o, 101), div(o, 97)));
     return normals.sample(uv0).add(normals.sample(uv1)).add(normals.sample(uv2)).mul(0.6667).sub(1);
   };
-  // World-space normal = swell slope + fine ripples from the normal map.
-  const ripple = getNoise(positionWorld.xz.mul(3.0)).xzy.mul(vec3(0.5, 1.0, 0.5));
+  // World-space normal = swell slope + fine ripples from the normal map. The ripples fade out with distance:
+  // by the far shore a single screen pixel covers metres of water, so keeping them there only aliases — real
+  // water goes glassy at a distance for the same reason. `?wrip` holds them on everywhere for comparison.
+  const eyeDist = length(cameraPosition.sub(positionWorld));
+  const rippleFade = params.has('wrip') ? float(1) : smoothstep(float(420), float(70), eyeDist);
+  const ripple = getNoise(positionWorld.xz.mul(3.0)).xzy.mul(vec3(0.5, 1.0, 0.5)).mul(rippleFade);
   const nWorld = normalize(vec3(dhx.negate(), 1.0, dhy.negate()).add(ripple.mul(vec3(1, 0, 1)).mul(1.1)));
   mat.normalNode = transformNormalToView(nWorld);
 
@@ -72,7 +76,16 @@ export function createWater(resolutionScale: number) {
   const cap = Number(params.get('wcap')) || 0.012;
   const theta = max(dot(eye, nWorld), 0.0);
   const falloff = float(0.001).add(float(1.0).div(dist)).mul(3.0).min(float(cap / amount));
-  const distortion = nWorld.xz.mul(falloff);
+  // Let the ripple drag the reflection where the reflection can afford it, and leave it alone where it
+  // cannot. The mirror is a screen-space image: looking down at the water near the camera it is barely
+  // compressed and a nudge reads as a ripple, but toward the horizon a whole district is squeezed into a few
+  // rows, so the same nudge fetches from streets away and the lit windows break into a stack of wavy
+  // ribbons. That is the artefact, confirmed by switching the offset off entirely — the reflection snaps
+  // into clean vertical streaks. So the offset fades out as the view flattens. `?wgrz` disables the fade,
+  // `?wvert` scales the vertical component on its own.
+  const graze = params.has('wgrz') ? float(1) : smoothstep(float(0.06), float(0.42), theta);
+  const squash = Number(params.get('wvert')) || 0.5;
+  const distortion = nWorld.xz.mul(falloff).mul(graze).mul(vec2(1, squash));
   mirror.uvNode = mirror.uvNode!.add(distortion.mul(amount));
   const reflectance = pow(float(1.0).sub(theta), 4.0).mul(0.5).add(0.1); // 0.1 head-on … 0.6 grazing
   mat.colorNode = color(0x08131f);
