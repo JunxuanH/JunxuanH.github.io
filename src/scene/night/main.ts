@@ -286,9 +286,11 @@ export async function start(root: HTMLElement) {
     // one has a seam where a car jumps from its end back to its start. These run out past the hero camera to
     // the south and off the map to the north, so the seam is always in the haze rather than over the city —
     // scripts/tunnel-check.mjs fails if any lands inside the dressed footprint.
-    { pts: [[-60, 20, 660], [-40, 22, 300], [-12, 24, 120], [-8, 26, -40], [-6, 28, -200], [10, 30, -420], [16, 32, -700]], speed: 0.05 },
-    { pts: [[12, 30, -700], [8, 33, -420], [10, 34, -200], [14, 34, -60], [20, 32, 100], [60, 30, 300], [90, 28, 660]], speed: 0.045 },
-    { pts: [[-330, 36, -20], [-120, 40, -60], [-60, 41, -90], [0, 42, -110], [40, 43, -130], [120, 44, -170], [330, 48, -230]], speed: 0.04 },
+    // 20 % slower than first tuned: from the vista these read as distant airliners, and distant things that
+    // cross the frame quickly read as small and near (Ivan, watching the hero).
+    { pts: [[-60, 20, 660], [-40, 22, 300], [-12, 24, 120], [-8, 26, -40], [-6, 28, -200], [10, 30, -420], [16, 32, -700]], speed: 0.04 },
+    { pts: [[12, 30, -700], [8, 33, -420], [10, 34, -200], [14, 34, -60], [20, 32, 100], [60, 30, 300], [90, 28, 660]], speed: 0.036 },
+    { pts: [[-330, 36, -20], [-120, 40, -60], [-60, 41, -90], [0, 42, -110], [40, 43, -130], [120, 44, -170], [330, 48, -230]], speed: 0.032 },
     { pts: [[-300, 13.5, 70], [300, 13.5, 70]], speed: 0.03, ground: true },
   ], tier);
   scene.add(traffic.group);

@@ -61,12 +61,23 @@ function taxiPad(label: string, yaw: number) {
   const g = ring(PAL.yellow, 1.5);
   const post = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.5, 8).translate(0, 1.25, 0), new THREE.MeshStandardNodeMaterial({ color: 0x14161f, roughness: 0.5, metalness: 0.7 }));
   post.position.set(Math.cos(yaw), 0, -Math.sin(yaw)).multiplyScalar(1.7); // beside the ring, along the sign's right-hand axis
-  const sign = neonText(`→ ${label}`, '#f2ff3d', 2.6, { gain: 2.4 });
+  // Neon text is a white core inside a coloured glow, and at gain 2.4 the core sat well past the bloom
+  // threshold: the halo filled the counters of its own letters and the sign read as a yellow smear, worse
+  // still with a quay lamp burning behind it. Backed by a dark plate and turned down, the letters have
+  // something to be read against — which is what a real sign does, rather than shouting louder.
+  const sign = neonText(`→ ${label}`, '#f2ff3d', 2.6, { gain: 1.5 });
   sign.position.set(post.position.x, 2.75, post.position.z);
   sign.rotation.y = yaw;
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), glow(PAL.yellow, 2.2));
+  const face = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+  const backing = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.78, 2.6 * 0.3125 + 0.16),
+    new THREE.MeshStandardNodeMaterial({ color: 0x0a0c14, roughness: 0.85, side: THREE.DoubleSide }),
+  );
+  backing.position.copy(sign.position).addScaledVector(face, -0.04);
+  backing.rotation.y = yaw;
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), glow(PAL.yellow, 1.5));
   cap.position.set(post.position.x, 2.55, post.position.z);
-  g.add(post, sign, cap);
+  g.add(post, backing, sign, cap);
   return g;
 }
 

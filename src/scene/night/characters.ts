@@ -494,12 +494,15 @@ export function createCrowd(opts: CrowdOptions) {
           if (opts.path.closed) d = ((d % 1) + 1) % 1;
           if (d > 0 && d * length < 1.6) w.speed = Math.min(w.speed, o.speed * 0.9);
         }
-        // Return to the saved path point first; otherwise the target runs away while rejoining. This has to be
-        // the walker's *own* lane point, not the centre-line: measured against the centre-line the distance
-        // never closes for a walker holding a 0.35–0.56 u offset, so `t` never advances and the walker plays
-        // its walk clip on the spot. The tolerance is loose enough that a neighbour's push does not stall it.
+        // Advance only when the walker has caught up with its own target *along the path*; how far it has been
+        // shoved sideways is irrelevant. Gating on total distance instead is a trap I have now fallen into
+        // twice: against the centre-line it froze every walker holding a lane offset, and against the lane
+        // point it froze any walker a neighbour was pushing, which is a feedback loop — pushed, so stops
+        // advancing, so the one behind arrives and pushes harder, and the district ends up in a huddle.
         lanePoint(w, w.t, tmp);
-        if (r.position.distanceTo(tmp) < 0.12) w.t += (w.dir * w.speed * dt) / length;
+        curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
+        const along = Math.abs((r.position.x - tmp.x) * tan.x + (r.position.z - tmp.z) * tan.z);
+        if (along < 0.3) w.t += (w.dir * w.speed * dt) / length;
         if (opts.path.closed) w.t = ((w.t % 1) + 1) % 1;
         else if (w.t > 1 || w.t < 0) { w.dir = (w.dir * -1) as 1 | -1; w.t = THREE.MathUtils.clamp(w.t, 0, 1); }
         lanePoint(w, w.t, tmp);
@@ -517,9 +520,13 @@ export function createCrowd(opts: CrowdOptions) {
           const dx = r.position.x - other.x, dz = r.position.z - other.z;
           const d2 = dx * dx + dz * dz;
           if (d2 > PERSONAL * PERSONAL || d2 < 1e-4) continue;
-          const d = Math.sqrt(d2), push = (PERSONAL - d) * Math.min(1, dt * 9) * 0.85;
-          r.position.x += (dx / d) * push;
-          r.position.z += (dz / d) * push;
+          // Sidestep, never brake. A radial push has a component along the path, which shoves the walker off
+          // its own target and — with the gate above — used to stop it dead. People step around each other.
+          const lateral = dx * tan.z - dz * tan.x;
+          if (Math.abs(lateral) < 1e-3) continue;
+          const d = Math.sqrt(d2), push = (PERSONAL - d) * Math.min(1, dt * 9) * 0.85 * Math.sign(lateral);
+          r.position.x += tan.z * push;
+          r.position.z -= tan.x * push;
         }
         face.copy(tan).add(r.position); face.y = r.position.y;
         m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);

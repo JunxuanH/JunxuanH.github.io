@@ -27,9 +27,11 @@ export function createWater(resolutionScale: number) {
 
   // Swell in the mesh's local XY (world XZ after the −90° tilt); displacement along local Z (world up).
   const px = positionLocal.x, py = positionLocal.y, t = time;
+  // Swell speeds, 20 % slower than they were first tuned (Ivan, watching the vista): a bay this wide reads
+  // as bigger water when its period is longer, and the hero is a held shot.
   const waves: [number, number, number, number, number][] = [
     // amplitude, kx, ky, speed, phase
-    [0.42, 0.30, 0.10, 1.1, 0.0], [0.28, 0.22, 0.42, -0.9, 1.7], [0.18, -0.05, 0.85, 1.6, 0.4], [0.12, 0.9, -0.9, 2.2, 2.9], [0.07, 1.6, 1.2, 3.1, 1.3],
+    [0.42, 0.30, 0.10, 0.88, 0.0], [0.28, 0.22, 0.42, -0.72, 1.7], [0.18, -0.05, 0.85, 1.28, 0.4], [0.12, 0.9, -0.9, 1.76, 2.9], [0.07, 1.6, 1.2, 2.48, 1.3],
   ];
   let h: any = float(0), dhx: any = float(0), dhy: any = float(0);
   for (const [a, kx, ky, sp, ph] of waves) {
@@ -48,7 +50,7 @@ export function createWater(resolutionScale: number) {
   mat.positionNode = positionLocal.add(vec3(0, 0, h));
 
   const getNoise = (p: any) => {
-    const o = time.mul(0.6);
+    const o = time.mul(0.48); // the fine ripple drifts with the swell, so it slows by the same 20 %
     const uv0 = add(div(p, 103), vec2(div(o, 17), div(o, 29)));
     const uv1 = div(p, 107).sub(vec2(div(o, -19), div(o, 31)));
     const uv2 = add(div(p, vec2(897.0, 983.0)), vec2(div(o, 101), div(o, 97)));

@@ -35,7 +35,7 @@ export function createAirTraffic() {
   const z = mix(float(Z_NEAR), float(Z_FAR), hash(id.mul(2.11)));
   // Half fly each way. Speed varies so the lanes never fall into step with each other.
   const dir = step(0.5, hash(id.mul(3.07))).mul(2).sub(1);
-  const speed = mix(float(0.012), float(0.03), hash(id.mul(4.51)));
+  const speed = mix(float(0.0096), float(0.024), hash(id.mul(4.51))); // 20 % slower, with the hover lanes
   const x = fract(time.mul(speed).add(hash(id.mul(5.93)))).sub(0.5).mul(SPAN * 2).mul(dir);
   // Taper both ends of the quad so a streak reads as a light with a trail, not as a bar.
   const taper = smoothstep(0.0, 0.16, uv().x).mul(smoothstep(1.0, 0.84, uv().x));
