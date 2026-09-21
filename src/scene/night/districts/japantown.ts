@@ -102,10 +102,15 @@ function sakuraGrove(spots: [number, number, number, number][], tint: number) {
   for (const [x, y, z, seed] of spots) {
     const r = rng(seed);
     trunks.push(new THREE.CylinderGeometry(0.16, 0.3, 3.2, 7).translate(x, y + 1.6, z));
-    for (let i = 0; i < 12; i++) {
-      const rad = 0.55 + r() * 0.6;
-      const ang = r() * Math.PI * 2, dist = r() * 2.2;
-      lumps.push(new THREE.SphereGeometry(rad, 8, 6).translate(x + Math.cos(ang) * dist, y + 3.4 + r() * 2.6, z + Math.sin(ang) * dist));
+    // Many small flattened lumps rather than a dozen big spheres: at radius 0.55–1.15 and 8×6 segments the
+    // canopy read as balloons against paving detailed to the millimetre. Lower segment counts keep the
+    // triangle count about where it was.
+    for (let i = 0; i < 30; i++) {
+      const rad = 0.26 + r() * 0.42;
+      const ang = r() * Math.PI * 2, dist = Math.sqrt(r()) * 2.5;
+      const lump = new THREE.SphereGeometry(rad, 6, 4);
+      lump.scale(1, 0.72, 1);
+      lumps.push(lump.translate(x + Math.cos(ang) * dist, y + 3.5 + r() * 2.4, z + Math.sin(ang) * dist));
     }
   }
   const mat = new THREE.MeshStandardNodeMaterial({ roughness: 0.8 });
