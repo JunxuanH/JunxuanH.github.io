@@ -398,6 +398,15 @@ export function createCrowd(opts: CrowdOptions) {
   const vacantSince = stalls.map(() => 0);
   const walkers: Walker[] = [];
   const tmp = new THREE.Vector3(), tan = new THREE.Vector3(), target = new THREE.Quaternion(), m = new THREE.Matrix4();
+  const laneTan = new THREE.Vector3();
+  /** The point this walker should be at for path parameter `t` — the curve, offset onto its own side. */
+  const lanePoint = (w: Walker, t: number, out: THREE.Vector3) => {
+    curve.getPointAt(t, out);
+    curve.getTangentAt(t, laneTan).multiplyScalar(w.dir);
+    out.x -= laneTan.z * w.lane;
+    out.z += laneTan.x * w.lane;
+    return out;
+  };
   const wp = new THREE.Vector3();
   const face = new THREE.Vector3();
   const okAssets = opts.assets.filter((a) => rigMeta(a.name, a).ok);
@@ -485,14 +494,16 @@ export function createCrowd(opts: CrowdOptions) {
           if (opts.path.closed) d = ((d % 1) + 1) % 1;
           if (d > 0 && d * length < 1.6) w.speed = Math.min(w.speed, o.speed * 0.9);
         }
-        curve.getPointAt(w.t, tmp);
-        // Return to the saved path point first; otherwise the target runs away while rejoining.
-        if (r.position.distanceTo(tmp) < 0.05) w.t += (w.dir * w.speed * dt) / length;
+        // Return to the saved path point first; otherwise the target runs away while rejoining. This has to be
+        // the walker's *own* lane point, not the centre-line: measured against the centre-line the distance
+        // never closes for a walker holding a 0.35–0.56 u offset, so `t` never advances and the walker plays
+        // its walk clip on the spot. The tolerance is loose enough that a neighbour's push does not stall it.
+        lanePoint(w, w.t, tmp);
+        if (r.position.distanceTo(tmp) < 0.12) w.t += (w.dir * w.speed * dt) / length;
         if (opts.path.closed) w.t = ((w.t % 1) + 1) % 1;
         else if (w.t > 1 || w.t < 0) { w.dir = (w.dir * -1) as 1 | -1; w.t = THREE.MathUtils.clamp(w.t, 0, 1); }
-        curve.getPointAt(w.t, tmp);
+        lanePoint(w, w.t, tmp);
         curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
-        tmp.x -= tan.z * w.lane; tmp.z += tan.x * w.lane; // walk the walker's own side of the path
         // Ease back from an off-path stall instead of snapping a metre sideways on release.
         r.position.lerp(tmp, Math.min(1, w.speed * dt / Math.max(r.position.distanceTo(tmp), 1e-6)));
         // Keep bodies apart. The spacing rule above only slows a walker behind another going the *same* way

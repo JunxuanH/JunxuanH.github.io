@@ -1,4 +1,9 @@
-// Walker separation probe: pedestrians must not walk through one another.
+// Crowd probe: pedestrians must move, and must not walk through one another.
+//
+// Both halves matter. Giving walkers their own side of the path once broke the gate that advances them along
+// it -- the check compared their position to the centre-line while they stood 0.5 u to the side, so the
+// distance never closed, `t` never advanced, and every NPC in the city played its walk clip on the spot. A
+// separation-only probe passed that with flying colours: frozen walkers never collide.
 //
 // characters.ts only slowed a walker behind another going the *same* way, and ignored stalled walkers
 // entirely, so on a closed two-way loop (the campus plaza) walkers met head-on and passed through each other.
@@ -18,10 +23,20 @@ await page.waitForTimeout(5000);
 await page.$eval(`.nav a[data-section="${section}"]`, (el) => el.click());
 await page.waitForTimeout(4000);
 const r = await page.evaluate(() => new Promise((resolve) => {
-  let min = Infinity, worst = null, frames = 0, pairs = 0;
-  const step = () => {
+  let min = Infinity, worst = null, frames = 0, pairs = 0, last = performance.now();
+  // Per walker: how far it meant to travel (speed integrated while walking) against how far it actually did.
+  // A walker parked at a stall or held at a red signal accrues no intent, so neither counts as stuck.
+  const want = new Map(), went = new Map(), prev = new Map();
+  const step = (now) => {
+    const dt = Math.min((now - last) / 1000, 0.05); last = now;
     for (const c of window.__crowds ?? []) {
       const ws = c.walkers.filter((w) => w.root.visible);
+      for (const w of ws) {
+        const p = w.root.position, was = prev.get(w);
+        if (was) went.set(w, (went.get(w) ?? 0) + Math.hypot(p.x - was.x, p.z - was.z));
+        prev.set(w, { x: p.x, z: p.z });
+        if (w.state === 'walk') want.set(w, (want.get(w) ?? 0) + w.speed * dt);
+      }
       for (let i = 0; i < ws.length; i++) for (let j = i + 1; j < ws.length; j++) {
         const a = ws[i].root.position, b = ws[j].root.position;
         const d = Math.hypot(a.x - b.x, a.z - b.z);
@@ -29,11 +44,18 @@ const r = await page.evaluate(() => new Promise((resolve) => {
         if (d < min) { min = d; worst = [+a.x.toFixed(1), +a.z.toFixed(1)]; }
       }
     }
-    if (++frames < 1800) requestAnimationFrame(step); else resolve({ min: +min.toFixed(2), worst, pairs, frames });
+    if (++frames < 1800) requestAnimationFrame(step);
+    else {
+      const rows = [...want.entries()].filter(([, w]) => w > 3).map(([k, w]) => [k, w, went.get(k) ?? 0]);
+      const stuck = rows.filter(([, w, g]) => g < w * 0.35);
+      resolve({ min: +min.toFixed(2), worst, pairs, frames, tracked: rows.length, stuck: stuck.length,
+        travel: +Math.max(0, ...rows.map(([, , g]) => g)).toFixed(1) });
+    }
   };
   requestAnimationFrame(step);
 }));
 await browser.close();
-console.log(`${section}: closest approach ${r.min} u at ${r.worst} over ${r.frames} frames (${r.pairs} pair samples)`);
-console.log(r.min < FLOOR ? `FAIL: walkers overlap (floor ${FLOOR})` : 'PASS: no walker overlap');
-process.exit(r.min < FLOOR ? 1 : 0);
+console.log(`${section}: closest approach ${r.min} u at ${r.worst}, furthest travelled ${r.travel} u, ${r.stuck} of ${r.tracked} walkers stuck (${r.frames} frames)`);
+const bad = [r.min < FLOOR && `walkers overlap (floor ${FLOOR})`, r.stuck > 0 && `${r.stuck} walkers animate on the spot`].filter(Boolean);
+console.log(bad.length ? `FAIL: ${bad.join('; ')}` : 'PASS: walkers move and keep apart');
+process.exit(bad.length ? 1 : 0);
