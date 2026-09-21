@@ -94,8 +94,11 @@ export async function start(root: HTMLElement) {
   document.documentElement.dataset.backend = isWebGPU ? 'webgpu' : 'webgl2';
   // Resolution is budgeted in pixels, not device ratio: a Retina desktop or a 3× phone would otherwise
   // render 3–5× the pixels of a laptop. The governor below then trims/raises it from measured frame time.
-  const PIXEL_BUDGET = { high: 2.4e6, med: 1.7e6, low: 0.9e6 }[tier];
-  const dprCap = Math.min(devicePixelRatio, tier === 'low' ? 1.5 : 1.25, Math.sqrt(PIXEL_BUDGET / (innerWidth * innerHeight)));
+  // Raised on 2026-09-21: on a Retina desktop the old budget put the cap at ~1.0 device pixels per CSS pixel
+  // — a half-resolution image on a 2x screen, which is the softness Ivan reported. The governor below is the
+  // real safety valve, so the ceiling can afford to be generous and let measured frame time pull it back.
+  const PIXEL_BUDGET = { high: 4.0e6, med: 2.8e6, low: 1.0e6 }[tier];
+  const dprCap = Math.min(devicePixelRatio, tier === 'low' ? 1.5 : 1.6, Math.sqrt(PIXEL_BUDGET / (innerWidth * innerHeight)));
   let dpr = Number(params.get('dpr')) || Math.max(0.6, dprCap);
   renderer.setPixelRatio(dpr);
   renderer.setSize(innerWidth, innerHeight);
@@ -731,12 +734,16 @@ export async function start(root: HTMLElement) {
     if (params.has('dpr')) return;
     ema += (dt * 1000 - ema) * 0.1;
     if (ema > 24) { fast = 0; if (++slow > 30 && dpr > 0.6) { dpr = Math.max(0.6, dpr - 0.1); slow = 0; apply(); } }
-    else if (ema < 12.5) { slow = 0; if (++fast > 240 && dpr < dprCap) { dpr = Math.min(dprCap, dpr + 0.05); fast = 0; apply(); } }
+    // Climb back faster than before (240 frames was 4 s per 0.05 step, so a capable machine took most of a
+    // minute to reach a cap that is now higher); dropping is unchanged, because falling behind should be
+    // corrected immediately and recovering should not thrash.
+    else if (ema < 12.5) { slow = 0; if (++fast > 120 && dpr < dprCap) { dpr = Math.min(dprCap, dpr + 0.05); fast = 0; apply(); } }
     else { slow = 0; fast = 0; }
   };
   const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(root.clientWidth || innerWidth, root.clientHeight || innerHeight); perf.dpr = dpr; };
   (window as any).__crowds = crowds; // probes: walker separation (scripts/crowd-check.mjs)
   (window as any).__perf = perf;
+  (window as any).__three = THREE; // probes: scripts/foot-check.mjs raycasts the scene
   (window as any).__scene = scene;
   (window as any).__camera = camera;
   const timed = (name: string, fn: () => void) => {

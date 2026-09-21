@@ -13,7 +13,7 @@ import type { Carrier, CarrierCtx } from './index';
  * (9, 3.2, −186) looking at the board centre.
  */
 
-const DISC = new THREE.Vector3(18.6, 0.44, -196);
+const DISC = new THREE.Vector3(17.0, 0.44, -196);
 const SLAB_BOTTOM = 2.6;   // world y; the mount is re-centred above it in fit()
 const DISC_H = 0.3;
 const CONE_R = 4.7;        // covers the 9 u slab's lower corners (±4.5)
@@ -64,11 +64,14 @@ export function create(_ctx: CarrierCtx): Carrier {
   pool.renderOrder = 4;
   group.add(pool);
 
-  // Board mount. rotation.y = −0.76 maps local +Z to (sin −0.76, 0, cos −0.76) = (−0.689, 0, 0.725); the dwell camera
-  // (9, 3.2, −186) seen from the disc is (−9.6, ·, +10) → (−0.693, 0.721) horizontally, so the screen faces it.
+  // Board mount. The slab is 9 u wide, so a yaw of −0.76 spread it 3.26 u either side in x from a disc at
+  // x 18.6 — and Downtown's frontage begins at x 19.6, so its outer third was inside the tower and the ad's
+  // lettering ran into the wall. Turned to −1.05 and moved to x 17.0 it spans 14.8 … 19.3, clear of the
+  // façade by half a metre, at the cost of meeting the dwell camera (9, 3.2, −186) 21° off square instead of
+  // head-on. Keep the three in step: widen the slab or move the disc east and it goes back into the wall.
   const mount = new THREE.Object3D();
   mount.position.set(0, 5.15 - DISC.y, 0);
-  mount.rotation.y = -0.76;
+  mount.rotation.y = -1.05;
   group.add(mount);
 
   // ---- dock: the mount (and the board on it) spins a full turn with a glitch on arrival (E re-triggers it); ←/→

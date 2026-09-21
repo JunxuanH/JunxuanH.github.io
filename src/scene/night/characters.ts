@@ -386,6 +386,8 @@ const STALL_OWNER_WAIT = 20;
 
 /** How close two walkers may come before they push each other apart, in world units. */
 const PERSONAL = 0.75;
+/** How far sideways of its own lane point a walker may ever be, however hard it is being pushed. */
+const STRAY = 0.55;
 
 export function createCrowd(opts: CrowdOptions) {
   const group = new THREE.Group();
@@ -527,6 +529,17 @@ export function createCrowd(opts: CrowdOptions) {
           const d = Math.sqrt(d2), push = (PERSONAL - d) * Math.min(1, dt * 9) * 0.85 * Math.sign(lateral);
           r.position.x += tan.z * push;
           r.position.z -= tan.x * push;
+        }
+        // Stay on the pavement the path was drawn for. A walker carries the path's height, never the ground's
+        // (paths.ts `y`), so drifting far enough sideways to reach a kerb, a stall platform or a planter
+        // leaves it standing inside that geometry with its shins buried. Clamp the total sideways offset —
+        // lane plus shoving — to something a footway can absorb.
+        const offX = r.position.x - tmp.x, offZ = r.position.z - tmp.z;
+        const side = offX * tan.z - offZ * tan.x;
+        if (Math.abs(side) > STRAY) {
+          const trim = (Math.abs(side) - STRAY) * Math.sign(side);
+          r.position.x -= tan.z * trim;
+          r.position.z += tan.x * trim;
         }
         face.copy(tan).add(r.position); face.y = r.position.y;
         m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);
