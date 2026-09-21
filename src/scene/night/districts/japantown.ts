@@ -6,6 +6,7 @@ import { neonText, createKeyedSigns } from '../signs';
 import { CURB_H, PATCH_LIFT, CROSS_Z, groundMaterial } from '../streets';
 import { THEMES } from '../theme';
 import { facadeBlock, stringLights, type DistrictBuild, type DistrictCtx } from './shared';
+import { PLAZA_BENCHES, PLAZA_DAIS, PLAZA_LANTERNS, PLAZA_VENDORS } from '../campus-layout';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /*
@@ -81,18 +82,63 @@ function torii(h = 9, w = 9) {
 
 /** Stone lanterns: one merged stone mesh + one instanced glow for all of them. */
 function stoneLanterns(positions: [number, number, number][], tint: number) {
+  // The light chamber is open: a stone plate above and below it, not a solid block. It used to be a 0.7 box
+  // with the 0.5 glow box centred inside it, so every stone lantern in the district was a dark post whose
+  // lamp was sealed in its own housing.
   const stoneGeo = mergeGeometries([
     new THREE.BoxGeometry(0.9, 0.35, 0.9).translate(0, 0.175, 0),
     new THREE.CylinderGeometry(0.16, 0.2, 1.3, 8).translate(0, 0.35 + 0.65, 0),
-    new THREE.BoxGeometry(0.7, 0.6, 0.7).translate(0, 1.65 + 0.3, 0),
+    new THREE.BoxGeometry(0.7, 0.1, 0.7).translate(0, 1.7, 0),
+    new THREE.BoxGeometry(0.72, 0.1, 0.72).translate(0, 2.2, 0),
+    ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) => new THREE.BoxGeometry(0.1, 0.42, 0.1).translate(sx * 0.3, 1.96, sz * 0.3))),
     new THREE.ConeGeometry(0.7, 0.45, 4).rotateY(Math.PI / 4).translate(0, 2.25 + 0.22, 0),
   ], false)!;
   const stone = new THREE.MeshStandardNodeMaterial({ color: 0x2a2c34, roughness: 0.9 });
   const stones = new THREE.InstancedMesh(stoneGeo, stone, positions.length);
-  const glows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.4, 0.5).translate(0, 1.95, 0), glowMaterial(tint, 2.4), positions.length);
+  const glows = new THREE.InstancedMesh(new THREE.BoxGeometry(0.58, 0.44, 0.58).translate(0, 1.96, 0), glowMaterial(tint, 2.4), positions.length);
   positions.forEach(([x, y, z], i) => { const m = new THREE.Matrix4().makeTranslation(x, y, z); stones.setMatrixAt(i, m); glows.setMatrixAt(i, m); });
   const group = new THREE.Group();
   group.add(stones, glows);
+  return group;
+}
+
+/**
+ * Plaza furniture: a raised planter, benches by the pond and a bank of vending machines.
+ *
+ * The plaza read as a parade ground — forty by forty metres of paving with a pond at one edge and the
+ * buildings at the rim, and nothing between the visitor and the far side. Everything here is placed clear of
+ * the crowd's loop (paths.ts EDUCATION_PLAZA) and of the walk from the spawn to the terminal, because both
+ * are load-bearing: scene-review asserts the walkers' route stays clear of static obstacles.
+ *
+ * Two merged meshes and one instanced glow, so the whole lot costs three draws.
+ */
+function plazaFurniture(benches: [number, number, number][], vendors: [number, number, number][], dais: [number, number]) {
+  const stone: THREE.BufferGeometry[] = [];
+  const [dx, dz] = dais;
+  stone.push(new THREE.BoxGeometry(8.4, 0.34, 8.4).translate(dx, CURB_H + 0.17, dz));
+  stone.push(new THREE.BoxGeometry(6.6, 0.34, 6.6).translate(dx, CURB_H + 0.51, dz));
+  for (const [x, z, yaw] of benches) {
+    const seat = new THREE.BoxGeometry(2.6, 0.16, 0.62).translate(0, 0.52, 0);
+    const legA = new THREE.BoxGeometry(0.22, 0.44, 0.52).translate(-1.05, 0.22, 0);
+    const legB = new THREE.BoxGeometry(0.22, 0.44, 0.52).translate(1.05, 0.22, 0);
+    const bench = mergeGeometries([seat, legA, legB], false)!;
+    bench.rotateY(yaw).translate(x, CURB_H, z);
+    stone.push(bench);
+  }
+  const body: THREE.BufferGeometry[] = [], faces: THREE.BufferGeometry[] = [];
+  for (const [x, z, yaw] of vendors) {
+    const shell = new THREE.BoxGeometry(1.25, 2.0, 0.78).translate(0, 1.0, 0);
+    shell.rotateY(yaw).translate(x, CURB_H, z);
+    body.push(shell);
+    const front = new THREE.PlaneGeometry(1.0, 1.42);
+    front.rotateY(yaw).translate(x + Math.sin(yaw) * 0.4, CURB_H + 1.12, z + Math.cos(yaw) * 0.4);
+    faces.push(front);
+  }
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(mergeGeometries(stone, false)!, new THREE.MeshStandardNodeMaterial({ color: 0x2e313a, roughness: 0.88 })));
+  group.add(new THREE.Mesh(mergeGeometries(body, false)!, new THREE.MeshStandardNodeMaterial({ color: 0x1b1f2a, roughness: 0.55, metalness: 0.35 })));
+  // The lit fronts are what read at night; the cabinets themselves are just dark boxes around them.
+  group.add(new THREE.Mesh(mergeGeometries(faces, false)!, glowMaterial(0xff9ecb, 1.5, { side: THREE.DoubleSide })));
   return group;
 }
 
@@ -197,6 +243,12 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   const pond = koiPond(6.5, T.secondary);
   pond.position.set(c.x - 12, CURB_H + 0.03, c.z + 10);
   group.add(pond);
+
+  // Furniture on the open floor (see plazaFurniture) plus its own tree and lanterns. Coordinates are mirrored
+  // by the collision proxies in walkable.ts campus() — keep the two in step.
+  group.add(plazaFurniture(PLAZA_BENCHES, PLAZA_VENDORS, PLAZA_DAIS));
+  group.add(sakuraGrove([[PLAZA_DAIS[0], CURB_H + 0.68, PLAZA_DAIS[1], 77]], T.primary));
+  group.add(stoneLanterns(PLAZA_LANTERNS.map(([x, z]) => [x, CURB_H, z] as [number, number, number]), T.warm));
   for (let k = 0; k < 4; k++) {
     const z = c.z - 10 + k * 8;
     group.add(stringLights(new THREE.Vector3(c.x - 24, 6.4, z), new THREE.Vector3(c.x + 24, 6.4, z), 14, 1.0, 0.34, k % 2 ? 0xff6a7a : 0xffb070, 2.2));

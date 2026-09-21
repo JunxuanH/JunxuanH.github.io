@@ -3,7 +3,7 @@ import { attribute, vec3, color, uniform, uv, float, smoothstep, glowMaterial } 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { PAL, rng } from './palette';
-import { AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, CURB_H, isRoad, isSidewalk } from './streets';
+import { AVENUE_HALF, SIDEWALK, CROSS_Z, CROSS_HALF, CURB_H, QUAY_Z, isRoad, isSidewalk } from './streets';
 import { MARKET } from './market-layout';
 
 /*
@@ -141,6 +141,12 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
     if (r() < 0.35 * density && !CROSS_Z.some((cz) => Math.abs(z + 5 - cz) < CROSS_HALF)) add('cone', side * (inner + 1.5), z + 5, r() * Math.PI, 0.9);
     if (r() < 0.25 * density) add('hanging', -side * inner, z - 6, side > 0 ? 0 : Math.PI);
     if (r() < 0.2 * density) add('sign', side * outer, z + 3, 0);
+  }
+  // Waterfront promenade: the quay ran 780 u with no lighting of its own at all, which is half the reason the
+  // seawall read as a black band. Skipped across the tunnel head (bay.ts createTunnelPortal).
+  for (let x = -312; x <= 312; x += 24) {
+    if (Math.abs(x) < 17) continue;
+    add('lamp', x, QUAY_Z - 6, x < 0 ? Math.PI / 2 : -Math.PI / 2);
   }
   // Cross streets: power poles with wires along them, corner lamps, hanging traffic lights over the avenue.
   for (const cz of CROSS_Z) {

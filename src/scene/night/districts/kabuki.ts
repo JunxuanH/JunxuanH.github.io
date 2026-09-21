@@ -144,8 +144,9 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
     const flag=label(x<50?'NIGHT SHIFT':'OPEN LATE','FOOD / TECH / GEAR',z<-228?0x65e0ed:0xdb67ca,1.7);
     flag.position.set(x,4.35,z); flag.rotation.y=z<-228?0:Math.PI; group.add(flag);
   }
-  // Lanterns and exposed catenary cables; high enough to keep every sign readable.
-  for(const x of [28,46,64,80]) {
+  // Lanterns and exposed catenary cables; high enough to keep every sign readable. Doubled up: the aisle is
+  // 14 u wide and its middle is walking space that must stay clear, so what fills it has to be overhead.
+  for(const x of [28,37,46,55,64,73,80]) {
     group.add(stringLights(new THREE.Vector3(x,6,-241),new THREE.Vector3(x,6,-215),9,.75,.14,0xffb66d,1));
     group.add(stringLights(new THREE.Vector3(x+.18,6.3,-241),new THREE.Vector3(x+.18,6.3,-215),28,.95,.035,0x10141c,.35));
   }
@@ -173,5 +174,8 @@ export async function create(ctx: DistrictCtx): Promise<DistrictBuild> {
   // the whole aisle was tried and turned the market into a beige carpet; what reads as a night market is
   // coloured puddles with dark between them.
   for (const s of MARKET_STALLS) group.add(lightPools([[s.x, s.z + (s.yaw ? 4.4 : -4.4), 5]], s.accent, { y: CURB_H + 0.06, strength: 0.6 }));
-  return {group,props:[],lights};
+  // Parasols in the gaps between the stalls, off the through-route (scripts/market-check.mjs asserts it).
+  const props: DistrictBuild['props'] = [];
+  for (const x of [43, 61]) for (const z of [-235.6, -220.4]) props.push({ kind: 'parasol', x, z, yaw: z < -228 ? 0.3 : Math.PI - 0.3 });
+  return {group,props,lights};
 }

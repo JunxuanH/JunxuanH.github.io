@@ -11,6 +11,7 @@ import { DOWNTOWN_LOBBIES, DOWNTOWN_DEPTH, DOWNTOWN_FRONT_X } from './building-l
 import { DOWNTOWN_PROPS, DOWNTOWN_ASSETS, DOWNTOWN_INFILL, downtownTowerHeight } from './downtown-layout';
 import { SIGNAL_POSTS } from './crossing-logic';
 import { MARKET_STALLS, MARKET_BOLLARDS, MARKET_BUILDINGS } from './market-layout';
+import { PLAZA_BENCHES, PLAZA_DAIS, PLAZA_LANTERNS, PLAZA_VENDORS } from './campus-layout';
 import { rng } from './palette';
 import { ANCHORS, type SectionId } from './journey';
 import { CURB_H, CROSS_Z, AVENUE_HALF, SIDEWALK, QUAY_Z, isRoad, isSidewalk } from './streets';
@@ -59,6 +60,17 @@ function campus(): Area {
     circle(c.x - 12, c.z + 10, 6.5, 0.1), // koi pond
     circle(-118, -76, 1.1, 1.6), circle(-42, -116, 1.1, 1.6), // dumpsters
   ];
+  // Plaza furniture (campus-layout.ts, drawn by japantown.ts plazaFurniture). Heights are deliberate: the
+  // planter and the benches sit under CAMERA_BLOCK_H so the boom rides over them, the lanterns and vending
+  // machines are tall enough to stop it.
+  obstacles.push(box(PLAZA_DAIS[0] - 4.2, PLAZA_DAIS[0] + 4.2, PLAZA_DAIS[1] - 4.2, PLAZA_DAIS[1] + 4.2, 0.7));
+  obstacles.push(circle(PLAZA_DAIS[0], PLAZA_DAIS[1], 0.5, 3.2)); // its cherry tree
+  for (const [x, z, yaw] of PLAZA_BENCHES) {
+    const along = Math.abs(Math.cos(yaw)) > 0.5;
+    obstacles.push(centred(x, z, along ? 2.8 : 0.9, along ? 0.9 : 2.8, 0.6));
+  }
+  for (const [x, z] of PLAZA_VENDORS) obstacles.push(centred(x, z, 1.1, 1.4, 2.4));
+  for (const [x, z] of PLAZA_LANTERNS) obstacles.push(circle(x, z, 0.5, 2.7));
   for (let i = 0; i < 4; i++) for (const s of [-1, 1]) obstacles.push(circle(c.x + s * 6.5, streetZ - 14 - i * 5, 0.5, 2.7)); // stone lanterns
   for (const [dx, dz] of [[-24, -6], [24, -6], [-24, 22], [24, 22]] as const) obstacles.push(circle(c.x + dx, c.z + dz, 0.35, 6.5)); // lamps
   // Sakura trunks: same seeded sequence as japantown.ts's grove.
