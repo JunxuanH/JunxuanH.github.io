@@ -236,11 +236,14 @@ export async function createTraffic(lanes: Lane[], tier: Tier) {
           if(Math.abs(otherPos.x)<AVENUE_HALF+4 && CROSS_Z.some(z=>Math.abs(otherPos.z-z)<CROSS_HALF+4))
             gap=Math.min(gap,signalStopDistance(tmp.x,tmp.z,ahead.x,ahead.z,c.length/2,44));
         }
-        // Yield to the player on foot without putting an invisible barrier around roads.
+        // Yield to the player on foot without putting an invisible barrier around roads. A car is ~2 u wide and
+        // a walker on a crossing drifts, so the corridor is wider than the car and the car stops further back
+        // than it needs to: at 2.5 u and 1.5 u a car would pass through someone standing just off the lane
+        // centre, which on a zebra looks like being run over.
         for(const pedestrian of pedestrians) if(Math.abs(pedestrian.y-tmp.y)<2) {
           const dx=pedestrian.x-tmp.x,dz=pedestrian.z-tmp.z;
           const forward=dx*ahead.x+dz*ahead.z,lateral=Math.abs(dx*ahead.z-dz*ahead.x);
-          if(forward>0 && lateral<2.5) gap=Math.min(gap,Math.max(0,forward-c.length/2-1.5));
+          if(forward>0 && lateral<3.4) gap=Math.min(gap,Math.max(0,forward-c.length/2-2.4));
         }
         const desired=Math.min(c.speed*lengths[c.lane],Math.sqrt(2*4*gap));
         c.velocity=Math.max(0,Math.min(desired,c.velocity+2.5*dt));

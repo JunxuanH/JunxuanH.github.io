@@ -290,14 +290,33 @@ export function resolve(area: Area, next: THREE.Vector3, prev: THREE.Vector3, ra
 }
 
 const probe = new THREE.Vector2();
-/** True when (x, z) is inside a camera-blocking obstacle (tall shapes only, slightly padded). */
+/**
+ * How far from the boom's centre-line an obstacle still fills the frame. The camera is not a point: its near
+ * plane is 0.5 and the frustum is wide, so a post half a metre to the side of the line is a black bar across
+ * the shot while the line itself is clear. This was the Market's camera-through-the-stall-post bug.
+ */
+const CAMERA_RADIUS = 0.75;
+/** True when (x, z) is inside a camera-blocking obstacle (tall shapes only, padded by the camera's girth). */
 function blocksCamera(area: Area, x: number, z: number, y: number): boolean {
   for (const o of area.obstacles) {
     if ((o.h ?? 0) < CAMERA_BLOCK_H || (o.h ?? 0) + 0.3 < y) continue;
     probe.set(x, z);
-    if (pushOut(o, probe, 0.3)) return true;
+    if (pushOut(o, probe, CAMERA_RADIUS)) return true;
   }
   return false;
+}
+
+/**
+ * Keep the damped camera out of geometry. `limitCamera` shortens the *desired* boom, but the camera chases it
+ * exponentially (player.ts), so during a fast walk or an orbit drag the real camera sweeps through whatever
+ * the desired pose had already been pushed out of. Called every frame on the damped position.
+ */
+export function clampCamera(area: Area, pivot: THREE.Vector3, cam: THREE.Vector3, minLen = 1.2) {
+  const len = pivot.distanceTo(cam);
+  if (len <= minLen) return;
+  const ground = groundY(area, cam.x, cam.z);
+  if (rectAt(area, cam.x, cam.z, CAMERA_MARGIN) && !blocksCamera(area, cam.x, cam.z, cam.y - ground)) return;
+  limitCamera(area, pivot, cam, minLen);
 }
 
 /**

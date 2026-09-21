@@ -136,7 +136,9 @@ export async function createProps({ tier, extra = [] }: PropsOptions) {
     if (z > -42 && z < -22) continue; // the tunnel head stands here (bay.ts createTunnelPortal)
     add('lamp', side * inner, z, side > 0 ? Math.PI : 0);
     if (r() < 0.55 * density) add(r() < 0.5 ? 'dumpster' : 'barrier', -side * outer, z + (r() - 0.5) * 8, r() * Math.PI);
-    if (r() < 0.35 * density) add('cone', side * (inner + 1.5), z + 5, r() * Math.PI, 0.9);
+    // Not on a crossing: the cone x here (±12.7) is exactly where streets.ts paints the cross-street zebra
+    // bands (x 11.2–16.4), so any cone whose z lands inside a cross street stands in the middle of one.
+    if (r() < 0.35 * density && !CROSS_Z.some((cz) => Math.abs(z + 5 - cz) < CROSS_HALF)) add('cone', side * (inner + 1.5), z + 5, r() * Math.PI, 0.9);
     if (r() < 0.25 * density) add('hanging', -side * inner, z - 6, side > 0 ? 0 : Math.PI);
     if (r() < 0.2 * density) add('sign', side * outer, z + 3, 0);
   }

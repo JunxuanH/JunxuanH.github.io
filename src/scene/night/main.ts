@@ -729,6 +729,7 @@ export async function start(root: HTMLElement) {
     else { slow = 0; fast = 0; }
   };
   const apply = () => { renderer.setPixelRatio(dpr); renderer.setSize(root.clientWidth || innerWidth, root.clientHeight || innerHeight); perf.dpr = dpr; };
+  (window as any).__crowds = crowds; // probes: walker separation (scripts/crowd-check.mjs)
   (window as any).__perf = perf;
   (window as any).__scene = scene;
   (window as any).__camera = camera;

@@ -10,7 +10,7 @@
 import * as THREE from 'three/webgpu';
 import { instantiate, strideOf, type CharacterAsset, type Instance } from './characters';
 import { reducedMotion } from './palette';
-import { limitCamera, resolve, groundY, type Area } from './walkable';
+import { limitCamera, clampCamera, resolve, groundY, type Area } from './walkable';
 import type { InputState } from './input';
 import { WALK_SPEED, RUN_SPEED, gaitForSpeed, gaitRate, gaitPhase } from './gait';
 
@@ -211,6 +211,8 @@ export function createPlayer(opts: PlayerOptions) {
     // per step) and eased in and out with speed.
     desiredCamera();
     camPos.lerp(desired, 1 - Math.exp(-6 * dt));
+    // The damped camera can lag into geometry the desired pose was already pushed out of.
+    if (area) clampCamera(area, pivot, camPos);
     camLook.lerp(lookT, 1 - Math.exp(-7 * dt));
     bobAmp += ((speed > 0.3 ? (clip === 'run' ? 0.018 : 0.01) : 0) - bobAmp) * (1 - Math.exp(-4 * dt));
     camOut.copy(camPos);

@@ -364,6 +364,8 @@ export interface Walker {
   // ---- internal (createCrowd)
   t: number;
   dir: 1 | -1;
+  /** Lateral offset from the path centre-line, in world units. Signed by `dir`, so opposite traffic passes. */
+  lane: number;
   speed: number;
   baseSpeed: number;
   /** Walk clip stride speed (u/s at timeScale 1) — timeScale = speed / stride keeps the feet planted. */
@@ -381,6 +383,9 @@ function rng(seed: number) {
 
 /** How long a stall stays reserved for walkers that own its clip before anyone may take it with idle. */
 const STALL_OWNER_WAIT = 20;
+
+/** How close two walkers may come before they push each other apart, in world units. */
+const PERSONAL = 0.75;
 
 export function createCrowd(opts: CrowdOptions) {
   const group = new THREE.Group();
@@ -409,6 +414,7 @@ export function createCrowd(opts: CrowdOptions) {
     const stride = opts.strideSpeed ?? strideOf(inst);
     const w: Walker = {
       name: asset.name, root: inst.root, inst, held: false, t: i / opts.count + rand() * 0.02, dir: opts.path.closed && !opts.path.oneWay && rand() < 0.4 ? -1 : 1,
+      lane: 0,
       speed, baseSpeed: speed, stride, state: 'walk', until: 0, stall: -1, faceTarget: null,
       hold(face) {
         if (w.stall >= 0) { occupied.delete(w.stall); vacantSince[w.stall] = elapsed; w.stall = -1; }
@@ -429,6 +435,10 @@ export function createCrowd(opts: CrowdOptions) {
     curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
     inst.root.rotation.y = Math.atan2(tan.x, tan.z);
     group.add(inst.root);
+    // Keep to your own side. Every walker shared one centre-line, so on a two-way loop two of them meeting
+    // head-on occupied the same point and passed through each other; a push-apart alone loses to the lerp that
+    // pulls each walker back onto the path. Signed by direction, so the two streams separate by a body width.
+    w.lane = w.dir * (0.34 + rand() * 0.22);
     walkers.push(w);
   }
 
@@ -482,8 +492,24 @@ export function createCrowd(opts: CrowdOptions) {
         else if (w.t > 1 || w.t < 0) { w.dir = (w.dir * -1) as 1 | -1; w.t = THREE.MathUtils.clamp(w.t, 0, 1); }
         curve.getPointAt(w.t, tmp);
         curve.getTangentAt(w.t, tan).multiplyScalar(w.dir);
+        tmp.x -= tan.z * w.lane; tmp.z += tan.x * w.lane; // walk the walker's own side of the path
         // Ease back from an off-path stall instead of snapping a metre sideways on release.
         r.position.lerp(tmp, Math.min(1, w.speed * dt / Math.max(r.position.distanceTo(tmp), 1e-6)));
+        // Keep bodies apart. The spacing rule above only slows a walker behind another going the *same* way
+        // and ignores stalled ones, so on a closed two-way loop — the campus plaza — two walkers meeting
+        // head-on pass straight through each other, and anyone passing a stalled walker overlaps them. This
+        // is a continuous nudge, never a snap: scene-review.mjs asserts a walker resumes without teleporting,
+        // and the lerp above pulls them back onto the path once there is room.
+        for (const o of walkers) {
+          if (o === w) continue;
+          const other = o.inst.root.position;
+          const dx = r.position.x - other.x, dz = r.position.z - other.z;
+          const d2 = dx * dx + dz * dz;
+          if (d2 > PERSONAL * PERSONAL || d2 < 1e-4) continue;
+          const d = Math.sqrt(d2), push = (PERSONAL - d) * Math.min(1, dt * 9) * 0.85;
+          r.position.x += (dx / d) * push;
+          r.position.z += (dz / d) * push;
+        }
         face.copy(tan).add(r.position); face.y = r.position.y;
         m.lookAt(face, r.position, THREE.Object3D.DEFAULT_UP);
         target.setFromRotationMatrix(m);
