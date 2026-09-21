@@ -48,7 +48,31 @@ export function signalStopDistance(x:number,z:number,dx:number,dz:number,nose:nu
  * touch, ran green. Each direction now watches its own conflicting axis, and only steps off with
  * enough of the red left to finish.
  */
-const CROSSING_MARGIN = 3; // seconds of red still needed before stepping off
+/**
+ * A pedestrian may only step off if the traffic they would cross stays stopped long enough to clear the
+ * carriageway. The old rule asked for 3 seconds of red — but the crowd walks at 0.9–1.4 u/s
+ * (characters.ts), so the 16 u cross street takes up to 20 s and the 20 u avenue up to 24 s. Walkers
+ * stepped off during the short 21–24 scramble and were still in the road when the cross street went green
+ * at 26. Sized for the slowest walker, plus a kerb's grace at each end.
+ */
+const WALK_SPEED_MIN = 0.9;
+/** Walkers step out at this multiple of their pace while on a carriageway (characters.ts HURRY). */
+const HURRY = 1.5;
+export const CLEARANCE = {
+  avenue: (AVENUE_HALF * 2 + 2) / (WALK_SPEED_MIN * HURRY),
+  cross: (CROSS_HALF * 2 + 2) / (WALK_SPEED_MIN * HURRY),
+};
+
+/**
+ * Seconds until this axis next shows green. `secondsUntilChange` answers with the next *edge*, which at
+ * t 50 is the end of the cycle — three seconds away — even though the cross street then stays red for
+ * another 26. Stepping off needs to know when the cars actually move.
+ */
+export function secondsUntilGreen(axis: 'avenue' | 'cross', t = clock) {
+  const GREEN_AT = { avenue: 0, cross: 26 };
+  const now = ((t % SIGNAL_CYCLE) + SIGNAL_CYCLE) % SIGNAL_CYCLE;
+  return (((GREEN_AT[axis] - now) % SIGNAL_CYCLE) + SIGNAL_CYCLE) % SIGNAL_CYCLE;
+}
 
 export function pedestrianMustWait(x:number,z:number,dx:number,dz:number,t=clock) {
   // Which traffic would they be stepping in front of, and are they at that kerb right now?
@@ -64,9 +88,11 @@ export function pedestrianMustWait(x:number,z:number,dx:number,dz:number,t=clock
     if(d>=0 && d<1) conflict='avenue';
   }
   if(!conflict) return false;                      // mid-crossing or nowhere near a kerb: keep going
-  if(crossingPhase(t).walk) return false;          // the all-red scramble lets everyone go
   if(crossingPhase(t)[conflict]!=='red') return true;
-  return secondsUntilChange(conflict,t)<=CROSSING_MARGIN;
+  // Red is not an invitation on its own: it has to last long enough to walk the whole carriageway. This
+  // also covers the all-red scramble, which used to be a blanket yes and is what put walkers in front of
+  // the cross street's green.
+  return secondsUntilGreen(conflict,t) < CLEARANCE[conflict];
 }
 
 /**

@@ -31,12 +31,17 @@ assert.equal(signalStopDistance(0,-148,1,0,3,ALL_RED),Infinity,'committed car mu
 // Pedestrians watch the road they are stepping into, not the whole junction.
 assert(!pedestrianMustWait(15,-134.8,0,-1,AVE_GREEN),'side-street kerb is clear while the avenue runs');
 assert(pedestrianMustWait(15,-134.8,0,-1,CROSS_GREEN),'must wait for the traffic they would step in front of');
-assert(!pedestrianMustWait(15,-134.8,0,-1,ALL_RED));
+assert(!pedestrianMustWait(15,-134.8,0,-1,ALL_RED),'cross street stays red for another 36 s: step off');
 assert(!pedestrianMustWait(15,-140,0,-1,ALL_RED),'pedestrian already crossing must clear');
 assert(pedestrianMustWait(-11,-133.8,1,0,AVE_GREEN),'avenue kerb waits while the avenue runs');
 assert(pedestrianMustWait(-11,-133.8,1,0,AVE_AMBER),'amber is not an invitation');
 assert(pedestrianMustWait(-11,-133.8,1,0,RED_ENDING),'do not step off into a red about to end');
-assert(!pedestrianMustWait(-11,-133.8,1,0,ALL_RED));
+// A red long enough to *reach the far kerb* is the test, not a red that merely exists. At t 50 the avenue
+// turns green in 10 s and the crossing takes 16 at a hurried pace, so this kerb waits — it used to step off
+// and was still on the carriageway when the traffic moved, which is what Ivan saw. Its window is the cross
+// street's green, when the avenue is red for a full half-cycle.
+assert(pedestrianMustWait(-11,-133.8,1,0,ALL_RED),'10 s of red is not enough to cross 20 u');
+assert(!pedestrianMustWait(-11,-133.8,1,0,CROSS_GREEN),'the avenue is red for 30 s here: step off');
 assert(!pedestrianMustWait(0,-133.8,1,0,ALL_RED),'mid-crossing is not a kerb');
 
 // Simulate a red approach at multiple frame rates: nose never crosses the stop line.

@@ -135,6 +135,8 @@ export function createCrossingSignals() {
 
   const update=(t:number)=>{
     setCrossingTime(t);const phase=crossingPhase(t);
+    // Probes read the live phase and its clock (scripts/jaywalk-check.mjs).
+    (window as any).__signals = { t, ...phase };
     for(const axis of ['avenue','cross'] as const) drawPanel(axis,secondsUntilChange(axis,t),phase[axis],axis==='avenue'?'AVE':'CROSS');
     const wc=walkCountdown(t);drawPanel('walk',wc.secs,wc.walk?'green':'red',wc.walk?'WALK':'WAIT');
     for(const l of lamps) l.mesh.visible=phase[l.axis]===l.state;

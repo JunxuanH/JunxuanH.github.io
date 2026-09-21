@@ -8,6 +8,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import type { PathDef } from './paths';
 import { pedestrianMustWait } from './crossing-logic';
+import { isRoad } from './streets';
 import { refineRoninRun } from './ronin-run';
 import { rigMeta, groundOffsetFor, type RigMeta } from './rigs';
 
@@ -386,6 +387,8 @@ const STALL_OWNER_WAIT = 20;
 
 /** How close two walkers may come before they push each other apart, in world units. */
 const PERSONAL = 0.75;
+/** Pace multiplier while crossing a road; must match crossing-logic's clearance sizing. */
+const HURRY = 1.5;
 /** How far sideways of its own lane point a walker may ever be, however hard it is being pushed. */
 const STRAY = 0.55;
 
@@ -488,6 +491,10 @@ export function createCrowd(opts: CrowdOptions) {
         const waiting=pedestrianMustWait(r.position.x,r.position.z,tan.x,tan.z);
         if(waiting) {
           w.speed=0;
+        } else if(isRoad(r.position.x,r.position.z)) {
+          // Nobody dawdles across a carriageway. The signal timing counts on this pace: crossing-logic's
+          // CLEARANCE is what a walker at the slowest pace times HURRY needs to reach the far kerb.
+          w.speed*=HURRY;
         }
         w.inst.play(waiting?'idle':'walk');
         for (const o of walkers) {
