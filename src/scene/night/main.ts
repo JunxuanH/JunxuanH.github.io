@@ -240,7 +240,11 @@ export async function start(root: HTMLElement) {
   }
 
   // ---------- bay
-  const water = params.has('nowater') ? null : createWater({ high: 0.5, med: 0.4, low: 0.3 }[tier]);
+  // Reflection buffer scale. The bay fills a third of the hero frame and reflects the most detailed, highest
+  // contrast thing in the scene, so at 0.4 the city's windows merged into blocks — the artefacting Ivan
+  // photographed. Measured at 1600x900 on med, 0.4 → 0.75 cost nothing at all (both pinned at 16.7 ms), and
+  // the step that actually buys the detail is 0.4 → 0.6; beyond ~0.75 the gain is small. Phones stay low.
+  const water = params.has('nowater') ? null : createWater({ high: 0.75, med: 0.62, low: 0.3 }[tier]);
   if (water) scene.add(water);
   scene.add(createBridge(walls));
   scene.add(createQuay(QUAY_Z, ground, walls));

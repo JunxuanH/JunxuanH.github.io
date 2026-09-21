@@ -18,11 +18,12 @@ import { groundMaterial, wallMaterial, type GroundTextures, type WallSets } from
  * that stays dim head-on and only brightens at grazing angles.
  */
 export function createWater(resolutionScale: number) {
+  const scale = Number(params.get('wres')) || resolutionScale;
   const tex = loader.load('/textures/waternormals.jpg');
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   const normals = texture(tex);
   const mat = new THREE.MeshStandardNodeMaterial({ roughness: 0.18, metalness: 0.15 }); // glossy: moon/neon glints on wave faces
-  const mirror = reflector({ resolutionScale, generateMipmaps: true });
+  const mirror = reflector({ resolutionScale: scale, generateMipmaps: true });
 
   // Swell in the mesh's local XY (world XZ after the −90° tilt); displacement along local Z (world up).
   const px = positionLocal.x, py = positionLocal.y, t = time;
@@ -61,9 +62,16 @@ export function createWater(resolutionScale: number) {
   const worldToEye = cameraPosition.sub(positionWorld);
   const eye = normalize(worldToEye);
   const dist = length(worldToEye);
-  const distortion = nWorld.xz.mul(float(0.001).add(float(1.0).div(dist))).mul(3.0);
-  mirror.uvNode = mirror.uvNode!.add(distortion.mul(0.35));
+  // How far a wave may drag the reflection, in screen UV. The 1/dist term keeps close ripples wobbling and
+  // distant water still, but unbounded it explodes — at 20 u it asks for 5 % of the screen — so it is capped.
+  // Tunable with `?wdis` and `?wcap`. Note this is *not* what made the bay look blocky: measured against a
+  // frame with the ripple switched off entirely, the smearing barely moved. The reflection's resolution was.
+  const amount = Number(params.get('wdis')) || 0.35;
+  const cap = Number(params.get('wcap')) || 0.012;
   const theta = max(dot(eye, nWorld), 0.0);
+  const falloff = float(0.001).add(float(1.0).div(dist)).mul(3.0).min(float(cap / amount));
+  const distortion = nWorld.xz.mul(falloff);
+  mirror.uvNode = mirror.uvNode!.add(distortion.mul(amount));
   const reflectance = pow(float(1.0).sub(theta), 4.0).mul(0.5).add(0.1); // 0.1 head-on … 0.6 grazing
   mat.colorNode = color(0x08131f);
   mat.emissiveNode = mirror.rgb.mul(0.65).mul(reflectance);
