@@ -26,3 +26,20 @@ Checked and fine: tokens now shared by both pages; no low-alpha ink text found b
 1. Raise minimum text to 12px (14px for body/bullets) -- #1.
 2. Resume header/date/bullet consistency and `max-width` -- #2, #3.
 3. De-emphasize glow on secondary elements -- #4, #5.
+
+## Phase 3 results (2D layer)
+
+Changed: `night.css`, `hud.css`, `dialogue.css`, `shops.css`, `resume.css`. Before/after screenshots: `shots/before` and `shots/after` (gitignored).
+
+| # | Status |
+|---|---|
+| 1 tiny text | Fixed for nav, HUD, dialogue, boot and shop labels (9-11px -> 12px, tracking reduced to 0.08-0.2em). **Not changed:** `carriers/terminal*.css` (in-scene CRT sheet, 11px; the detector exempts terminal contexts) -- check it in the 3D view before touching it. |
+| 2 resume headers | Dates now stay right-aligned on the first line of every role. **Content gap, not CSS:** the Apple entry still has no bullets (`src/content.ts`); add some or accept it. |
+| 3 line length | `max-width: 64ch` on bullets/body/summary. The resume now has a wide empty right margin; try 68-72ch if that looks too narrow. |
+| 4 glow | Removed the halo from `.slab`, `.card`, the outline button and the resume paper. Kept on nav, hero panel, primary yellow button, interaction prompt. |
+| 5 card shadow row | Resolved by 4 (cards keep the edge, lose the shadow). |
+| 6, 7 | Not changed (see table above). |
+
+`impeccable detect`: /resume 5 -> 1 finding (the intentional yellow button glow); flat page 23 -> 6 (remaining: kickers, kept; primary-element glow, kept).
+
+Not done: phases 4 (GSAP motion) and 5 (three.js scene) -- they need a GPU to verify. The in-city HUD changes (sizes, tracking) were not visually checked because the city can't render in this sandbox; check the nav, hint, toast and dialogue at phone width.
