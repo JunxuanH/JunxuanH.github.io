@@ -1,0 +1,15 @@
+/* Single source of truth for the site's design tokens. night.css (city UI) and resume.css (/resume) both rely on
+   this file; don't redeclare these on :root elsewhere. See .claude/skills/design-system/SKILL.md. */
+:root {
+  --cyan: #00e5ff;
+  --magenta: #ff2bd6;
+  --yellow: #f2ff3d;
+  --sodium: #ff9a3d;
+  --ink: #eafcff;
+  --asphalt: #07070c;
+  --holo: rgb(8 10 20 / 0.62);
+  --font-display: 'Rajdhani', 'Chakra Petch', 'Impact', sans-serif;
+  --font: 'Source Sans 3 Variable', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+}
