@@ -37,3 +37,5 @@ Notes:
 - three-best-practices and three-js overlap; if they give conflicting advice, delete one.
 - ui-ux-pro-max and taste-skill both ship large reference data (about 4 MB and 2 MB); remove them if the repo size matters.
 - `design-system` (ours) wins on this site's tokens and rules; treat the third-party design skills as critique and ideas.
+
+Also installed: playwright-cli (microsoft/playwright-cli), the remaining small taste-skill variants (brandkit, brutalist, gpt-taste, imagegen-frontend web/mobile, minimalist, output, soft, stitch; the v1 and experimental taste-skill versions were left out), and `site-polish`, the workflow that ties them together. Run it with `/site-polish`.
