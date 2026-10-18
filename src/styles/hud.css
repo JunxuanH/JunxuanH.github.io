@@ -35,7 +35,7 @@ html.no-3d #hud { display: none; }
   opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .hud-hint.is-on { opacity: 1; transform: none; animation: hud-glitch 0.4s steps(6); }
-.hud-hint-title { margin: 0 0 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--yellow); }
+.hud-hint-title { margin: 0 0 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--yellow); }
 .hud-hint ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(234 252 255 / 0.85); }
 .hud-hint li { display: flex; align-items: center; gap: 6px; }
 .hud-hint li span { margin-left: auto; color: var(--cyan); }
@@ -58,7 +58,7 @@ html.no-3d #hud { display: none; }
 }
 .hud-toast.is-on { opacity: 1; animation: hud-glitch 0.45s steps(7); }
 .hud-toast-name { display: block; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: 0.12em; text-transform: uppercase; }
-.hud-toast-sub { display: block; margin-top: 4px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--yellow); }
+.hud-toast-sub { display: block; margin-top: 4px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--yellow); }
 .hud-toast-sub::before { content: '· '; color: var(--cyan); }
 
 /* Location change (scene/night/nav.ts fade beats → hud.cutscene): a black overlay above the rest of the HUD. */
@@ -95,7 +95,7 @@ html[data-cutscene] .nav:hover { opacity: 1; }
   display: grid; place-items: center; transition: opacity 0.2s ease;
 }
 .stick-rest::before { content: ''; width: 14px; height: 14px; border-radius: 50%; background: rgb(0 229 255 / 0.55); box-shadow: 0 0 10px rgb(0 229 255 / 0.5); }
-.stick-rest span { position: absolute; bottom: -22px; font: 600 11px var(--font-display); letter-spacing: 0.24em; text-transform: uppercase; color: rgb(0 229 255 / 0.7); }
+.stick-rest span { position: absolute; bottom: -22px; font: 600 12px var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: rgb(0 229 255 / 0.7); }
 .stick.is-on ~ .stick-rest { opacity: 0; }
 .hud-btns { position: absolute; right: 18px; bottom: calc(24px + env(safe-area-inset-bottom)); display: flex; gap: 14px; align-items: flex-end; pointer-events: auto; touch-action: none; }
 .hud-btn {
@@ -150,7 +150,7 @@ html[data-cutscene] .nav:hover { opacity: 1; }
     left: auto; right: 16px; bottom: auto; top: calc(var(--nav-b, 60px) + 72px); width: min(300px, calc(100vw - 32px)); padding: 10px 14px 11px;
     transform: translateY(-6px);
   }
-  .hud-hint-title { margin-bottom: 6px; font-size: 10px; }
+  .hud-hint-title { margin-bottom: 6px; font-size: 12px; }
   .hud-hint ul { gap: 4px; font-size: 13px; }
   .hud-hint .touch-only { display: flex; }
   .hud-hint .keys-only { display: none; }
@@ -170,7 +170,7 @@ html[data-cutscene] .nav:hover { opacity: 1; }
   html .sheet { max-height: 60vh; }
   .hud-toast { padding: 6px 14px 8px; }
   .hud-toast-name { font-size: 18px; }
-  .hud-toast-sub { font-size: 10px; }
+  .hud-toast-sub { font-size: 12px; }
   .hud-hint { top: calc(var(--nav-b, 48px) + 8px); width: 250px; }
   .hud-hint ul { gap: 3px; font-size: 12px; }
   .hud-btns { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); gap: 10px; }
