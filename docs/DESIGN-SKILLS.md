@@ -27,3 +27,13 @@ This site is vanilla three.js r186 (WebGPU renderer with TSL, WebGL2 fallback) p
 Not worth it for this repo: OpenAEC-Foundation's Three.js skill package (24 skills, mostly R3F, very few installs) and the `threejs-r3f` skills.
 
 Before installing any of these, check that they target your three.js version (r186): TSL and WebGPU APIs changed a lot between releases, and a skill written for an older one will push the agent toward APIs that no longer exist.
+
+## Installed in `.claude/skills/`
+
+frontend-design (anthropics/skills), impeccable (skill folder only), taste-skill + redesign-skill + image-to-code-skill (Leonxlnx/taste-skill; its other variants were left out), ui-ux-pro-max, img2threejs (without its docs/ and integrations/ folders), the eight gsap-* skills, webgpu-threejs-tsl, three-best-practices and three-js. The local `design-system` skill is ours. Playwright is `scripts/shots-matrix.mjs`.
+
+Notes:
+- impeccable's launcher (`.claude/skills/impeccable/scripts/impeccable`) downloads a platform binary from github.com/pbakaus/impeccable releases the first time it runs. Its plugin hooks and sub-agents were not installed, so nothing runs automatically.
+- three-best-practices and three-js overlap; if they give conflicting advice, delete one.
+- ui-ux-pro-max and taste-skill both ship large reference data (about 4 MB and 2 MB); remove them if the repo size matters.
+- `design-system` (ours) wins on this site's tokens and rules; treat the third-party design skills as critique and ideas.
